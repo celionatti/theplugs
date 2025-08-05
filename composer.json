@@ -1,0 +1,24 @@
+{
+    "name": "celionatti/theplugs",
+    "description": "he Plug's Dev's PHP Framework, A very powerful MVC framework, well secure enough to handle any project. with a vast team behind its build.",
+    "type": "project",
+    "license": "MIT",
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/",
+            "Plugs\\": "core/"
+        }
+    },
+    "authors": [
+        {
+            "name": "celionatti",
+            "email": "amisuusman@gmail.com"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {
+        "php": ">=7.4",
+        "ext-pdo": "*",
+        "vlucas/phpdotenv": "^5.6"
+    }
+}
