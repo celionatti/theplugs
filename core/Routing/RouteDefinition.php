@@ -153,7 +153,7 @@ class RouteDefinition
     /**
      * Check if URI matches this route's pattern
      */
-    private function matchesUri(string $uri): bool
+    public function matchesUri(string $uri): bool
     {
         $pattern = $this->getUri();
         

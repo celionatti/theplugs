@@ -12,19 +12,20 @@ use Plugs\Http\Response\Response;
 class RoutingServiceProvider
 {
     private Router $router;
-    private ?object $container;
 
-    public function __construct(?object $container = null)
+    public function __construct()
     {
-        $this->container = $container;
-        $this->router = new Router($container);
+        // Initialize the router
+        $this->router = new Router();
+        
+        // Set it in the Route facade
         Route::setRouter($this->router);
     }
 
     public function boot(): void
     {
-        // Register global middleware here if needed
-        // $this->router->middleware(['cors', 'throttle']);
+        // Can register global middleware here if needed
+        // $this->router->middleware(['web']);
     }
 
     public function getRouter(): Router
@@ -42,22 +43,11 @@ class RoutingServiceProvider
         try {
             return $this->router->dispatch($request);
         } catch (\Throwable $e) {
-            return $this->handleException($e, $request);
+            // Simple error response
+            return new Response([
+                'error' => $e->getMessage(),
+                'code' => $e->getCode() ?: 500
+            ], $e->getCode() ?: 500);
         }
-    }
-
-    private function handleException(\Throwable $e, Request $request): Response
-    {
-        // In a real application, you'd have more sophisticated error handling
-        $statusCode = method_exists($e, 'getStatusCode') ? $e->getCode() : 500;
-        
-        if ($statusCode === 0) {
-            $statusCode = 500;
-        }
-
-        return new Response([
-            'error' => $e->getMessage(),
-            'code' => $statusCode
-        ], $statusCode);
     }
 }

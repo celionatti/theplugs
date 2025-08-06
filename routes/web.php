@@ -2,4 +2,14 @@
 
 declare(strict_types=1);
 
-var_dump('This is the web routes file.'); // Placeholder for actual route definitions
+use Plugs\Http\Router\Route;
+
+Route::get('/', function() {
+    return '<h1>Welcome to Plugs Framework!</h1>';
+});
+
+Route::get('/user', function() {
+    return '<h1>Welcome to Plugs Framework!</h1> <br> This is the user page.';
+});
+
+Route::get('/about', 'HomeController@about');

@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace Plugs;
 
 use Throwable;
+use Plugs\Http\Router\Route;
 use Plugs\Http\Router\Router;
 use Plugs\Container\Container;
 use Plugs\Http\Request\Request;
 use Plugs\Http\Response\Response;
 use Plugs\Services\ServiceProvider;
+use Plugs\Services\RoutingServiceProvider;
 use Plugs\Exceptions\Handler\ExceptionHandler;
 
 class Plugs
@@ -61,13 +63,11 @@ class Plugs
     {
         $this->container = new Container();
         $this->registerBaseBindings();
-
+        $this->registerBaseServiceProviders();
+        $this->registerCoreContainerAliases();
         if ($basePath) {
             $this->setBasePath($basePath);
         }
-        
-        $this->registerBaseServiceProviders();
-        $this->registerCoreContainerAliases();
 
         static::$instance = $this;
     }
@@ -259,6 +259,9 @@ class Plugs
             return new ExceptionHandler($app);
         });
 
+        // Initialize router directly without container
+        $this->initializeRouter();
+
         // These would be core framework providers
         // $this->register(new RoutingServiceProvider($this));
         // $this->register(new ExceptionServiceProvider($this));
@@ -272,7 +275,7 @@ class Plugs
         foreach (
             [
                 'app' => [self::class, Container::class],
-                'router' => [Router::class],
+                // 'router' => [Router::class],
             ] as $key => $aliases
         ) {
             foreach ($aliases as $alias) {
@@ -298,6 +301,9 @@ class Plugs
     {
         $envFile = $this->basePath('.env');
 
+        if (!file_exists($envFile)) {
+            return;
+        }
         if (file_exists($envFile)) {
             $this->loadEnvFile($envFile);
         }
@@ -332,6 +338,18 @@ class Plugs
                 $this->register($provider);
             }
         }
+    }
+
+    protected function initializeRouter(): void
+    {
+        // Create router instance
+        $router = new Router();
+
+        // Set it in the Route facade
+        Route::setRouter($router);
+
+        // Make it available in the app if needed
+        $this->container->instance(Router::class, $router);
     }
 
     /**
