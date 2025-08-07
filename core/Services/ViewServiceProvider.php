@@ -7,7 +7,8 @@ namespace Plugs\Services;
 use Plugs\Plugs;
 use Plugs\View\View;
 use Plugs\Container\Container;
-use Plugs\View\Complier\ViewCompiler;
+use Plugs\Services\ServiceProvider;
+use Plugs\View\Compiler\ViewCompiler;
 
 class ViewServiceProvider extends ServiceProvider
 {
