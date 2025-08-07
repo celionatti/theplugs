@@ -29,10 +29,10 @@ class ViewServiceProvider extends ServiceProvider
     {
         $this->app->singleton(ViewCompiler::class, function (Container $app) {
             $compiler = new ViewCompiler();
-            
+
             // Register built-in directives
             $this->registerDefaultDirectives($compiler);
-            
+
             return $compiler;
         });
     }
@@ -54,7 +54,7 @@ class ViewServiceProvider extends ServiceProvider
     {
         // Alias for convenience
         $this->app->alias('view', View::class);
-        
+
         // Share the container instance with views
         View::share('app', $this->app);
     }
@@ -85,10 +85,13 @@ class ViewServiceProvider extends ServiceProvider
     protected function configureViewPaths(): void
     {
         $app = $this->app->get(Plugs::class);
-        
+
         // Add default view path
         View::addPath($app->basePath('resources/views'));
-        
+        // View::setAssetPath($app->urlPath('assets'));
+        $assetPath = rtrim($app->urlPath(), '/') . '/assets';
+        View::setAssetPath($assetPath);
+
         // Add additional paths from config if available
         if ($this->app->has('config') && isset($this->app->get('config')['view']['paths'])) {
             foreach ($this->app->get('config')['view']['paths'] as $path) {
@@ -103,7 +106,7 @@ class ViewServiceProvider extends ServiceProvider
     protected function configureViewCaching(): void
     {
         $app = $this->app->get(Plugs::class);
-        
+
         if ($app->environment() === 'production') {
             $cachePath = $app->basePath('storage/cache/views');
             View::setCaching(true, $cachePath);

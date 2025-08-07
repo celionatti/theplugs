@@ -29,6 +29,7 @@ class Plugs
      * The base path of the application.
      */
     protected ?string $basePath;
+    protected ?string $urlPath = "/";
 
     /**
      * The environment the application is running in.
@@ -104,6 +105,31 @@ class Plugs
     public function basePath(string $path = ''): string
     {
         return $this->basePath . ($path ? DIRECTORY_SEPARATOR . ltrim($path, DIRECTORY_SEPARATOR) : '');
+    }
+
+    /**
+     * Set the URL path for the application.
+     */
+    public function setUrlPath(string $urlPath): self
+    {
+        $this->urlPath = rtrim($urlPath, '/') ?: '/';
+        return $this;
+    }
+
+    /**
+     * Get the URL path of the application.
+     */
+    public function urlPath(string $path = ''): string
+    {
+        $baseUrlPath = $this->urlPath ?? '/';
+        $baseUrlPath = rtrim($baseUrlPath, '/'); // Remove trailing slash
+
+        if ($path === '') {
+            return $baseUrlPath ?: '/';
+        }
+
+        $path = ltrim($path, '/');
+        return $baseUrlPath . '/' . $path;
     }
 
     /**
@@ -335,6 +361,7 @@ class Plugs
         $this->container->instance('path.base', $this->basePath());
         $this->container->instance('path.config', $this->configPath());
         $this->container->instance('path.routes', $this->routesPath());
+        $this->container->instance('path.url', $this->urlPath());
     }
 
     /**
@@ -344,14 +371,15 @@ class Plugs
     {
         $envFile = $this->basePath('.env');
 
-        if (!file_exists($envFile)) {
-            return;
-        }
+        // Default values
+        $this->environment = 'production';
+        $this->urlPath = '/';
+
         if (file_exists($envFile)) {
             $this->loadEnvFile($envFile);
+            $this->environment = $_ENV['APP_ENV'] ?? $_SERVER['APP_ENV'] ?? $this->environment;
+            $this->urlPath = $_ENV['APP_URL_PATH'] ?? $_SERVER['APP_URL_PATH'] ?? $this->urlPath;
         }
-
-        $this->environment = $_ENV['APP_ENV'] ?? $_SERVER['APP_ENV'] ?? 'production';
     }
 
     /**
@@ -383,10 +411,32 @@ class Plugs
         }
     }
 
+    // protected function initializeRouter(): void
+    // {
+    //     // Create router instance
+    //     $router = new Router();
+
+    //     // Set base path if configured
+    //     if ($this->urlPath && $this->urlPath !== '/') {
+    //         $router->setBasePath($this->urlPath);
+    //     }
+
+    //     // Set it in the Route facade
+    //     Route::setRouter($router);
+
+    //     // Make it available in the app if needed
+    //     $this->container->instance(Router::class, $router);
+    // }
+
     protected function initializeRouter(): void
     {
         // Create router instance
-        $router = new Router();
+        $router = new Router($this->container);
+
+        // Set base path if configured and not root
+        if ($this->urlPath !== '/') {
+            $router->setBasePath($this->urlPath);
+        }
 
         // Set it in the Route facade
         Route::setRouter($router);

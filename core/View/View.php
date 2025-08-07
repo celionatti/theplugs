@@ -21,17 +21,22 @@ class View
     protected ?string $layout = null;
     protected array $sections = [];
     protected array $sectionStack = [];
+    protected static ?string $assetPath = null;
+    protected static ?string $assetVersion = null;
+    protected static bool $assetAutoVersion = false;
+    protected array $onceTokens = [];
+    protected array $stacks = [];
 
     public function __construct(string $template, array $data = [])
     {
         $this->template = $template;
-        
+
         // Validate data for variable collisions
         $compiler = static::getCompiler();
         $data = $compiler->validateVariables($data);
-        
+
         $this->data = array_merge(static::$sharedData, $data);
-        
+
         // Ensure session is started for CSRF
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
@@ -102,15 +107,15 @@ class View
     public function render(): string
     {
         $templatePath = $this->findTemplate($this->template);
-        
+
         // Check cache first if enabled
         $cacheKey = null;
         $cacheFile = null;
-        
+
         if (static::$cacheEnabled && static::$cachePath) {
             $cacheKey = md5($templatePath . filemtime($templatePath));
             $cacheFile = static::$cachePath . '/' . $cacheKey . '.php';
-            
+
             if (file_exists($cacheFile) && filemtime($cacheFile) >= filemtime($templatePath)) {
                 return $this->renderFromCache($cacheFile);
             }
@@ -123,7 +128,7 @@ class View
         }
 
         $compiled = static::getCompiler()->compile($content);
-        
+
         // Save to cache if enabled
         if (static::$cacheEnabled && $cacheFile) {
             file_put_contents($cacheFile, $compiled);
@@ -165,14 +170,14 @@ class View
             // Also extract data but protect special variables
             $__view = $this;
             $__data = $this->data;
-            
+
             // Extract variables but exclude reserved names
             extract($__data, EXTR_SKIP);
-            
+
             ob_start();
             include $file;
             $output = ob_get_clean();
-            
+
             if ($output === false) {
                 throw new ViewException("Failed to capture template output");
             }
@@ -187,7 +192,6 @@ class View
             }
 
             return $output;
-            
         } catch (Exception $e) {
             throw new ViewException("Template rendering failed: " . $e->getMessage(), 0, $e);
         }
@@ -264,11 +268,11 @@ class View
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
-        
+
         if (!isset($_SESSION['csrf_token'])) {
             $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
         }
-        
+
         $token = $_SESSION['csrf_token'];
         return '<input type="hidden" name="_token" value="' . htmlspecialchars($token, ENT_QUOTES, 'UTF-8') . '">';
     }
@@ -278,7 +282,7 @@ class View
         if (static::$authChecker) {
             return (static::$authChecker)();
         }
-        
+
         // Default implementation - check if user session exists
         return isset($_SESSION['user']) || isset($_SESSION['authenticated']);
     }
@@ -292,7 +296,7 @@ class View
 
         $token = $token ?? ($_POST['_token'] ?? $_GET['_token'] ?? '');
         $sessionToken = $_SESSION['csrf_token'] ?? '';
-        
+
         return !empty($token) && !empty($sessionToken) && hash_equals($sessionToken, $token);
     }
 
@@ -344,7 +348,129 @@ class View
             }
             $this->data[$key] = $value;
         }
-        
+
         return $this;
+    }
+
+    /** Extras */
+
+    public static function setAssetPath(string $path): void
+    {
+        static::$assetPath = rtrim($path, '/');
+    }
+
+    public static function setAssetVersion(string $version): void
+    {
+        static::$assetVersion = $version;
+    }
+
+    public static function enableAutoVersioning(bool $enabled = true): void
+    {
+        static::$assetAutoVersion = $enabled;
+    }
+
+    public function asset(string $path): string
+    {
+        $assetPath = static::$assetPath ?? '';
+        $url = rtrim($assetPath, '/') . '/' . ltrim($path, '/');
+
+        // Add version if specified
+        if (static::$assetVersion) {
+            $url .= '?v=' . static::$assetVersion;
+        } elseif (static::$assetAutoVersion && static::$assetPath) {
+            // Auto version based on file modification time
+            $fullPath = static::$assetPath . '/' . ltrim($path, '/');
+            if (file_exists($fullPath)) {
+                $url .= '?v=' . filemtime($fullPath);
+            }
+        }
+
+        return $url;
+    }
+
+    public function css(string $path, array $attributes = []): string
+    {
+        $url = $this->asset($path);
+        $attrs = $this->htmlAttributes($attributes);
+        return '<link rel="stylesheet" href="' . htmlspecialchars($url) . '"' . $attrs . '>';
+    }
+
+    public function js(string $path, array $attributes = []): string
+    {
+        $url = $this->asset($path);
+        $attrs = $this->htmlAttributes($attributes);
+        return '<script src="' . htmlspecialchars($url) . '"' . $attrs . '></script>';
+    }
+
+    public function img(string $path, array $attributes = []): string
+    {
+        $url = $this->asset($path);
+        $attrs = $this->htmlAttributes($attributes);
+        return '<img src="' . htmlspecialchars($url) . '"' . $attrs . '>';
+    }
+
+    protected function htmlAttributes(array $attributes): string
+    {
+        $html = '';
+        foreach ($attributes as $key => $value) {
+            if (is_bool($value)) {
+                if ($value) $html .= ' ' . $key;
+            } else {
+                $html .= ' ' . $key . '="' . htmlspecialchars($value) . '"';
+            }
+        }
+        return $html;
+    }
+
+    public function json(mixed $data): string
+    {
+        return htmlspecialchars(json_encode($data, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP), ENT_QUOTES, 'UTF-8');
+    }
+
+    public function once(?string $token = null): bool
+    {
+        $token = $token ?: md5(serialize(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2)));
+
+        if (isset($this->onceTokens[$token])) {
+            return false;
+        }
+
+        $this->onceTokens[$token] = true;
+        return true;
+    }
+
+    public function startPush(string $name): void
+    {
+        $this->sectionStack[] = $name;
+        ob_start();
+    }
+
+    public function endPush(): void
+    {
+        $name = array_pop($this->sectionStack);
+        $content = ob_get_clean();
+        $this->stacks[$name][] = $content;
+    }
+
+    public function stack(string $name): string
+    {
+        return implode('', $this->stacks[$name] ?? []);
+    }
+
+    public function formOpen(string $action, string $method = 'POST', array $attributes = []): string
+    {
+        $attrs = $this->htmlAttributes($attributes);
+        $html = '<form action="' . htmlspecialchars($action) . '" method="' . htmlspecialchars(strtoupper($method)) . '"' . $attrs . '>';
+
+        if (strtoupper($method) !== 'GET') {
+            $html .= $this->csrf();
+        }
+
+        return $html;
+    }
+
+    public function formClose(): string
+    {
+        return '</form>';
     }
 }

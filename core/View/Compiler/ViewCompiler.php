@@ -13,8 +13,17 @@ class ViewCompiler
 
     // Reserved variable names that cannot be used in templates to avoid collisions
     protected array $reservedVariables = [
-        'this', '__view', '__data', '__sections', '__layout', '__output', 
-        '__temp', '__content', '__compiler', '__template', '__path'
+        'this',
+        '__view',
+        '__data',
+        '__sections',
+        '__layout',
+        '__output',
+        '__temp',
+        '__content',
+        '__compiler',
+        '__template',
+        '__path'
     ];
 
     public function directive(string $name, callable $handler): void
@@ -31,16 +40,16 @@ class ViewCompiler
         // IMPORTANT: Process in the correct order
         // 1. Handle verbatim blocks first (to protect content)
         $template = $this->compileVerbatim($template);
-        
+
         // 2. Compile structural directives
         $template = $this->compileDirectives($template);
-        
+
         // 3. Compile echo statements 
         $template = $this->compileEchos($template);
-        
+
         // 4. Custom directives
         $template = $this->compileCustomDirectives($template);
-        
+
         // 5. Restore verbatim blocks
         $template = $this->restoreVerbatim($template);
 
@@ -52,7 +61,7 @@ class ViewCompiler
         // Store verbatim content and replace with placeholders
         $template = preg_replace_callback(
             '/@verbatim(.*?)@endverbatim/s',
-            function($matches) {
+            function ($matches) {
                 $placeholder = '__VERBATIM_' . count($this->verbatimBlocks) . '__';
                 $this->verbatimBlocks[$placeholder] = $matches[1];
                 return $placeholder;
@@ -85,7 +94,7 @@ class ViewCompiler
             '/\{\{\s*(.+?)\s*\}\}/s',
             function ($matches) {
                 $expression = trim($matches[1]);
-                
+
                 // Handle null coalescing operator
                 if (strpos($expression, '??') !== false) {
                     return "<?php echo htmlspecialchars(($expression), ENT_QUOTES, 'UTF-8', false); ?>";
@@ -115,6 +124,9 @@ class ViewCompiler
 
         // CSRF
         $template = $this->compileCsrf($template);
+
+        // Assets
+        $template = $this->compileAssets($template);
 
         // Additional directives
         $template = $this->compileEmpty($template);
@@ -174,10 +186,10 @@ class ViewCompiler
         );
 
         $template = preg_replace('/@endsection/', '<?php $__view->endSection(); ?>', $template);
-        
+
         // Handle @show directive (end section and immediately yield)
         $template = preg_replace('/@show/', '<?php echo $__view->endSectionAndShow(); ?>', $template);
-        
+
         return $template;
     }
 
@@ -185,7 +197,7 @@ class ViewCompiler
     {
         return preg_replace_callback(
             '/@yield\s*\(\s*[\'"]([^\'\"]+)[\'"]\s*(?:,\s*(.+?))?\s*\)/',
-            function($matches) {
+            function ($matches) {
                 $section = $matches[1];
                 $default = $matches[2] ?? "''";
                 return "<?php echo \$__view->yieldContent('$section', $default); ?>";
@@ -198,7 +210,7 @@ class ViewCompiler
     {
         return preg_replace_callback(
             '/@include\s*\(\s*[\'"]([^\'\"]+)[\'"]\s*(?:,\s*(.+?))?\s*\)/',
-            function($matches) {
+            function ($matches) {
                 $templateName = $matches[1];
                 $data = $matches[2] ?? '[]';
                 return "<?php echo \$__view->include('$templateName', $data); ?>";
@@ -232,6 +244,62 @@ class ViewCompiler
         return $template;
     }
 
+    protected function compileAssets(string $template): string
+    {
+        // @asset('path/to/file')
+        $template = preg_replace(
+            '/@asset\(\s*[\'"]([^\'"]+)[\'"]\s*\)/',
+            '<?php echo $__view->asset(\'$1\'); ?>',
+            $template
+        );
+
+        // @css('path/to/file', ['attr' => 'value'])
+        $template = preg_replace_callback(
+            '/@css\(\s*[\'"]([^\'"]+)[\'"]\s*(?:,\s*(.+))?\s*\)/',
+            function ($matches) {
+                $path = $matches[1];
+                $attrs = $matches[2] ?? '[]';
+                return "<?php echo \$__view->css('$path', $attrs); ?>";
+            },
+            $template
+        );
+
+        // @js('path/to/file', ['attr' => 'value'])
+        $template = preg_replace_callback(
+            '/@js\(\s*[\'"]([^\'"]+)[\'"]\s*(?:,\s*(.+))?\s*\)/',
+            function ($matches) {
+                $path = $matches[1];
+                $attrs = $matches[2] ?? '[]';
+                return "<?php echo \$__view->js('$path', $attrs); ?>";
+            },
+            $template
+        );
+
+        // @img('path/to/file', ['attr' => 'value'])
+        $template = preg_replace_callback(
+            '/@img\(\s*[\'"]([^\'"]+)[\'"]\s*(?:,\s*(.+))?\s*\)/',
+            function ($matches) {
+                $path = $matches[1];
+                $attrs = $matches[2] ?? '[]';
+                return "<?php echo \$__view->img('$path', $attrs); ?>";
+            },
+            $template
+        );
+
+        return $template;
+    }
+
+    protected function compileClassDirective(string $template): string
+    {
+        return preg_replace_callback(
+            '/@class\(\s*(.+?)\s*\)/',
+            function ($matches) {
+                return "<?php echo 'class=\"' . implode(' ', array_filter($matches[1])) . '\"'; ?>";
+            },
+            $template
+        );
+    }
+
     protected function compileCustomDirectives(string $template): string
     {
         foreach ($this->customDirectives as $name => $handler) {
@@ -251,12 +319,12 @@ class ViewCompiler
     public function validateVariables(array $data): array
     {
         $conflicts = array_intersect_key($data, array_flip($this->reservedVariables));
-        
+
         if (!empty($conflicts)) {
             throw new \InvalidArgumentException(
-                'Template data contains reserved variable names: ' . 
-                implode(', ', array_keys($conflicts)) . '. ' .
-                'Reserved names are: ' . implode(', ', $this->reservedVariables)
+                'Template data contains reserved variable names: ' .
+                    implode(', ', array_keys($conflicts)) . '. ' .
+                    'Reserved names are: ' . implode(', ', $this->reservedVariables)
             );
         }
 

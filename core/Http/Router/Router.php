@@ -15,11 +15,29 @@ class Router
     private RouteCollection $routes;
     private RouteDispatcher $dispatcher;
     private array $currentGroupAttributes = [];
+    private string $basePath = '';
 
     public function __construct(?object $container = null)
     {
         $this->routes = new RouteCollection();
         $this->dispatcher = new RouteDispatcher($container);
+    }
+
+    /**
+     * Set the base path for all routes
+     */
+    public function setBasePath(string $basePath): self
+    {
+        $this->basePath = rtrim($basePath, '/');
+        return $this;
+    }
+
+    /**
+     * Get the current base path
+     */
+    public function getBasePath(): string
+    {
+        return $this->basePath;
     }
 
     // HTTP method registration methods
@@ -66,8 +84,24 @@ class Router
 
     // Route registration
 
+    // private function addRoute(array $methods, string $uri, mixed $action): RouteDefinition
+    // {
+    //     $route = new RouteDefinition($methods, $uri, $action);
+
+    //     // Apply current group attributes
+    //     $this->applyGroupAttributes($route);
+
+    //     $this->routes->add($route);
+
+    //     return $route;
+    // }
+
     private function addRoute(array $methods, string $uri, mixed $action): RouteDefinition
     {
+        // Prepend base path to the URI if it's not empty
+        $uri = $this->basePath . '/' . ltrim($uri, '/');
+        $uri = rtrim($uri, '/') ?: '/'; // Ensure empty path becomes '/'
+
         $route = new RouteDefinition($methods, $uri, $action);
 
         // Apply current group attributes
@@ -80,6 +114,12 @@ class Router
 
     private function applyGroupAttributes(RouteDefinition $route): void
     {
+        if (isset($this->currentGroupAttributes['prefix'])) {
+            $prefix = $this->currentGroupAttributes['prefix'];
+            // Don't prepend base path here - it's already in the URI
+            $route->setPrefix($prefix);
+        }
+
         if (isset($this->currentGroupAttributes['prefix'])) {
             $route->setPrefix($this->currentGroupAttributes['prefix']);
         }
@@ -159,13 +199,27 @@ class Router
     public function url(string $name, array $parameters = []): string
     {
         $route = $this->routes->getByName($name);
-        
+
         if (!$route) {
             throw new \InvalidArgumentException("Route {$name} not found");
         }
 
         return $this->buildUrl($route->getUri(), $parameters);
     }
+
+    // private function buildUrl(string $pattern, array $parameters): string
+    // {
+    //     $url = $pattern;
+
+    //     foreach ($parameters as $key => $value) {
+    //         $url = str_replace(['{' . $key . '}', '{' . $key . '?}'], $value, $url);
+    //     }
+
+    //     // Remove optional parameters that weren't provided
+    //     $url = preg_replace('/\{[^}]+\?\}/', '', $url);
+
+    //     return $url;
+    // }
 
     private function buildUrl(string $pattern, array $parameters): string
     {
@@ -177,6 +231,11 @@ class Router
 
         // Remove optional parameters that weren't provided
         $url = preg_replace('/\{[^}]+\?\}/', '', $url);
+
+        // Ensure the base path is included
+        if ($this->basePath && strpos($url, $this->basePath) !== 0) {
+            $url = $this->basePath . '/' . ltrim($url, '/');
+        }
 
         return $url;
     }
