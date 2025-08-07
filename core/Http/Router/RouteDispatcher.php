@@ -29,7 +29,7 @@ class RouteDispatcher
         $pipeline = new MiddlewarePipeline($route->getMiddleware());
 
         // Dispatch through middleware pipeline
-        return $pipeline->handle($request, function(Request $req) use ($route) {
+        return $pipeline->handle($request, function (Request $req) use ($route) {
             return $this->callAction($route, $req);
         });
     }
@@ -58,24 +58,31 @@ class RouteDispatcher
     {
         $parameters = $this->resolveParameters($closure, $request);
         $result = $closure(...$parameters);
-        
+
         return $this->createResponse($result);
     }
 
     private function callController(string $controller, string $method, Request $request, ?string $namespace = null): Response
     {
         $controllerClass = $namespace ? $namespace . '\\' . $controller : $controller;
-        
+
         if (!class_exists($controllerClass)) {
             throw new \InvalidArgumentException("Controller {$controllerClass} not found");
         }
 
         $instance = $this->resolveController($controllerClass);
-        
+
         if (!method_exists($instance, $method)) {
             throw new \InvalidArgumentException("Method {$method} not found in controller {$controllerClass}");
         }
 
+        // Use ControllerDispatcher if it's a Controller subclass
+        if (is_subclass_of($instance, \Plugs\Controller\Controller::class)) {
+            $dispatcher = new \Plugs\Controller\ControllerDispatcher();
+            return $dispatcher->dispatch($controllerClass, $method, $request->getParameters(), $request);
+        }
+
+        // Fallback for non-Controller classes
         $parameters = $this->resolveMethodParameters($controllerClass, $method, $request);
         $result = $instance->$method(...$parameters);
 
@@ -119,10 +126,10 @@ class RouteDispatcher
 
         foreach ($parameters as $parameter) {
             $type = $parameter->getType();
-            
+
             if ($type && !$type->isBuiltin()) {
                 $className = $type->getName();
-                
+
                 if ($className === Request::class) {
                     $resolved[] = $request;
                     continue;

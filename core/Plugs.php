@@ -129,6 +129,7 @@ class Plugs
             return;
         }
 
+        $this->loadFunctions();
         $this->loadEnvironmentConfiguration();
         $this->loadConfiguration();
         $this->registerServiceProviders();
@@ -136,6 +137,26 @@ class Plugs
         $this->loadRoutes();
 
         $this->hasBeenBootstrapped = true;
+    }
+
+    private function loadFunctions(): void
+    {
+        $functionsDir = __DIR__ . '/functions/';
+
+        // Check if directory exists
+        if (!is_dir($functionsDir)) {
+            return;
+        }
+
+        // Get all PHP files in the directory
+        $files = glob($functionsDir . '*.php');
+
+        // Load each file
+        foreach ($files as $file) {
+            if (file_exists($file) && is_file($file)) {
+                require_once $file;
+            }
+        }
     }
 
     /**

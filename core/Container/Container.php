@@ -8,9 +8,10 @@ use Closure;
 use Exception;
 use ReflectionClass;
 use ReflectionParameter;
+use Plugs\Container\ContainerInterface;
 use Plugs\Exceptions\Handler\ExceptionHandler;
 
-class Container
+class Container implements ContainerInterface
 {
     /**
      * The container's bindings.
@@ -113,6 +114,15 @@ class Container
         return isset($this->bindings[$abstract]) ||
             isset($this->instances[$abstract]) ||
             isset($this->aliases[$abstract]);
+    }
+
+    /**
+     * Get an instance from the container.
+     * This is an alias for the make() method.
+     */
+    public function get(string $abstract): mixed
+    {
+        return $this->make($abstract);
     }
 
     /**
