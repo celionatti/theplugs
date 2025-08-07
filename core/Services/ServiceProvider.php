@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Plugs\Services;
 
+use Plugs\Container\Container;
 use Plugs\Plugs;
 
 abstract class ServiceProvider
@@ -11,12 +12,12 @@ abstract class ServiceProvider
     /**
      * The application instance.
      */
-    protected Plugs $app;
+    protected Container $app;
 
     /**
      * Create a new service provider instance.
      */
-    public function __construct(Plugs $app)
+    public function __construct(Container $app)
     {
         $this->app = $app;
     }

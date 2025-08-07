@@ -5,13 +5,14 @@ declare(strict_types=1);
 namespace Plugs\Http\Request;
 
 use InvalidArgumentException;
+use Plugs\Http\Request\Headers;
 
 class Request
 {
     private string $method;
     private string $uri;
     private array $parameters = [];
-    private array $headers = [];
+    private Headers $headers;
     private array $query = [];
     private array $server;
     private array $post = [];
@@ -32,7 +33,7 @@ class Request
     ) {
         $this->method = $this->sanitizeMethod($method ?? $_SERVER['REQUEST_METHOD'] ?? 'GET');
         $this->uri = $this->sanitizeUri($uri ?? $this->parseUri());
-        $this->headers = $this->sanitizeHeaders($headers ?: $this->parseHeaders());
+        $this->headers = new Headers($this->sanitizeHeaders($headers ?: $this->parseHeaders()));
         $this->query = $this->sanitizeInput($query ?: $_GET);
         $this->post = $this->sanitizeInput($post ?: $_POST);
         $this->server = $server ?: $_SERVER;
@@ -60,7 +61,7 @@ class Request
     {
         $sanitized = [];
         foreach ($headers as $key => $value) {
-            $sanitized[strtolower($key)] = is_array($value) 
+            $sanitized[strtolower($key)] = is_array($value)
                 ? array_map('strip_tags', $value)
                 : strip_tags($value);
         }
@@ -127,7 +128,7 @@ class Request
 
     public function isSecure(): bool
     {
-        return (!empty($this->server['HTTPS']) && $this->server['HTTPS'] !== 'off') 
+        return (!empty($this->server['HTTPS']) && $this->server['HTTPS'] !== 'off')
             || (!empty($this->server['HTTP_X_FORWARDED_PROTO']) && $this->server['HTTP_X_FORWARDED_PROTO'] === 'https');
     }
 
@@ -214,6 +215,15 @@ class Request
         return array_key_exists($key, $this->all());
     }
 
+    /**
+     * Get input value from query parameters or request body
+     * Alias for input() method
+     */
+    public function get(string $key, mixed $default = null): mixed
+    {
+        return $this->input($key, $default);
+    }
+
     public function filled(string $key): bool
     {
         $value = $this->input($key);
@@ -228,17 +238,14 @@ class Request
     public function header(?string $key = null, mixed $default = null): mixed
     {
         if ($key === null) {
-            return $this->headers;
+            return $this->headers->all();
         }
-        $key = strtolower($key);
-        return $this->headers[$key] ?? $default;
+        return $this->headers->get($key, $default);
     }
 
     public function setHeader(string $key, mixed $value): void
     {
-        $this->headers[strtolower($key)] = is_array($value)
-            ? array_map('strip_tags', $value)
-            : strip_tags($value);
+        $this->headers->set($key, $value);
     }
 
     public function setHeaders(array $headers): void
@@ -250,7 +257,13 @@ class Request
 
     public function hasHeader(string $key): bool
     {
-        return isset($this->headers[strtolower($key)]);
+        return $this->headers->has($key);
+    }
+
+    // Add this getter method
+    public function headers(): Headers
+    {
+        return $this->headers;
     }
 
     public function cookie(?string $key = null, mixed $default = null): mixed
@@ -304,17 +317,17 @@ class Request
     {
         if ($this->jsonData === null) {
             $this->jsonData = [];
-            
+
             if ($this->isJson()) {
                 $content = $this->getContent();
                 $this->jsonData = json_decode($content, true) ?? [];
-                
+
                 if (json_last_error() !== JSON_ERROR_NONE) {
                     throw new InvalidArgumentException('Invalid JSON payload');
                 }
             }
         }
-        
+
         return $this->jsonData;
     }
 
@@ -380,9 +393,9 @@ class Request
 
     public function getClientIp(): string
     {
-        $ip = $this->server['HTTP_CLIENT_IP'] 
-            ?? $this->server['HTTP_X_FORWARDED_FOR'] 
-            ?? $this->server['REMOTE_ADDR'] 
+        $ip = $this->server['HTTP_CLIENT_IP']
+            ?? $this->server['HTTP_X_FORWARDED_FOR']
+            ?? $this->server['REMOTE_ADDR']
             ?? '';
 
         return filter_var($ip, FILTER_VALIDATE_IP) ? $ip : '';
@@ -406,6 +419,6 @@ class Request
     public function isPrefetch(): bool
     {
         return strtolower($this->header('Purpose', '')) === 'prefetch' ||
-               strtolower($this->header('X-Purpose', '')) === 'prefetch';
+            strtolower($this->header('X-Purpose', '')) === 'prefetch';
     }
 }

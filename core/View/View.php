@@ -5,11 +5,10 @@ declare(strict_types=1);
 namespace Plugs\View;
 
 use Exception;
-use Plugs\View\ViewInterface;
 use Plugs\View\Complier\ViewCompiler;
 use Plugs\Exceptions\View\ViewException;
 
-class View implements ViewInterface
+class View
 {
     protected static array $sharedData = [];
     protected static array $paths = [];

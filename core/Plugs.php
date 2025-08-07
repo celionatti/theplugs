@@ -5,12 +5,14 @@ declare(strict_types=1);
 namespace Plugs;
 
 use Throwable;
+use Plugs\View\View;
 use Plugs\Http\Router\Route;
 use Plugs\Http\Router\Router;
 use Plugs\Container\Container;
 use Plugs\Http\Request\Request;
 use Plugs\Http\Response\Response;
 use Plugs\Services\ServiceProvider;
+use Plugs\Services\ViewServiceProvider;
 use Plugs\Services\RoutingServiceProvider;
 use Plugs\Exceptions\Handler\ExceptionHandler;
 
@@ -176,25 +178,43 @@ class Plugs
     /**
      * Register a service provider.
      */
-    public function register(string|ServiceProvider $provider, bool $defer = false): ServiceProvider
+    public function register(string|ServiceProvider $provider, bool $force = false): ServiceProvider
     {
         if (is_string($provider)) {
             $provider = new $provider($this);
         }
 
-        if (array_key_exists($providerName = get_class($provider), $this->loadedProviders)) {
-            return $this->loadedProviders[$providerName];
+        $providerName = get_class($provider);
+
+        // If already registered and not forcing, return existing instance
+        if (isset($this->loadedProviders[$providerName])) {
+            if (!$force) {
+                return $this->loadedProviders[$providerName];
+            }
+            $this->unregister($providerName);
         }
 
         $this->serviceProviders[] = $provider;
+        $this->loadedProviders[$providerName] = $provider;
 
-        if (!$defer) {
-            $provider->register();
-        }
-
-        $this->loadedProviders[get_class($provider)] = $provider;
+        // Immediately register if not deferred
+        $provider->register();
 
         return $provider;
+    }
+
+    /**
+     * Unregister a service provider
+     */
+    public function unregister(string $providerName): void
+    {
+        if (isset($this->loadedProviders[$providerName])) {
+            unset($this->loadedProviders[$providerName]);
+            $this->serviceProviders = array_filter(
+                $this->serviceProviders,
+                fn($p) => get_class($p) !== $providerName
+            );
+        }
     }
 
     /**
@@ -284,6 +304,7 @@ class Plugs
         $this->initializeRouter();
 
         // These would be core framework providers
+        $this->register(new ViewServiceProvider($this->container));
         // $this->register(new RoutingServiceProvider($this));
         // $this->register(new ExceptionServiceProvider($this));
     }
@@ -296,7 +317,8 @@ class Plugs
         foreach (
             [
                 'app' => [self::class, Container::class],
-                // 'router' => [Router::class],
+                'view' => [View::class, 'Plugs\View\View'],
+                // 'router' => [Router::class, 'Plugs\Http\Router\Router'],
             ] as $key => $aliases
         ) {
             foreach ($aliases as $alias) {
