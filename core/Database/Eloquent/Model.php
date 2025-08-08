@@ -56,13 +56,15 @@ abstract class Model implements JsonSerializable
 
     public function __construct(array $attributes = [])
     {
+        $this->syncOriginal();
         $this->fill($attributes);
     }
 
     // Static factory methods
     public static function create(array $attributes = []): static
     {
-        $model = new static($attributes);
+        $model = new static();
+        $model->fill($attributes);
         $model->save();
         return $model;
     }
@@ -122,7 +124,12 @@ abstract class Model implements JsonSerializable
             return false;
         }
 
-        $saved = $this->exists ? $this->performUpdate() : $this->performInsert();
+        // Determine if this is an insert or update based on primary key existence
+        $keyName = $this->getKeyName();
+        $keyValue = $this->getAttribute($keyName);
+        
+        // If no primary key value or it's null/empty, it's an insert
+        $saved = (!$keyValue || !$this->exists) ? $this->performInsert() : $this->performUpdate();
 
         if ($saved) {
             $this->fireEvent('saved');
@@ -517,9 +524,10 @@ abstract class Model implements JsonSerializable
 
         if ($affected > 0) {
             $this->fireEvent('updated');
+            return true;
         }
 
-        return $affected > 0;
+        return false;
     }
 
     protected function performSoftDelete(): bool
@@ -551,7 +559,19 @@ abstract class Model implements JsonSerializable
 
     protected function getInsertableAttributes(): array
     {
-        return $this->attributes;
+        $attributes = [];
+        
+        foreach ($this->attributes as $key => $value) {
+            // Skip internal model properties, primary key (for auto-increment), and null timestamps
+            if (!in_array($key, ['exists', 'wasRecentlyCreated']) && 
+                $key !== $this->getKeyName() && // Skip primary key for inserts
+                !($key === 'created_at' && $value === null) && 
+                !($key === 'updated_at' && $value === null)) {
+                $attributes[$key] = $value;
+            }
+        }
+        
+        return $attributes;
     }
 
     protected function updateTimestamps(): void
@@ -675,6 +695,29 @@ abstract class Model implements JsonSerializable
     public function jsonSerialize(): array
     {
         return $this->toArray();
+    }
+
+    // Additional methods needed by EloquentBuilder
+    public function newInstance(array $attributes = []): static
+    {
+        return new static($attributes);
+    }
+
+    public function setRawAttributes(array $attributes, bool $sync = false): static
+    {
+        $this->attributes = $attributes;
+        
+        if ($sync) {
+            $this->syncOriginal();
+        }
+        
+        return $this;
+    }
+
+    public function setExisting(bool $exists = true): static
+    {
+        $this->exists = $exists;
+        return $this;
     }
 
     // Magic methods

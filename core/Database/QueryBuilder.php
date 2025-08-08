@@ -21,20 +21,50 @@ class QueryBuilder
     private ?int $limitValue = null;
     private ?int $offsetValue = null;
 
+    // SQL reserved words that need to be escaped
+    private array $reservedWords = [
+        'exists', 'order', 'group', 'where', 'select', 'from', 'join', 'update', 
+        'delete', 'insert', 'into', 'values', 'table', 'column', 'index', 'key',
+        'primary', 'foreign', 'references', 'constraint', 'default', 'null',
+        'not', 'and', 'or', 'in', 'like', 'between', 'case', 'when', 'then',
+        'else', 'end', 'if', 'count', 'sum', 'avg', 'min', 'max', 'distinct',
+        'all', 'any', 'some', 'union', 'intersect', 'except', 'having'
+    ];
+
     public function __construct(PDO $pdo)
     {
         $this->pdo = $pdo;
     }
 
+    private function escapeIdentifier(string $identifier): string
+    {
+        // Remove any existing backticks
+        $identifier = trim($identifier, '`');
+        
+        // Check if it's a reserved word or contains special characters
+        if (in_array(strtolower($identifier), $this->reservedWords) || 
+            preg_match('/[^a-zA-Z0-9_]/', $identifier)) {
+            return "`{$identifier}`";
+        }
+        
+        return $identifier;
+    }
+
     public function table(string $table): self
     {
-        $this->table = $table;
+        $this->table = $this->escapeIdentifier($table);
         return $this;
     }
 
     public function select(array|string $columns = ['*']): self
     {
-        $this->selects = is_array($columns) ? $columns : func_get_args();
+        $columns = is_array($columns) ? $columns : func_get_args();
+        
+        // Escape column names except for *
+        $this->selects = array_map(function($column) {
+            return $column === '*' ? $column : $this->escapeIdentifier($column);
+        }, $columns);
+        
         return $this;
     }
 
@@ -53,7 +83,7 @@ class QueryBuilder
 
         $this->wheres[] = [
             'type' => 'basic',
-            'column' => $column,
+            'column' => $this->escapeIdentifier($column),
             'operator' => $operator,
             'value' => $value,
             'boolean' => $boolean
@@ -73,7 +103,7 @@ class QueryBuilder
     {
         $this->wheres[] = [
             'type' => 'in',
-            'column' => $column,
+            'column' => $this->escapeIdentifier($column),
             'values' => $values,
             'boolean' => $boolean
         ];
@@ -87,7 +117,7 @@ class QueryBuilder
     {
         $this->wheres[] = [
             'type' => 'not_in',
-            'column' => $column,
+            'column' => $this->escapeIdentifier($column),
             'values' => $values,
             'boolean' => $boolean
         ];
@@ -101,7 +131,7 @@ class QueryBuilder
     {
         $this->wheres[] = [
             'type' => 'null',
-            'column' => $column,
+            'column' => $this->escapeIdentifier($column),
             'boolean' => $boolean
         ];
 
@@ -112,7 +142,7 @@ class QueryBuilder
     {
         $this->wheres[] = [
             'type' => 'not_null',
-            'column' => $column,
+            'column' => $this->escapeIdentifier($column),
             'boolean' => $boolean
         ];
 
@@ -123,10 +153,10 @@ class QueryBuilder
     {
         $this->joins[] = [
             'type' => $type,
-            'table' => $table,
-            'first' => $first,
+            'table' => $this->escapeIdentifier($table),
+            'first' => $this->escapeIdentifier($first),
             'operator' => $operator ?: '=',
-            'second' => $second
+            'second' => $this->escapeIdentifier($second)
         ];
 
         return $this;
@@ -144,13 +174,17 @@ class QueryBuilder
 
     public function orderBy(string $column, string $direction = 'asc'): self
     {
-        $this->orderBy[] = ['column' => $column, 'direction' => strtolower($direction)];
+        $this->orderBy[] = [
+            'column' => $this->escapeIdentifier($column), 
+            'direction' => strtolower($direction)
+        ];
         return $this;
     }
 
     public function groupBy(string|array $groups): self
     {
-        $this->groupBy = is_array($groups) ? $groups : func_get_args();
+        $groups = is_array($groups) ? $groups : func_get_args();
+        $this->groupBy = array_map([$this, 'escapeIdentifier'], $groups);
         return $this;
     }
 
@@ -200,7 +234,7 @@ class QueryBuilder
             throw new InvalidArgumentException('Insert data cannot be empty');
         }
 
-        $columns = array_keys($data);
+        $columns = array_map([$this, 'escapeIdentifier'], array_keys($data));
         $placeholders = array_fill(0, count($data), '?');
 
         $sql = "INSERT INTO {$this->table} (" . implode(', ', $columns) . ") VALUES (" . implode(', ', $placeholders) . ")";
@@ -225,7 +259,7 @@ class QueryBuilder
         $bindings = [];
 
         foreach ($data as $column => $value) {
-            $sets[] = "{$column} = ?";
+            $sets[] = $this->escapeIdentifier($column) . " = ?";
             $bindings[] = $value;
         }
 
@@ -286,6 +320,7 @@ class QueryBuilder
 
     private function buildCountQuery(string $column): string
     {
+        $column = $column === '*' ? $column : $this->escapeIdentifier($column);
         $sql = "SELECT COUNT({$column}) FROM {$this->table}";
 
         // Add JOINs
@@ -311,7 +346,6 @@ class QueryBuilder
         }
 
         $conditions = [];
-        $bindCount = 0;
 
         foreach ($this->wheres as $where) {
             $condition = match ($where['type']) {
