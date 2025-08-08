@@ -577,16 +577,10 @@ abstract class Model implements JsonSerializable
         $this->original = $this->attributes;
     }
 
-    // Event handling
-    protected function fireEvent(string $event)
+    // Event handling - FIXED
+    protected function fireEvent(string $event): bool
     {
-        $method = $event;
-        if (method_exists($this, $method)) {
-            if ($this->$method() === false) {
-                return false;
-            }
-        }
-
+        // Check for registered callbacks only - no direct method calls
         $callbacks = static::$eventCallbacks[static::class][$event] ?? [];
         foreach ($callbacks as $callback) {
             if ($callback($this) === false) {
@@ -635,6 +629,16 @@ abstract class Model implements JsonSerializable
     public static function deleted(callable $callback): void
     {
         static::registerEvent('deleted', $callback);
+    }
+
+    public static function restoring(callable $callback): void
+    {
+        static::registerEvent('restoring', $callback);
+    }
+
+    public static function restored(callable $callback): void
+    {
+        static::registerEvent('restored', $callback);
     }
 
     protected static function registerEvent(string $event, callable $callback): void
