@@ -30,7 +30,8 @@ abstract class Model implements JsonSerializable
     protected array $casts = [];
     protected array $dates = ['created_at', 'updated_at'];
     protected bool $timestamps = true;
-    protected ?string $deletedAt = 'deleted_at';
+    protected ?string $deletedAt = null;
+    // protected ?string $deletedAt = 'deleted_at';
     protected array $attributes = [];
     protected array $original = [];
     protected array $relations = [];
@@ -39,7 +40,16 @@ abstract class Model implements JsonSerializable
 
     // Event hooks
     protected static array $events = [
-        'creating', 'created', 'updating', 'updated', 'saving', 'saved', 'deleting', 'deleted', 'restoring', 'restored'
+        'creating',
+        'created',
+        'updating',
+        'updated',
+        'saving',
+        'saved',
+        'deleting',
+        'deleted',
+        'restoring',
+        'restored'
     ];
 
     protected static array $eventCallbacks = [];
@@ -59,7 +69,7 @@ abstract class Model implements JsonSerializable
 
     public static function find($id): ?static
     {
-        return static::query()->where(static::make()->getKeyName(), $id)->first();
+        return static::query()->where(static::make()->getKeyName(), '=', $id)->first();
     }
 
     public static function findOrFail($id): static
@@ -91,12 +101,12 @@ abstract class Model implements JsonSerializable
         $model = new static();
         $builder = new QueryBuilder(DatabaseConfig::getConnection());
         $builder->table($model->getTable());
-        
-        // Apply global scopes (like soft deletes)
+
+        // Only apply soft delete scope if the model uses soft deletes
         if ($model->usesSoftDeletes()) {
             $builder->whereNull($model->getDeletedAtColumn());
         }
-        
+
         return new EloquentBuilder($builder, $model);
     }
 
@@ -256,8 +266,8 @@ abstract class Model implements JsonSerializable
     public function isDirty(?string $key = null): bool
     {
         if ($key !== null) {
-            return array_key_exists($key, $this->attributes) && 
-                   $this->attributes[$key] !== ($this->original[$key] ?? null);
+            return array_key_exists($key, $this->attributes) &&
+                $this->attributes[$key] !== ($this->original[$key] ?? null);
         }
 
         foreach ($this->attributes as $key => $value) {
@@ -305,10 +315,12 @@ abstract class Model implements JsonSerializable
         return new BelongsToRelation($related, $this, $foreignKey, $ownerKey);
     }
 
-    public function belongsToMany(string $related, ?string $table = null, ?string $foreignPivotKey = null, 
-                                 ?
-                                 string $relatedPivotKey = null): BelongsToManyRelation
-    {
+    public function belongsToMany(
+        string $related,
+        ?string $table = null,
+        ?string $foreignPivotKey = null,
+        ?string $relatedPivotKey = null
+    ): BelongsToManyRelation {
         $table = $table ?: $this->joiningTable($related);
         $foreignPivotKey = $foreignPivotKey ?: $this->getForeignKey();
         $relatedPivotKey = $relatedPivotKey ?: (new $related)->getForeignKey();
@@ -393,7 +405,7 @@ abstract class Model implements JsonSerializable
 
     public function usesSoftDeletes(): bool
     {
-        return $this->deletedAt !== null;
+        return $this->deletedAt !== null && $this->deletedAt !== '';
     }
 
     public function getDeletedAtColumn(): string
@@ -500,8 +512,8 @@ abstract class Model implements JsonSerializable
 
         $builder = new QueryBuilder(DatabaseConfig::getConnection());
         $affected = $builder->table($this->getTable())
-                          ->where($this->getKeyName(), $this->getKey())
-                          ->update($dirty);
+            ->where($this->getKeyName(), $this->getKey())
+            ->update($dirty);
 
         if ($affected > 0) {
             $this->fireEvent('updated');
@@ -526,8 +538,8 @@ abstract class Model implements JsonSerializable
     {
         $builder = new QueryBuilder(DatabaseConfig::getConnection());
         $affected = $builder->table($this->getTable())
-                          ->where($this->getKeyName(), $this->getKey())
-                          ->delete();
+            ->where($this->getKeyName(), $this->getKey())
+            ->delete();
 
         if ($affected > 0) {
             $this->exists = false;
@@ -643,9 +655,8 @@ abstract class Model implements JsonSerializable
 
         foreach ($this->relations as $key => $relation) {
             if (!in_array($key, $this->hidden)) {
-                $attributes[$key] = is_array($relation) ? 
-                    array_map(fn($model) => $model instanceof Model ? $model->toArray() : $model, $relation) :
-                    ($relation instanceof Model ? $relation->toArray() : $relation);
+                $attributes[$key] = is_array($relation) ?
+                    array_map(fn($model) => $model instanceof Model ? $model->toArray() : $model, $relation) : ($relation instanceof Model ? $relation->toArray() : $relation);
             }
         }
 

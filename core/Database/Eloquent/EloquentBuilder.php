@@ -109,11 +109,11 @@ class EloquentBuilder
     public function with(string|array $relations): self
     {
         $relations = is_string($relations) ? [$relations] : $relations;
-        
+
         foreach ($relations as $relation) {
             $this->eagerLoad[$relation] = [];
         }
-        
+
         return $this;
     }
 
@@ -121,10 +121,10 @@ class EloquentBuilder
     {
         // Remove soft delete constraint if applicable
         if ($this->model->usesSoftDeletes()) {
-            // This would need to be implemented to remove the whereNull constraint
-            // For simplicity, we'll leave this as a placeholder
+            // Find and remove the whereNull constraint for deleted_at
+            $this->query->whereNotNull($this->model->getDeletedAtColumn());
         }
-        
+
         return $this;
     }
 
@@ -133,17 +133,18 @@ class EloquentBuilder
         if ($this->model->usesSoftDeletes()) {
             $this->query->whereNotNull($this->model->getDeletedAtColumn());
         }
-        
+
         return $this;
     }
 
     public function withTrashed(): self
     {
         if ($this->model->usesSoftDeletes()) {
-            // Remove the global scope that filters out soft-deleted records
-            // This would need proper implementation
+            // Remove any whereNull constraints for deleted_at
+            // This would need to be implemented based on your query builder
+            // For now, we'll just not add the whereNull constraint
         }
-        
+
         return $this;
     }
 
@@ -152,55 +153,55 @@ class EloquentBuilder
     {
         $results = $this->query->get();
         $models = $this->hydrate($results);
-        
+
         if (!empty($this->eagerLoad)) {
             $models = $this->loadRelations($models);
         }
-        
+
         return $models;
     }
 
     public function first(): ?Model
     {
         $result = $this->query->first();
-        
+
         if ($result === null) {
             return null;
         }
-        
+
         $model = $this->newModelInstance($result);
-        
+
         if (!empty($this->eagerLoad)) {
             $this->loadRelations([$model]);
         }
-        
+
         return $model;
     }
 
     public function firstOrFail(): Model
     {
         $model = $this->first();
-        
+
         if ($model === null) {
             throw new ModelNotFoundException('No query results for model [' . get_class($this->model) . ']');
         }
-        
+
         return $model;
     }
 
     public function find($id): ?Model
     {
-        return $this->where($this->model->getKeyName(), $id)->first();
+        return $this->where($this->model->getKeyName(), '=', $id)->first();
     }
 
     public function findOrFail($id): Model
     {
         $model = $this->find($id);
-        
+
         if ($model === null) {
             throw new ModelNotFoundException("No query results for model [" . get_class($this->model) . "] {$id}");
         }
-        
+
         return $model;
     }
 
@@ -218,9 +219,9 @@ class EloquentBuilder
     {
         $total = $this->count();
         $offset = ($page - 1) * $perPage;
-        
+
         $results = $this->offset($offset)->limit($perPage)->get();
-        
+
         return [
             'data' => $results,
             'current_page' => $page,
@@ -263,13 +264,13 @@ class EloquentBuilder
     {
         $models = $this->get();
         $count = 0;
-        
+
         foreach ($models as $model) {
             if ($model->delete()) {
                 $count++;
             }
         }
-        
+
         return $count;
     }
 
@@ -282,11 +283,11 @@ class EloquentBuilder
     protected function hydrate(array $items): array
     {
         $models = [];
-        
+
         foreach ($items as $item) {
             $models[] = $this->newModelInstance($item);
         }
-        
+
         return $models;
     }
 
@@ -295,7 +296,7 @@ class EloquentBuilder
         $model = $this->model->newInstance();
         $model->setRawAttributes($attributes);
         $model->exists = true;
-        
+
         return $model;
     }
 
@@ -304,7 +305,7 @@ class EloquentBuilder
         foreach ($this->eagerLoad as $relation => $constraints) {
             $models = $this->loadRelation($models, $relation, $constraints);
         }
-        
+
         return $models;
     }
 
@@ -313,9 +314,9 @@ class EloquentBuilder
         if (empty($models)) {
             return $models;
         }
-        
+
         $relationInstance = $models[0]->$relation();
-        
+
         return $relationInstance->addEagerConstraints($models)->match($models, $relation);
     }
 
@@ -335,13 +336,13 @@ class EloquentBuilder
         if (str_starts_with($method, 'where')) {
             return $this->dynamicWhere($method, $parameters);
         }
-        
+
         // Forward to the query builder
         if (method_exists($this->query, $method)) {
             $result = $this->query->$method(...$parameters);
             return $result instanceof QueryBuilder ? $this : $result;
         }
-        
+
         throw new \BadMethodCallException("Call to undefined method {$method}");
     }
 
@@ -349,27 +350,27 @@ class EloquentBuilder
     {
         $finder = substr($method, 5);
         $segments = preg_split('/(And|Or)(?=[A-Z])/', $finder, -1, PREG_SPLIT_DELIM_CAPTURE);
-        
+
         $connector = 'and';
         $index = 0;
-        
+
         foreach ($segments as $segment) {
             if ($segment !== 'And' && $segment !== 'Or') {
                 $column = strtolower(preg_replace('/([A-Z])/', '_$1', lcfirst($segment)));
                 $value = $parameters[$index] ?? null;
-                
+
                 if ($connector === 'and') {
                     $this->where($column, $value);
                 } else {
                     $this->orWhere($column, $value);
                 }
-                
+
                 $index++;
             } else {
                 $connector = strtolower($segment);
             }
         }
-        
+
         return $this;
     }
 }

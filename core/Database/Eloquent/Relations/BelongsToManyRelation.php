@@ -30,14 +30,11 @@ class BelongsToManyRelation extends Relation
     public function addConstraints(): void
     {
         if ($this->parent->exists) {
-            $this->query->join($this->table, function($join) {
-                $relatedTable = $this->newRelatedInstance()->getTable();
-                $relatedKey = $this->newRelatedInstance()->getKeyName();
-                
-                $join->on("{$relatedTable}.{$relatedKey}", '=', "{$this->table}.{$this->relatedPivotKey}")
-                     ->where("{$this->table}.{$this->foreignPivotKey}", '=', 
-                            $this->parent->getAttribute($this->parent->getKeyName()));
-            });
+            $relatedTable = $this->newRelatedInstance()->getTable();
+            $relatedKey = $this->newRelatedInstance()->getKeyName();
+            $joinCondition = "{$relatedTable}.{$relatedKey} = {$this->table}.{$this->relatedPivotKey}";
+            $this->query->join($this->table, $joinCondition)
+                        ->where("{$this->table}.{$this->foreignPivotKey}", '=', $this->parent->getAttribute($this->parent->getKeyName()));
         }
     }
 
@@ -51,12 +48,11 @@ class BelongsToManyRelation extends Relation
         }
 
         if (!empty($keys)) {
-            $this->query->join($this->table, function($join) {
-                $relatedTable = $this->newRelatedInstance()->getTable();
-                $relatedKey = $this->newRelatedInstance()->getKeyName();
-                
-                $join->on("{$relatedTable}.{$relatedKey}", '=', "{$this->table}.{$this->relatedPivotKey}");
-            })->whereIn("{$this->table}.{$this->foreignPivotKey}", array_unique($keys));
+            $relatedTable = $this->newRelatedInstance()->getTable();
+            $relatedKey = $this->newRelatedInstance()->getKeyName();
+            $joinCondition = "{$relatedTable}.{$relatedKey} = {$this->table}.{$this->relatedPivotKey}";
+            $this->query->join($this->table, $joinCondition)
+                        ->whereIn("{$this->table}.{$this->foreignPivotKey}", array_unique($keys));
         }
 
         return $this;

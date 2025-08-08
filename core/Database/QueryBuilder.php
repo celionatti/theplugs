@@ -40,13 +40,15 @@ class QueryBuilder
 
     public function where(string $column, $operator = null, $value = null, string $boolean = 'and'): self
     {
-        if (func_num_args() == 2) {
+        // If only 2 arguments are passed, assume operator is '='
+        if (func_num_args() === 2) {
             $value = $operator;
             $operator = '=';
         }
 
-        if ($operator === null) {
-            throw new InvalidArgumentException('Operator cannot be null');
+        // Validate operator
+        if (!in_array(strtolower($operator), ['=', '<', '>', '<=', '>=', '<>', '!=', 'like', 'not like', 'in', 'not in', 'between', 'not between'])) {
+            throw new InvalidArgumentException('Illegal operator');
         }
 
         $this->wheres[] = [
@@ -174,7 +176,9 @@ class QueryBuilder
 
     public function first(): ?array
     {
-        return $this->limit(1)->get()[0] ?? null;
+        $this->limit(1);
+        $results = $this->get();
+        return $results[0] ?? null;
     }
 
     public function count(string $column = '*'): int
@@ -307,6 +311,7 @@ class QueryBuilder
         }
 
         $conditions = [];
+        $bindCount = 0;
 
         foreach ($this->wheres as $where) {
             $condition = match ($where['type']) {
