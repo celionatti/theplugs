@@ -10,7 +10,7 @@ use InvalidArgumentException;
 
 class QueryBuilder
 {
-    private PDO $pdo;
+    public PDO $pdo; // Made public for EloquentBuilder access
     private string $table = '';
     private array $selects = ['*'];
     private array $joins = [];
@@ -43,7 +43,7 @@ class QueryBuilder
         
         // Check if it's a reserved word or contains special characters
         if (in_array(strtolower($identifier), $this->reservedWords) || 
-            preg_match('/[^a-zA-Z0-9_]/', $identifier)) {
+            preg_match('/[^a-zA-Z0-9_.]/', $identifier)) {
             return "`{$identifier}`";
         }
         
@@ -60,9 +60,12 @@ class QueryBuilder
     {
         $columns = is_array($columns) ? $columns : func_get_args();
         
-        // Escape column names except for *
+        // Escape column names except for * and aggregate functions
         $this->selects = array_map(function($column) {
-            return $column === '*' ? $column : $this->escapeIdentifier($column);
+            if ($column === '*' || preg_match('/\w+\s*\(\s*.*\s*\)/', $column)) {
+                return $column; // Don't escape * or function calls
+            }
+            return $this->escapeIdentifier($column);
         }, $columns);
         
         return $this;
@@ -77,8 +80,9 @@ class QueryBuilder
         }
 
         // Validate operator
-        if (!in_array(strtolower($operator), ['=', '<', '>', '<=', '>=', '<>', '!=', 'like', 'not like', 'in', 'not in', 'between', 'not between'])) {
-            throw new InvalidArgumentException('Illegal operator');
+        $validOperators = ['=', '<', '>', '<=', '>=', '<>', '!=', 'like', 'not like', 'in', 'not in', 'between', 'not between'];
+        if (!in_array(strtolower($operator), $validOperators)) {
+            throw new InvalidArgumentException("Illegal operator: {$operator}");
         }
 
         $this->wheres[] = [
@@ -101,6 +105,10 @@ class QueryBuilder
 
     public function whereIn(string $column, array $values, string $boolean = 'and'): self
     {
+        if (empty($values)) {
+            throw new InvalidArgumentException('whereIn values cannot be empty');
+        }
+
         $this->wheres[] = [
             'type' => 'in',
             'column' => $this->escapeIdentifier($column),
@@ -115,6 +123,10 @@ class QueryBuilder
 
     public function whereNotIn(string $column, array $values, string $boolean = 'and'): self
     {
+        if (empty($values)) {
+            throw new InvalidArgumentException('whereNotIn values cannot be empty');
+        }
+
         $this->wheres[] = [
             'type' => 'not_in',
             'column' => $this->escapeIdentifier($column),
@@ -156,7 +168,7 @@ class QueryBuilder
             'table' => $this->escapeIdentifier($table),
             'first' => $this->escapeIdentifier($first),
             'operator' => $operator ?: '=',
-            'second' => $this->escapeIdentifier($second)
+            'second' => $this->escapeIdentifier($second ?: '')
         ];
 
         return $this;
@@ -174,9 +186,14 @@ class QueryBuilder
 
     public function orderBy(string $column, string $direction = 'asc'): self
     {
+        $direction = strtolower($direction);
+        if (!in_array($direction, ['asc', 'desc'])) {
+            throw new InvalidArgumentException("Order direction must be 'asc' or 'desc'");
+        }
+
         $this->orderBy[] = [
             'column' => $this->escapeIdentifier($column), 
-            'direction' => strtolower($direction)
+            'direction' => $direction
         ];
         return $this;
     }
@@ -184,18 +201,24 @@ class QueryBuilder
     public function groupBy(string|array $groups): self
     {
         $groups = is_array($groups) ? $groups : func_get_args();
-        $this->groupBy = array_map([$this, 'escapeIdentifier'], $groups);
+        $this->groupBy = array_merge($this->groupBy, array_map([$this, 'escapeIdentifier'], $groups));
         return $this;
     }
 
     public function limit(int $limit): self
     {
+        if ($limit < 0) {
+            throw new InvalidArgumentException('Limit must be non-negative');
+        }
         $this->limitValue = $limit;
         return $this;
     }
 
     public function offset(int $offset): self
     {
+        if ($offset < 0) {
+            throw new InvalidArgumentException('Offset must be non-negative');
+        }
         $this->offsetValue = $offset;
         return $this;
     }
@@ -204,22 +227,48 @@ class QueryBuilder
     {
         $sql = $this->buildSelectQuery();
         $stmt = $this->pdo->prepare($sql);
-        $stmt->execute($this->bindings);
-        return $stmt->fetchAll();
+        
+        if (!$stmt) {
+            throw new RuntimeException('Failed to prepare SQL statement: ' . implode(', ', $this->pdo->errorInfo()));
+        }
+        
+        $success = $stmt->execute($this->bindings);
+        
+        if (!$success) {
+            throw new RuntimeException('Failed to execute SQL statement: ' . implode(', ', $stmt->errorInfo()));
+        }
+        
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public function first(): ?array
     {
+        $originalLimit = $this->limitValue;
         $this->limit(1);
-        $results = $this->get();
-        return $results[0] ?? null;
+        
+        try {
+            $results = $this->get();
+            return $results[0] ?? null;
+        } finally {
+            $this->limitValue = $originalLimit;
+        }
     }
 
     public function count(string $column = '*'): int
     {
         $sql = $this->buildCountQuery($column);
         $stmt = $this->pdo->prepare($sql);
-        $stmt->execute($this->bindings);
+        
+        if (!$stmt) {
+            throw new RuntimeException('Failed to prepare SQL statement: ' . implode(', ', $this->pdo->errorInfo()));
+        }
+        
+        $success = $stmt->execute($this->bindings);
+        
+        if (!$success) {
+            throw new RuntimeException('Failed to execute SQL statement: ' . implode(', ', $stmt->errorInfo()));
+        }
+        
         return (int) $stmt->fetchColumn();
     }
 
@@ -240,12 +289,22 @@ class QueryBuilder
         $sql = "INSERT INTO {$this->table} (" . implode(', ', $columns) . ") VALUES (" . implode(', ', $placeholders) . ")";
 
         $stmt = $this->pdo->prepare($sql);
+        
+        if (!$stmt) {
+            throw new RuntimeException('Failed to prepare insert statement: ' . implode(', ', $this->pdo->errorInfo()));
+        }
+        
         return $stmt->execute(array_values($data));
     }
 
     public function insertGetId(array $data): int|string
     {
-        $this->insert($data);
+        $success = $this->insert($data);
+        
+        if (!$success) {
+            throw new RuntimeException('Insert operation failed');
+        }
+        
         return $this->pdo->lastInsertId();
     }
 
@@ -267,7 +326,17 @@ class QueryBuilder
         $sql .= $this->buildWhereClause();
 
         $stmt = $this->pdo->prepare($sql);
-        $stmt->execute(array_merge($bindings, $this->bindings));
+        
+        if (!$stmt) {
+            throw new RuntimeException('Failed to prepare update statement: ' . implode(', ', $this->pdo->errorInfo()));
+        }
+        
+        $allBindings = array_merge($bindings, $this->bindings);
+        $success = $stmt->execute($allBindings);
+        
+        if (!$success) {
+            throw new RuntimeException('Update operation failed: ' . implode(', ', $stmt->errorInfo()));
+        }
 
         return $stmt->rowCount();
     }
@@ -278,13 +347,26 @@ class QueryBuilder
         $sql .= $this->buildWhereClause();
 
         $stmt = $this->pdo->prepare($sql);
-        $stmt->execute($this->bindings);
+        
+        if (!$stmt) {
+            throw new RuntimeException('Failed to prepare delete statement: ' . implode(', ', $this->pdo->errorInfo()));
+        }
+        
+        $success = $stmt->execute($this->bindings);
+        
+        if (!$success) {
+            throw new RuntimeException('Delete operation failed: ' . implode(', ', $stmt->errorInfo()));
+        }
 
         return $stmt->rowCount();
     }
 
     private function buildSelectQuery(): string
     {
+        if (empty($this->table)) {
+            throw new RuntimeException('No table specified for query');
+        }
+
         $sql = "SELECT " . implode(', ', $this->selects) . " FROM {$this->table}";
 
         // Add JOINs
@@ -320,6 +402,10 @@ class QueryBuilder
 
     private function buildCountQuery(string $column): string
     {
+        if (empty($this->table)) {
+            throw new RuntimeException('No table specified for query');
+        }
+
         $column = $column === '*' ? $column : $this->escapeIdentifier($column);
         $sql = "SELECT COUNT({$column}) FROM {$this->table}";
 
@@ -380,5 +466,21 @@ class QueryBuilder
     public function clone(): self
     {
         return clone $this;
+    }
+
+    // Reset query state
+    public function reset(): self
+    {
+        $this->table = '';
+        $this->selects = ['*'];
+        $this->joins = [];
+        $this->wheres = [];
+        $this->groupBy = [];
+        $this->orderBy = [];
+        $this->bindings = [];
+        $this->limitValue = null;
+        $this->offsetValue = null;
+        
+        return $this;
     }
 }

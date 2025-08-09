@@ -13,6 +13,7 @@ class EloquentBuilder
     protected QueryBuilder $query;
     protected Model $model;
     protected array $eagerLoad = [];
+    protected bool $removedGlobalScopes = false;
 
     public function __construct(QueryBuilder $query, Model $model)
     {
@@ -119,11 +120,15 @@ class EloquentBuilder
 
     public function withoutGlobalScopes(): self
     {
-        // Remove soft delete constraint if applicable
-        if ($this->model->usesSoftDeletes()) {
-            // Find and remove the whereNull constraint for deleted_at
-            $this->query->whereNotNull($this->model->getDeletedAtColumn());
-        }
+        // Create a fresh query without global scopes
+        $freshQuery = new QueryBuilder($this->query->pdo);
+        $freshQuery->table($this->model->getTable());
+        
+        // Copy over all existing conditions except soft delete constraints
+        $this->copyQueryState($this->query, $freshQuery);
+        
+        $this->query = $freshQuery;
+        $this->removedGlobalScopes = true;
 
         return $this;
     }
@@ -131,6 +136,9 @@ class EloquentBuilder
     public function onlyTrashed(): self
     {
         if ($this->model->usesSoftDeletes()) {
+            // First remove any existing soft delete constraints
+            $this->withoutGlobalScopes();
+            // Then add constraint to only show trashed records
             $this->query->whereNotNull($this->model->getDeletedAtColumn());
         }
 
@@ -140,12 +148,69 @@ class EloquentBuilder
     public function withTrashed(): self
     {
         if ($this->model->usesSoftDeletes()) {
-            // Remove any whereNull constraints for deleted_at
-            // This would need to be implemented based on your query builder
-            // For now, we'll just not add the whereNull constraint
+            // Remove soft delete constraints to include both trashed and non-trashed
+            $this->withoutGlobalScopes();
         }
 
         return $this;
+    }
+
+    protected function copyQueryState(QueryBuilder $from, QueryBuilder $to): void
+    {
+        // This is a simplified copy - you might need to extend this
+        // based on your QueryBuilder implementation
+        $reflection = new \ReflectionClass($from);
+        
+        $properties = ['selects', 'joins', 'groupBy', 'orderBy', 'limitValue', 'offsetValue'];
+        
+        foreach ($properties as $property) {
+            if ($reflection->hasProperty($property)) {
+                $prop = $reflection->getProperty($property);
+                $prop->setAccessible(true);
+                $value = $prop->getValue($from);
+                
+                $toProp = (new \ReflectionClass($to))->getProperty($property);
+                $toProp->setAccessible(true);
+                $toProp->setValue($to, $value);
+            }
+        }
+        
+        // Copy wheres but filter out soft delete constraints
+        $wheresProperty = $reflection->getProperty('wheres');
+        $wheresProperty->setAccessible(true);
+        $wheres = $wheresProperty->getValue($from);
+        
+        $bindingsProperty = $reflection->getProperty('bindings');
+        $bindingsProperty->setAccessible(true);
+        $bindings = $bindingsProperty->getValue($from);
+        
+        $filteredWheres = [];
+        $filteredBindings = [];
+        
+        foreach ($wheres as $index => $where) {
+            // Skip soft delete constraints
+            if ($this->model->usesSoftDeletes() && 
+                isset($where['column']) && 
+                str_contains($where['column'], $this->model->getDeletedAtColumn()) &&
+                $where['type'] === 'null') {
+                continue;
+            }
+            
+            $filteredWheres[] = $where;
+            
+            // Copy corresponding bindings
+            if (isset($bindings[$index])) {
+                $filteredBindings[] = $bindings[$index];
+            }
+        }
+        
+        $toWheresProperty = (new \ReflectionClass($to))->getProperty('wheres');
+        $toWheresProperty->setAccessible(true);
+        $toWheresProperty->setValue($to, $filteredWheres);
+        
+        $toBindingsProperty = (new \ReflectionClass($to))->getProperty('bindings');
+        $toBindingsProperty->setAccessible(true);
+        $toBindingsProperty->setValue($to, $filteredBindings);
     }
 
     // Result methods that return models
@@ -257,11 +322,14 @@ class EloquentBuilder
     // Modification methods
     public function update(array $values): int
     {
+        // For bulk updates, we can use the query builder directly
+        // But we should also fire model events if needed
         return $this->query->update($values);
     }
 
     public function delete(): int
     {
+        // Get all models first to fire individual delete events
         $models = $this->get();
         $count = 0;
 
@@ -276,6 +344,7 @@ class EloquentBuilder
 
     public function forceDelete(): int
     {
+        // Direct database deletion without model events
         return $this->query->delete();
     }
 
@@ -294,8 +363,8 @@ class EloquentBuilder
     protected function newModelInstance(array $attributes = []): Model
     {
         $model = $this->model->newInstance();
-        $model->setRawAttributes($attributes);
-        $model->exists = true;
+        $model->setRawAttributes($attributes, true); // Set sync = true to mark as original
+        $model->setExisting(true);
 
         return $model;
     }

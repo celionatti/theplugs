@@ -104,12 +104,14 @@ abstract class Model implements JsonSerializable
         $builder = new QueryBuilder(DatabaseConfig::getConnection());
         $builder->table($model->getTable());
 
-        // Only apply soft delete scope if the model uses soft deletes
+        $eloquentBuilder = new EloquentBuilder($builder, $model);
+
+        // Apply soft delete scope if the model uses soft deletes
         if ($model->usesSoftDeletes()) {
-            $builder->whereNull($model->getDeletedAtColumn());
+            $eloquentBuilder->whereNull($model->getDeletedAtColumn());
         }
 
-        return new EloquentBuilder($builder, $model);
+        return $eloquentBuilder;
     }
 
     public static function make(array $attributes = []): static
@@ -127,7 +129,7 @@ abstract class Model implements JsonSerializable
         // Determine if this is an insert or update based on primary key existence
         $keyName = $this->getKeyName();
         $keyValue = $this->getAttribute($keyName);
-        
+
         // If no primary key value or it's null/empty, it's an insert
         $saved = (!$keyValue || !$this->exists) ? $this->performInsert() : $this->performUpdate();
 
@@ -145,7 +147,17 @@ abstract class Model implements JsonSerializable
             return false;
         }
 
-        return $this->fill($attributes)->save();
+        // Fill the new attributes if provided
+        if (!empty($attributes)) {
+            $this->fill($attributes);
+        }
+
+        // Only proceed if there are actual changes
+        if (!$this->isDirty()) {
+            return true; // Consider no changes as a successful "update"
+        }
+
+        return $this->save();
     }
 
     public function delete(): bool
@@ -273,10 +285,34 @@ abstract class Model implements JsonSerializable
     public function isDirty(?string $key = null): bool
     {
         if ($key !== null) {
-            return array_key_exists($key, $this->attributes) &&
-                $this->attributes[$key] !== ($this->original[$key] ?? null);
+            // Check if this specific key is dirty
+            if (!array_key_exists($key, $this->attributes)) {
+                return false;
+            }
+
+            $current = $this->attributes[$key];
+            $original = $this->original[$key] ?? null;
+
+            // Convert both values to strings for comparison if they're different types
+            // but handle null values specially
+            if ($current === null && $original === null) {
+                return false;
+            }
+            
+            if ($current === null || $original === null) {
+                return $current !== $original;
+            }
+
+            // For non-null values, do strict comparison first
+            if ($current === $original) {
+                return false;
+            }
+
+            // If strict comparison fails, try string comparison for different types
+            return (string)$current !== (string)$original;
         }
 
+        // Check if any attribute is dirty
         foreach ($this->attributes as $key => $value) {
             if ($this->isDirty($key)) {
                 return true;
@@ -295,6 +331,11 @@ abstract class Model implements JsonSerializable
             }
         }
         return $changes;
+    }
+
+    public function getDirty(): array
+    {
+        return $this->getChanges();
     }
 
     // Relationships
@@ -506,15 +547,16 @@ abstract class Model implements JsonSerializable
             return false;
         }
 
-        $dirty = $this->getChanges();
+        $dirty = $this->getDirty();
 
         if (empty($dirty)) {
+            $this->fireEvent('updated');
             return true;
         }
 
         if ($this->timestamps) {
             $this->updateTimestamps();
-            $dirty = $this->getChanges();
+            $dirty = $this->getDirty(); // Refresh dirty attributes after updating timestamps
         }
 
         $builder = new QueryBuilder(DatabaseConfig::getConnection());
@@ -560,17 +602,17 @@ abstract class Model implements JsonSerializable
     protected function getInsertableAttributes(): array
     {
         $attributes = [];
-        
+
         foreach ($this->attributes as $key => $value) {
-            // Skip internal model properties, primary key (for auto-increment), and null timestamps
-            if (!in_array($key, ['exists', 'wasRecentlyCreated']) && 
-                $key !== $this->getKeyName() && // Skip primary key for inserts
-                !($key === 'created_at' && $value === null) && 
-                !($key === 'updated_at' && $value === null)) {
+            // Skip internal model properties and primary key for auto-increment
+            if (
+                !in_array($key, ['exists', 'wasRecentlyCreated']) &&
+                !($key === $this->getKeyName() && empty($value)) // Allow primary key if it has a value
+            ) {
                 $attributes[$key] = $value;
             }
         }
-        
+
         return $attributes;
     }
 
@@ -597,7 +639,33 @@ abstract class Model implements JsonSerializable
         $this->original = $this->attributes;
     }
 
-    // Event handling - FIXED
+    public function syncOriginalAttribute(string $attribute): static
+    {
+        $this->original[$attribute] = $this->attributes[$attribute] ?? null;
+        return $this;
+    }
+
+    public function syncOriginalAttributes(array $attributes): static
+    {
+        foreach ($attributes as $attribute) {
+            $this->syncOriginalAttribute($attribute);
+        }
+        return $this;
+    }
+
+    // Debug methods
+    public function debugAttributes(): array
+    {
+        return [
+            'attributes' => $this->attributes,
+            'original' => $this->original,
+            'dirty' => $this->getDirty(),
+            'exists' => $this->exists,
+            'key' => $this->getKey()
+        ];
+    }
+
+    // Event handling
     protected function fireEvent(string $event): bool
     {
         // Check for registered callbacks only - no direct method calls
@@ -706,11 +774,11 @@ abstract class Model implements JsonSerializable
     public function setRawAttributes(array $attributes, bool $sync = false): static
     {
         $this->attributes = $attributes;
-        
+
         if ($sync) {
             $this->syncOriginal();
         }
-        
+
         return $this;
     }
 
