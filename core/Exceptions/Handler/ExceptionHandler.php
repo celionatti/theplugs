@@ -778,7 +778,7 @@ class ExceptionHandler
             <div class="header-content">
                 <div class="brand-section">
                     <div class="framework-brand">
-                        <div class="brand-logo">P</div>
+                        <div class="brand-logo">🔌</div>
                         <div class="brand-text">
                             <div class="brand-name">Plugs Framework</div>
                             <div class="brand-tagline">Modern PHP Development</div>
