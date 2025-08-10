@@ -26,10 +26,18 @@ class View
     protected static bool $assetAutoVersion = false;
     protected array $onceTokens = [];
     protected array $stacks = [];
+    protected array $fragments = [];
+    protected array $componentData = [];
+    protected static array $macros = [];
+    protected static array $viewComposers = [];
+    protected static array $viewCreators = [];
 
     public function __construct(string $template, array $data = [])
     {
         $this->template = $template;
+
+        // Apply view creators for this template
+        $this->applyViewCreators();
 
         // Validate data for variable collisions
         $compiler = static::getCompiler();
@@ -37,10 +45,47 @@ class View
 
         $this->data = array_merge(static::$sharedData, $data);
 
+        // Apply view composers for this template
+        $this->applyViewComposers();
+
         // Ensure session is started for CSRF
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
+    }
+
+    protected function applyViewCreators(): void
+    {
+        foreach (static::$viewCreators as $pattern => $callback) {
+            if ($this->templateMatchesPattern($pattern)) {
+                $callback($this);
+            }
+        }
+    }
+
+    protected function applyViewComposers(): void
+    {
+        foreach (static::$viewComposers as $pattern => $callback) {
+            if ($this->templateMatchesPattern($pattern)) {
+                $callback($this);
+            }
+        }
+    }
+
+    protected function templateMatchesPattern(string $pattern): bool
+    {
+        // Simple exact match
+        if ($pattern === $this->template) {
+            return true;
+        }
+
+        // Wildcard matching
+        if (str_contains($pattern, '*')) {
+            $regex = str_replace('\*', '.*', preg_quote($pattern, '/'));
+            return (bool) preg_match("/^{$regex}$/", $this->template);
+        }
+
+        return false;
     }
 
     public static function make(string $template, array $data = []): self
@@ -188,6 +233,8 @@ class View
                     'content' => $output
                 ]));
                 $layoutView->sections = array_merge($this->sections, $layoutView->sections);
+                $layoutView->stacks = $this->stacks;
+                $layoutView->fragments = $this->fragments;
                 return $layoutView->render();
             }
 
@@ -331,6 +378,8 @@ class View
             'paths' => static::$paths,
             'layout' => $this->layout,
             'sections' => array_keys($this->sections),
+            'stacks' => array_keys($this->stacks),
+            'fragments' => array_keys($this->fragments),
             'cache_enabled' => static::$cacheEnabled,
             'cache_path' => static::$cachePath,
             'reserved_variables' => static::getCompiler()->getReservedVariables()
@@ -439,6 +488,7 @@ class View
         return true;
     }
 
+    // Stack methods
     public function startPush(string $name): void
     {
         $this->sectionStack[] = $name;
@@ -457,6 +507,58 @@ class View
         return implode('', $this->stacks[$name] ?? []);
     }
 
+    public function prepend(string $name): void
+    {
+        if (!isset($this->stacks[$name])) {
+            $this->stacks[$name] = [];
+        }
+
+        $content = ob_get_clean();
+        array_unshift($this->stacks[$name], $content);
+    }
+
+    // Fragment methods
+    public function startFragment(string $name): void
+    {
+        $this->sectionStack[] = $name;
+        ob_start();
+    }
+
+    public function endFragment(): void
+    {
+        $name = array_pop($this->sectionStack);
+        $content = ob_get_clean();
+        $this->fragments[$name] = $content;
+    }
+
+    public function fragment(string $name): ?string
+    {
+        return $this->fragments[$name] ?? null;
+    }
+
+    public function hasFragment(string $name): bool
+    {
+        return isset($this->fragments[$name]);
+    }
+
+    // Component methods
+    public function component(string $name, array $data = []): void
+    {
+        $this->componentData[$name] = $data;
+        $this->startSection($name);
+    }
+
+    public function endComponent(): void
+    {
+        $this->endSection();
+    }
+
+    public function slot(string $name = 'default'): string
+    {
+        return $this->yieldContent($name, '');
+    }
+
+    // Form helpers
     public function formOpen(string $action, string $method = 'POST', array $attributes = []): string
     {
         $attrs = $this->htmlAttributes($attributes);
@@ -472,5 +574,87 @@ class View
     public function formClose(): string
     {
         return '</form>';
+    }
+
+    // Macro system
+    public static function macro(string $name, callable $macro): void
+    {
+        static::$macros[$name] = $macro;
+    }
+
+    public static function hasMacro(string $name): bool
+    {
+        return isset(static::$macros[$name]);
+    }
+
+    public function __call(string $method, array $parameters)
+    {
+        if (static::hasMacro($method)) {
+            return call_user_func_array(static::$macros[$method]->bindTo($this, static::class), $parameters);
+        }
+
+        throw new \BadMethodCallException("Method {$method} does not exist.");
+    }
+
+    // View composers and creators
+    public static function composer(string|array $views, callable $callback): void
+    {
+        foreach ((array) $views as $view) {
+            static::$viewComposers[$view] = $callback;
+        }
+    }
+
+    public static function creator(string|array $views, callable $callback): void
+    {
+        foreach ((array) $views as $view) {
+            static::$viewCreators[$view] = $callback;
+        }
+    }
+
+    // Conditional rendering
+    public function when(bool $condition, callable $callback, ?callable $default = null): ?string
+    {
+        if ($condition) {
+            return $callback($this);
+        }
+
+        if ($default) {
+            return $default($this);
+        }
+
+        return null;
+    }
+
+    public function unless(bool $condition, callable $callback, ?callable $default = null): ?string
+    {
+        return $this->when(!$condition, $callback, $default);
+    }
+
+    // Error bag for form validation
+    public function withErrors(array $errors): self
+    {
+        return $this->with('errors', $errors);
+    }
+
+    // Old input for form repopulation
+    public function withInput(array $input): self
+    {
+        return $this->with('old', $input);
+    }
+
+    // Shortcut for rendering JSON
+    public function jsonResponse(array $data, int $status = 200): string
+    {
+        http_response_code($status);
+        header('Content-Type: application/json');
+        return json_encode($data);
+    }
+
+    // Shortcut for redirect responses
+    public function redirect(string $url, int $status = 302): string
+    {
+        http_response_code($status);
+        header("Location: $url");
+        return '';
     }
 }
