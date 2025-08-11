@@ -5,6 +5,33 @@ declare(strict_types=1);
 use Plugs\View\View;
 use Plugs\Database\Eloquent\Collection;
 
+if(!function_exists("env")) {
+    function env(string $key, mixed $default = null): mixed
+    {
+        $value = $_ENV[$key] ?? getenv($key);
+        return $value !== false ? $value : $default;
+    }
+}
+
+if (!function_exists('storage_path')) {
+    /**
+     * Get the path to the storage directory.
+     *
+     * @param  string|null  $path
+     * @return string
+     */
+    function storage_path(?string $path = null): string
+    {
+        // Assuming your framework has a BASE_PATH constant or similar
+        $storageBase = rtrim(ROOT_PATH, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'storage';
+
+        return $path
+            ? $storageBase . DIRECTORY_SEPARATOR . ltrim($path, DIRECTORY_SEPARATOR)
+            : $storageBase;
+    }
+}
+
+
 if (!function_exists("view")) {
     function view(string $template, array $data = []): View
     {

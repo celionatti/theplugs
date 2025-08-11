@@ -6,6 +6,7 @@ namespace Plugs\Http\Request;
 
 use InvalidArgumentException;
 use Plugs\Http\Request\Headers;
+use Plugs\Session\Interface\SessionInterface;
 
 class Request
 {
@@ -20,6 +21,7 @@ class Request
     private array $cookies = [];
     private array $files = [];
     private ?array $jsonData = null;
+    private ?SessionInterface $session = null;
 
     public function __construct(
         ?string $method = null,
@@ -420,5 +422,53 @@ class Request
     {
         return strtolower($this->header('Purpose', '')) === 'prefetch' ||
             strtolower($this->header('X-Purpose', '')) === 'prefetch';
+    }
+
+    /**
+     * Set the session instance
+     */
+    public function setSession(SessionInterface $session): void
+    {
+        $this->session = $session;
+    }
+
+    /**
+     * Get the session instance
+     */
+    public function session(): ?SessionInterface
+    {
+        return $this->session;
+    }
+
+    /**
+     * Check if request has session
+     */
+    public function hasSession(): bool
+    {
+        return $this->session !== null;
+    }
+
+    /**
+     * Get value from session
+     */
+    public function sessionGet(string $key, mixed $default = null): mixed
+    {
+        return $this->session?->get($key, $default);
+    }
+
+    /**
+     * Store value in session
+     */
+    public function sessionPut(string $key, mixed $value): void
+    {
+        $this->session?->put($key, $value);
+    }
+
+    /**
+     * Flash data to session for next request
+     */
+    public function sessionFlash(string $key, mixed $value): void
+    {
+        $this->session?->flash($key, $value);
     }
 }

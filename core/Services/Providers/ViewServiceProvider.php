@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Plugs\Services;
+namespace Plugs\Services\Providers;
 
 use Plugs\Plugs;
 use Plugs\View\View;

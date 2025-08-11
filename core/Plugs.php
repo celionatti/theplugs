@@ -12,9 +12,9 @@ use Plugs\Container\Container;
 use Plugs\Http\Request\Request;
 use Plugs\Http\Response\Response;
 use Plugs\Services\ServiceProvider;
-use Plugs\Services\ViewServiceProvider;
-use Plugs\Services\RoutingServiceProvider;
 use Plugs\Exceptions\Handler\ExceptionHandler;
+use Plugs\Services\Providers\ViewServiceProvider;
+use Plugs\Services\Providers\SessionServiceProvider;
 
 class Plugs
 {
@@ -144,6 +144,14 @@ class Plugs
      * Get the path to the application routes files.
      */
     public function routesPath(string $path = ''): string
+    {
+        return $this->basePath('routes') . ($path ? DIRECTORY_SEPARATOR . $path : '');
+    }
+
+    /**
+     * Get the path to the application routes files.
+     */
+    public function storagePath(string $path = ''): string
     {
         return $this->basePath('routes') . ($path ? DIRECTORY_SEPARATOR . $path : '');
     }
@@ -331,6 +339,7 @@ class Plugs
 
         // These would be core framework providers
         $this->register(new ViewServiceProvider($this->container));
+        $this->register(new SessionServiceProvider($this->container));
         // $this->register(new RoutingServiceProvider($this));
         // $this->register(new ExceptionServiceProvider($this));
     }
@@ -410,23 +419,6 @@ class Plugs
             }
         }
     }
-
-    // protected function initializeRouter(): void
-    // {
-    //     // Create router instance
-    //     $router = new Router();
-
-    //     // Set base path if configured
-    //     if ($this->urlPath && $this->urlPath !== '/') {
-    //         $router->setBasePath($this->urlPath);
-    //     }
-
-    //     // Set it in the Route facade
-    //     Route::setRouter($router);
-
-    //     // Make it available in the app if needed
-    //     $this->container->instance(Router::class, $router);
-    // }
 
     protected function initializeRouter(): void
     {
