@@ -16,18 +16,31 @@ if(!function_exists("env")) {
 if (!function_exists('storage_path')) {
     /**
      * Get the path to the storage directory.
+     * Optionally creates it if it does not exist.
      *
      * @param  string|null  $path
+     * @param  bool         $create
      * @return string
      */
-    function storage_path(?string $path = null): string
+    function storage_path(?string $path = null, bool $create = false): string
     {
-        // Assuming your framework has a BASE_PATH constant or similar
+        // Assuming your framework defines BASE_PATH
         $storageBase = rtrim(ROOT_PATH, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'storage';
 
-        return $path
+        // Append subpath if given
+        $fullPath = $path
             ? $storageBase . DIRECTORY_SEPARATOR . ltrim($path, DIRECTORY_SEPARATOR)
             : $storageBase;
+
+        // If create is true, ensure the directory exists
+        if ($create) {
+            $directory = is_dir($fullPath) ? $fullPath : dirname($fullPath);
+            if (!is_dir($directory)) {
+                mkdir($directory, 0775, true);
+            }
+        }
+
+        return $fullPath;
     }
 }
 

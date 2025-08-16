@@ -1,4 +1,4 @@
-# Plugs Eloquent Model Documentation
+# ThePlug's Eloquent Model Documentation
 
 ## Table of Contents
 

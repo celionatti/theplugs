@@ -1,4 +1,4 @@
-# Plugs Framework Exception Handler Documentation
+# ThePlug's Framework Exception Handler Documentation
 
 ## Table of Contents
 
@@ -17,7 +17,7 @@
 
 ## Overview
 
-The Plugs Framework Exception Handler is a sophisticated, professional-grade error handling and debugging tool designed to provide developers with comprehensive exception information in an elegant, user-friendly interface. It transforms PHP exceptions into beautifully formatted, interactive debug pages that significantly enhance the development experience.
+The Plug's Framework Exception Handler is a sophisticated, professional-grade error handling and debugging tool designed to provide developers with comprehensive exception information in an elegant, user-friendly interface. It transforms PHP exceptions into beautifully formatted, interactive debug pages that significantly enhance the development experience.
 
 ### Key Philosophy
 

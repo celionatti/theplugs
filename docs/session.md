@@ -1,4 +1,4 @@
-# Session Management System Documentation
+# ThePlug's Session Management System Documentation
 
 ## Table of Contents
 
@@ -21,7 +21,7 @@
 
 ## Introduction
 
-The Session Management System is a secure, extensible, and production-ready session handling library for PHP 8.1+ frameworks. It provides Laravel-like session functionality with multiple storage drivers, advanced security features, and seamless framework integration.
+The Session Management System is a secure, extensible, and production-ready session handling library for PHP 8.1+ frameworks. It provides multiple storage drivers, advanced security features, and seamless framework integration.
 
 ### Key Features
 
