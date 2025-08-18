@@ -709,6 +709,7 @@ class Authentication
         if (!$validator->passes()) {
             throw new ValidationException('Validation failed', $validator->errors());
         }
+        return $data ?? [];
     }
 
     private function userExists(string $email): bool
