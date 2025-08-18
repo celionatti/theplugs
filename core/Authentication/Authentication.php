@@ -6,9 +6,16 @@ namespace Plugs\Authentication;
 
 use PDO;
 use DateTime;
+use Exception;
+use InvalidArgumentException;
 use Plugs\Session\SessionManager;
 use Plugs\Illusion\Helper\JwtManager;
+use Plugs\Illusion\Helper\RateLimiter;
+use Illusion\Mailer\Service\EmailService;
+use Plugs\Illusion\Helper\CsrfProtection;
 use Plugs\Authentication\Interface\UserInterface;
+use Plugs\Exceptions\Validation\ValidationException;
+use Plugs\Validation\Validation;
 
 class Authentication
 {
@@ -32,13 +39,46 @@ class Authentication
     ) {
         $this->db = $db;
         $this->config = $config;
-        $this->session = $session ?? new SessionManager($config);
+        
+        // Use your existing SessionManager or create with proper config
+        $this->session = $session ?? new SessionManager($this->getSessionConfig());
+        $this->session->start(); // Start session using your implementation
+        
         $this->jwt = $jwt ?? new JwtManager($config);
         $this->rateLimiter = $rateLimiter ?? new RateLimiter($db, $config);
         $this->emailService = $emailService ?? new EmailService($config);
         $this->csrf = $csrf ?? new CsrfProtection($this->session);
         
         $this->initializeDatabase();
+    }
+
+    /**
+     * Generate session configuration compatible with your SessionManager
+     * 
+     * @return array Session configuration array
+     */
+    private function getSessionConfig(): array
+    {
+        return [
+            'driver' => $this->config->sessionDriver ?? 'file',
+            'cookie' => $this->config->sessionCookieName ?? 'laravel_session',
+            'lifetime' => $this->config->sessionLifetime ?? 120, // minutes
+            'expire_on_close' => $this->config->expireOnClose ?? false,
+            'path' => $this->config->sessionPath ?? '/',
+            'domain' => $this->config->sessionDomain ?? '',
+            'secure' => $this->config->secureCookies ?? isset($_SERVER['HTTPS']),
+            'http_only' => true,
+            'same_site' => $this->config->sameSite ?? 'Lax',
+            'encrypt' => $this->config->encryptSession ?? false,
+            'key' => $this->config->sessionKey ?? $this->config->appKey ?? '',
+            'check_ip' => $this->config->checkClientIp ?? true,
+            'check_user_agent' => $this->config->checkUserAgent ?? true,
+            // Database driver specific config
+            'connection' => $this->db,
+            'table' => $this->config->sessionTable ?? 'sessions',
+            // File driver specific config
+            'files' => $this->config->sessionPath ?? sys_get_temp_dir(),
+        ];
     }
 
     /**
@@ -142,8 +182,9 @@ class Authentication
 
             // Check if 2FA is required
             if ($user->has2FAEnabled()) {
-                // Store pending 2FA session
-                $this->session->set('pending_2fa_user_id', $user->getId());
+                // Store pending 2FA session using your session manager
+                $this->session->put('pending_2fa_user_id', $user->getId());
+                $this->session->put('pending_2fa_timestamp', time());
                 return new AuthResult(false, 'Two-factor authentication required', null, [], '2fa_required');
             }
 
@@ -206,7 +247,8 @@ class Authentication
             }
 
             // Complete login process
-            $this->session->remove('pending_2fa_user_id');
+            $this->session->forget('pending_2fa_user_id');
+            $this->session->forget('pending_2fa_timestamp');
             $this->updateLastLogin($user);
 
             if ($this->config->authMethod === 'session') {
@@ -237,7 +279,8 @@ class Authentication
                 if ($allDevices) {
                     $this->invalidateAllUserSessions($this->currentUser->getId());
                 } else {
-                    $this->session->destroy();
+                    // Use your session manager's invalidate method which clears and regenerates
+                    $this->session->invalidate();
                 }
                 
                 $this->currentUser = null;
@@ -447,6 +490,13 @@ class Authentication
         if ($this->config->authMethod === 'session') {
             $userId = $this->session->get('user_id');
             if ($userId) {
+                // Additional security check for session hijacking
+                $loginTime = $this->session->get('login_time');
+                if ($loginTime && (time() - $loginTime) > $this->config->sessionTimeout) {
+                    $this->logout();
+                    return null;
+                }
+                
                 $this->currentUser = $this->getUserById($userId);
             }
         } elseif ($this->config->authMethod === 'jwt') {
@@ -503,7 +553,8 @@ class Authentication
      */
     public function generateCSRFToken(): string
     {
-        return $this->csrf->generateToken();
+        // Use your session manager's built-in token method
+        return $this->session->token();
     }
 
     /**
@@ -514,7 +565,8 @@ class Authentication
      */
     public function verifyCSRFToken(string $token): bool
     {
-        return $this->csrf->verifyToken($token);
+        $sessionToken = $this->session->get('_token');
+        return $sessionToken && hash_equals($sessionToken, $token);
     }
 
     /**
@@ -644,17 +696,19 @@ class Authentication
         }
     }
 
-    private function validateRegistrationData(array $data): array
-    {
-        $validator = new InputValidator();
-        
+    private function validateRegistrationData(array $data)
+    {        
         $rules = [
             'email' => 'required|email|max:255',
             'password' => 'required|min:8|password',
             'name' => 'nullable|string|max:255'
         ];
 
-        return $validator->validate($data, $rules);
+        $validator = new Validation($data, $rules);
+
+        if (!$validator->passes()) {
+            throw new ValidationException('Validation failed', $validator->errors());
+        }
     }
 
     private function userExists(string $email): bool
@@ -764,7 +818,7 @@ class Authentication
         $timeSlice = floor(time() / 30);
         
         for ($i = -1; $i <= 1; $i++) {
-            $calculatedCode = $this->calculateTOTPCode($secret, $timeSlice + $i);
+            $calculatedCode = $this->calculateTOTPCode($secret, (int)$timeSlice + $i);
             if (hash_equals($code, $calculatedCode)) {
                 return true;
             }
@@ -808,12 +862,15 @@ class Authentication
 
     private function createUserSession(UserInterface $user, bool $remember = false): void
     {
-        $this->session->regenerate();
-        $this->session->set('user_id', $user->getId());
-        $this->session->set('user_email', $user->getEmail());
+        $this->session->regenerate(); // Use your regenerate method
+        $this->session->put('user_id', $user->getId()); // Use put instead of set
+        $this->session->put('user_email', $user->getEmail());
+        $this->session->put('login_time', time());
         
         if ($remember) {
-            $this->session->extendLifetime(2592000); // 30 days
+            // Your SessionManager handles cookie lifetime through config
+            // We can store a remember flag and extend session as needed
+            $this->session->put('remember_user', true);
         }
     }
 
