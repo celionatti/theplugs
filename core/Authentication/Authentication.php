@@ -61,7 +61,7 @@ class Authentication
     {
         return [
             'driver' => $this->config->sessionDriver ?? 'file',
-            'cookie' => $this->config->sessionCookieName ?? 'laravel_session',
+            'cookie' => $this->config->sessionCookieName ?? 'theplugs_session',
             'lifetime' => $this->config->sessionLifetime ?? 120, // minutes
             'expire_on_close' => $this->config->expireOnClose ?? false,
             'path' => $this->config->sessionPath ?? '/',

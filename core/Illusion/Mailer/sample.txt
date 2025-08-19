@@ -1,0 +1,341 @@
+<?php
+// File: views/emails/welcome.php
+?>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to <?= $e($appName ?? 'Our App') ?></title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: #007bff;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 5px 5px 0 0;
+        }
+        .content {
+            background: #f8f9fa;
+            padding: 30px;
+            border-radius: 0 0 5px 5px;
+        }
+        .button {
+            display: inline-block;
+            background: #28a745;
+            color: white;
+            padding: 12px 25px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .footer {
+            text-align: center;
+            color: #666;
+            font-size: 14px;
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Welcome, <?= $e($user['name'] ?? 'New User') ?>!</h1>
+    </div>
+    
+    <div class="content">
+        <p>Thank you for joining <?= $e($appName ?? 'our platform') ?>. We're excited to have you on board!</p>
+        
+        <p>Your account has been successfully created with the email address: <strong><?= $e($user['email'] ?? '') ?></strong></p>
+        
+        <?php if (isset($loginUrl)): ?>
+        <p>To get started, click the button below to log in to your account:</p>
+        <p>
+            <a href="<?= $e($loginUrl) ?>" class="button">Log In to Your Account</a>
+        </p>
+        <?php endif; ?>
+        
+        <p>If you have any questions, feel free to reach out to our support team.</p>
+        
+        <p>Best regards,<br>The <?= $e($appName ?? 'App') ?> Team</p>
+    </div>
+    
+    <div class="footer">
+        <p>This email was sent to <?= $e($user['email'] ?? '') ?>. If you didn't create this account, you can safely ignore this email.
+
+Best regards,
+The Team
+
+<?php
+// File: example-usage.php
+// Complete usage examples showing how to use the mailer
+?>
+
+<?php
+
+require_once 'mailer.php';
+
+use Mail\Mail;
+
+// 1. Configure the mailer (optional - has defaults)
+Mail::configure([
+    'default' => 'smtp',
+    'drivers' => [
+        'smtp' => [
+            'host' => 'smtp.gmail.com',
+            'port' => 587,
+            'username' => 'your-email@gmail.com',
+            'password' => 'your-app-password',
+            'encryption' => 'tls',
+            'auth' => true
+        ],
+        'native' => []
+    ],
+    'templates' => [
+        'path' => __DIR__ . '/views/emails'
+    ]
+]);
+
+// 2. Simple HTML email
+try {
+    $sent = Mail::to('recipient@example.com', 'John Doe')
+        ->from('sender@myapp.com', 'My Application')
+        ->subject('Simple HTML Email')
+        ->html('<h1>Hello!</h1><p>This is a <strong>simple</strong> HTML email.</p>')
+        ->send();
+    
+    echo $sent ? "Email sent successfully!\n" : "Failed to send email.\n";
+} catch (Exception $e) {
+    echo "Error: " . $e->getMessage() . "\n";
+}
+
+// 3. Template-based email with data
+$user = [
+    'name' => 'Jane Smith',
+    'email' => 'jane@example.com'
+];
+
+$loginUrl = 'https://myapp.com/login';
+$appName = 'My Awesome App';
+
+try {
+    Mail::to($user['email'], $user['name'])
+        ->from('welcome@myapp.com', 'Welcome Team')
+        ->subject('Welcome to ' . $appName)
+        ->view('welcome', [
+            'user' => $user,
+            'loginUrl' => $loginUrl,
+            'appName' => $appName
+        ])
+        ->send();
+} catch (Exception $e) {
+    echo "Welcome email error: " . $e->getMessage() . "\n";
+}
+
+// 4. Multi-recipient email with both HTML and text versions
+try {
+    Mail::to('user1@example.com', 'User One')
+        ->to('user2@example.com', 'User Two')
+        ->cc('manager@example.com', 'Manager')
+        ->bcc('archive@example.com')
+        ->from('newsletter@myapp.com', 'Newsletter')
+        ->replyTo('support@myapp.com', 'Support Team')
+        ->subject('Monthly Newsletter')
+        ->view('newsletter', ['month' => 'August', 'articles' => $articles])
+        ->textView('newsletter-text', ['month' => 'August', 'articles' => $articles])
+        ->send();
+} catch (Exception $e) {
+    echo "Newsletter error: " . $e->getMessage() . "\n";
+}
+
+// 5. Email with attachments
+try {
+    Mail::to('client@example.com', 'Client Name')
+        ->from('invoices@myapp.com', 'Billing Department')
+        ->subject('Invoice #12345')
+        ->view('invoice', ['invoice' => $invoiceData])
+        ->attach('/path/to/invoice.pdf', 'Invoice-12345.pdf', 'application/pdf')
+        ->attach('/path/to/terms.pdf', 'Terms-and-Conditions.pdf')
+        ->send();
+} catch (Exception $e) {
+    echo "Invoice email error: " . $e->getMessage() . "\n";
+}
+
+// 6. Account verification email
+$verificationToken = bin2hex(random_bytes(32));
+$verifyUrl = "https://myapp.com/verify?token={$verificationToken}";
+
+try {
+    Mail::to($user['email'], $user['name'])
+        ->from('noreply@myapp.com', 'Account Verification')
+        ->subject('Please verify your email address')
+        ->view('verify-account', [
+            'user' => $user,
+            'verifyUrl' => $verifyUrl
+        ])
+        ->textView('verify-account-text', [
+            'user' => $user,
+            'verifyUrl' => $verifyUrl
+        ])
+        ->send();
+} catch (Exception $e) {
+    echo "Verification email error: " . $e->getMessage() . "\n";
+}
+
+// 7. Using different drivers
+try {
+    // Force use of native mail() function
+    Mail::to('test@example.com')
+        ->from('test@myapp.com')
+        ->subject('Test with Native Driver')
+        ->text('This email was sent using PHP\'s native mail() function.')
+        ->driver('native')
+        ->send();
+        
+    // Force use of SMTP
+    Mail::to('test@example.com')
+        ->from('test@myapp.com')
+        ->subject('Test with SMTP Driver')
+        ->html('<p>This email was sent using SMTP.</p>')
+        ->driver('smtp')
+        ->send();
+} catch (Exception $e) {
+    echo "Driver test error: " . $e->getMessage() . "\n";
+}
+
+// 8. Raw usage without static methods (for dependency injection)
+use Mail\MailManager;
+use Mail\Templates\SimpleTemplateRenderer;
+
+$config = [
+    'default' => 'smtp',
+    'drivers' => [
+        'smtp' => [
+            'host' => 'localhost',
+            'port' => 587,
+            'username' => '',
+            'password' => '',
+            'encryption' => 'tls'
+        ]
+    ],
+    'templates' => ['path' => 'views/emails']
+];
+
+$mailManager = new MailManager($config);
+
+try {
+    $mailManager->to('recipient@example.com')
+        ->from('sender@example.com')
+        ->subject('Dependency Injection Example')
+        ->html('<p>This shows how to use the mailer with DI.</p>')
+        ->send();
+} catch (Exception $e) {
+    echo "DI example error: " . $e->getMessage() . "\n";
+}
+
+?> please ignore this email.</p>
+    </div>
+</body>
+</html>
+
+<?php
+// File: views/emails/welcome-text.php
+?>
+Welcome, <?= $user['name'] ?? 'New User' ?>!
+
+Thank you for joining <?= $appName ?? 'our platform' ?>. We're excited to have you on board!
+
+Your account has been successfully created with the email address: <?= $user['email'] ?? '' ?>
+
+<?php if (isset($loginUrl)): ?>
+To get started, visit the following link to log in to your account:
+<?= $loginUrl ?>
+
+<?php endif; ?>
+If you have any questions, feel free to reach out to our support team.
+
+Best regards,
+The <?= $appName ?? 'App' ?> Team
+
+---
+This email was sent to <?= $user['email'] ?? '' ?>. If you didn't create this account, please ignore this email.
+
+<?php
+// File: views/emails/verify-account.php
+?>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Your Account</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .verification-box {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 20px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .verify-button {
+            display: inline-block;
+            background: #007bff;
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Verify Your Account</h1>
+    
+    <p>Hello <?= $e($user['name'] ?? 'there') ?>,</p>
+    
+    <p>Please verify your email address to complete your account setup.</p>
+    
+    <div class="verification-box">
+        <p><strong>Important:</strong> You must verify your email within 24 hours, or your account will be automatically deleted.</p>
+        
+        <p>
+            <a href="<?= $e($verifyUrl) ?>" class="verify-button">Verify My Account</a>
+        </p>
+    </div>
+    
+    <p>If the button doesn't work, copy and paste this link into your browser:</p>
+    <p><?= $e($verifyUrl) ?></p>
+    
+    <p>If you didn't create this account, you can safely ignore this email.</p>
+</body>
+</html>
+
+<?php
+// File: views/emails/verify-account-text.php
+?>
+Verify Your Account
+
+Hello <?= $user['name'] ?? 'there' ?>,
+
+Please verify your email address to complete your account setup.
+
+IMPORTANT: You must verify your email within 24 hours, or your account will be automatically deleted.
+
+Click here to verify: <?= $verifyUrl ?>
+
+If you didn't create this account,
