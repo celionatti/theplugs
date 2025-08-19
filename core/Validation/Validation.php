@@ -8,6 +8,7 @@ use DateTime;
 use Countable;
 use DateTimeZone;
 use DateTimeInterface;
+use Plugs\Database\DB;
 use Plugs\Exceptions\Validation\ValidationException;
 
 class Validation
@@ -17,7 +18,7 @@ class Validation
     protected array $errors = [];
     protected array $customMessages = [];
     protected static array $customValidators = [];
-    
+
     protected static array $defaultMessages = [
         'required' => ':field is required.',
         'email' => ':field must be a valid email address.',
@@ -168,104 +169,104 @@ class Validation
     protected function validateConditionalRequired(string $ruleName, string $field, ?string $ruleValue): bool
     {
         $value = $this->getValue($field);
-        
+
         switch ($ruleName) {
             case 'required_if':
                 // Format: required_if:other_field,value
                 [$otherField, $otherValue] = explode(',', $ruleValue, 2);
                 $otherFieldValue = $this->getValue($otherField);
-                
+
                 if ((string)$otherFieldValue === (string)$otherValue && $this->isEmptyValue($value)) {
                     $this->addError($field, $this->getMessage('required_if', $field, $otherField, $otherValue));
                     return false;
                 }
                 break;
-                
+
             case 'required_unless':
                 // Format: required_unless:other_field,value1,value2
                 $parts = explode(',', $ruleValue);
                 $otherField = array_shift($parts);
                 $otherFieldValue = $this->getValue($otherField);
-                
+
                 if (!in_array((string)$otherFieldValue, $parts) && $this->isEmptyValue($value)) {
                     $this->addError($field, $this->getMessage('required_unless', $field, $otherField, implode(',', $parts)));
                     return false;
                 }
                 break;
-                
+
             case 'required_with':
                 // Format: required_with:field1,field2
                 $fields = explode(',', $ruleValue);
                 $anyPresent = false;
-                
+
                 foreach ($fields as $f) {
                     if (!$this->isEmptyValue($this->getValue($f))) {
                         $anyPresent = true;
                         break;
                     }
                 }
-                
+
                 if ($anyPresent && $this->isEmptyValue($value)) {
                     $this->addError($field, $this->getMessage('required_with', $field, $ruleValue));
                     return false;
                 }
                 break;
-                
+
             case 'required_with_all':
                 // Format: required_with_all:field1,field2
                 $fields = explode(',', $ruleValue);
                 $allPresent = true;
-                
+
                 foreach ($fields as $f) {
                     if ($this->isEmptyValue($this->getValue($f))) {
                         $allPresent = false;
                         break;
                     }
                 }
-                
+
                 if ($allPresent && $this->isEmptyValue($value)) {
                     $this->addError($field, $this->getMessage('required_with_all', $field, $ruleValue));
                     return false;
                 }
                 break;
-                
+
             case 'required_without':
                 // Format: required_without:field1,field2
                 $fields = explode(',', $ruleValue);
                 $anyMissing = false;
-                
+
                 foreach ($fields as $f) {
                     if ($this->isEmptyValue($this->getValue($f))) {
                         $anyMissing = true;
                         break;
                     }
                 }
-                
+
                 if ($anyMissing && $this->isEmptyValue($value)) {
                     $this->addError($field, $this->getMessage('required_without', $field, $ruleValue));
                     return false;
                 }
                 break;
-                
+
             case 'required_without_all':
                 // Format: required_without_all:field1,field2
                 $fields = explode(',', $ruleValue);
                 $allMissing = true;
-                
+
                 foreach ($fields as $f) {
                     if (!$this->isEmptyValue($this->getValue($f))) {
                         $allMissing = false;
                         break;
                     }
                 }
-                
+
                 if ($allMissing && $this->isEmptyValue($value)) {
                     $this->addError($field, $this->getMessage('required_without_all', $field, $ruleValue));
                     return false;
                 }
                 break;
         }
-        
+
         return true;
     }
 
@@ -588,38 +589,33 @@ class Validation
 
         [$table, $column] = explode('.', $tableColumn);
 
-        // Use dependency injection for database would be better
-        $db = Database::getInstance();
-        if (!$db) {
-            throw new ValidationException("Database connection not established");
-        }
-
-        $query = "SELECT COUNT(*) as count FROM {$table} WHERE {$column} = ?";
-        $params = [$value];
-
-        if (!empty($parts)) {
-            $additionalCondition = trim($parts[0]);
-
-            if (preg_match('/(\w+)\s*(=|!=|<|>|<=|>=)\s*(.+)/', $additionalCondition, $matches)) {
-                $conditionField = $matches[1];
-                $conditionOperator = $matches[2];
-                $conditionValue = $matches[3];
-
-                $query .= " AND {$conditionField} {$conditionOperator} ?";
-                $params[] = is_numeric($conditionValue) ? $conditionValue : trim($conditionValue, "'");
-            } else {
-                throw new ValidationException("Invalid condition format in unique validation.");
-            }
-        }
-
         try {
-            $result = $db->query($query, $params);
+            // Use your existing DB class
+            $query = DB::table($table)->where($column, $value);
 
-            if ($result === false) {
-                throw new ValidationException("Database query failed: " . $db->getLastError());
+            // Handle additional conditions (for ignoring current record during updates)
+            if (!empty($parts)) {
+                $additionalCondition = trim($parts[0]);
+
+                if (preg_match('/(\w+)\s*(=|!=|<|>|<=|>=)\s*(.+)/', $additionalCondition, $matches)) {
+                    $conditionField = $matches[1];
+                    $conditionOperator = $matches[2];
+                    $conditionValue = $matches[3];
+
+                    // Handle special case for ignoring current record
+                    if ($conditionValue === 'CURRENT_ID' && isset($this->data['id'])) {
+                        $conditionValue = $this->data['id'];
+                    }
+
+                    $query->where($conditionField, $conditionOperator, $conditionValue);
+                } else {
+                    throw new ValidationException("Invalid condition format in unique validation.");
+                }
             }
 
-            if (!empty($result) && $result[0]['count'] > 0) {
+            $count = $query->count();
+
+            if ($count > 0) {
                 $this->addError($field, $this->getMessage('unique', $field));
             }
         } catch (\Exception $e) {
@@ -659,14 +655,20 @@ class Validation
         $otherValue = $this->getValue($otherField);
 
         if ($otherValue === null) {
-            $this->addError($field, str_replace(':other', $this->formatFieldName($otherField),
-                $this->getMessage('same', $field)));
+            $this->addError($field, str_replace(
+                ':other',
+                $this->formatFieldName($otherField),
+                $this->getMessage('same', $field)
+            ));
             return;
         }
 
         if ($value !== $otherValue) {
-            $this->addError($field, str_replace(':other', $this->formatFieldName($otherField),
-                $this->getMessage('same', $field)));
+            $this->addError($field, str_replace(
+                ':other',
+                $this->formatFieldName($otherField),
+                $this->getMessage('same', $field)
+            ));
         }
     }
 
@@ -679,8 +681,11 @@ class Validation
         if ($otherValue === null) return;
 
         if ($value === $otherValue) {
-            $this->addError($field, str_replace(':other', $this->formatFieldName($otherField),
-                $this->getMessage('different', $field)));
+            $this->addError($field, str_replace(
+                ':other',
+                $this->formatFieldName($otherField),
+                $this->getMessage('different', $field)
+            ));
         }
     }
 
@@ -766,11 +771,11 @@ class Validation
 
     protected function isValidPassword(string $password): bool
     {
-        return strlen($password) >= 8 && 
-               preg_match('/[A-Z]/', $password) &&
-               preg_match('/[a-z]/', $password) &&
-               preg_match('/\d/', $password) &&
-               preg_match('/[^A-Za-z0-9]/', $password);
+        return strlen($password) >= 8 &&
+            preg_match('/[A-Z]/', $password) &&
+            preg_match('/[a-z]/', $password) &&
+            preg_match('/\d/', $password) &&
+            preg_match('/[^A-Za-z0-9]/', $password);
     }
 
     protected function validateFile(string $field): void
