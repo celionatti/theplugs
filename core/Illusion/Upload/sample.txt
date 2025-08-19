@@ -1,0 +1,121 @@
+/**
+ * Example Usage and Test Helper
+ */
+class UploadExample
+{
+    /**
+     * Example: Upload a single document
+     */
+    public static function uploadDocument(): void
+    {
+        try {
+            $result = Upload::file($_FILES['document'])
+                ->allowed(['pdf', 'docx', 'xlsx'])
+                ->maxSize(5 * 1024 * 1024) // 5MB
+                ->rename('slug')
+                ->process()
+                ->store('uploads/documents');
+
+            echo "Document uploaded: " . $result->getPath() . "\n";
+            
+        } catch (RuntimeException $e) {
+            echo "Upload failed: " . $e->getMessage() . "\n";
+        }
+    }
+
+    /**
+     * Example: Upload and optimize images
+     */
+    public static function uploadImage(): void
+    {
+        try {
+            $result = Upload::file($_FILES['photos'])
+                ->allowed(['images'])
+                ->maxSize(10 * 1024 * 1024) // 10MB
+                ->compress(80)
+                ->resize(1200, 800)
+                ->convertTo('webp')
+                ->process()
+                ->store('uploads/images');
+
+            foreach ($result->getFiles() as $file) {
+                echo "Image uploaded: {$file['stored_name']} ({$file['size']} bytes)\n";
+            }
+            
+        } catch (RuntimeException $e) {
+            echo "Upload failed: " . $e->getMessage() . "\n";
+        }
+    }
+
+    /**
+     * Example: Upload avatar with specific optimization
+     */
+    public static function uploadAvatar(): void
+    {
+        try {
+            $result = Upload::file($_FILES['avatar'])
+                ->allowed(['jpg', 'png'])
+                ->maxSize(2 * 1024 * 1024) // 2MB
+                ->compress(85)
+                ->resize(300, 300, 'center')
+                ->convertTo('webp')
+                ->preserveExif(false)
+                ->process()
+                ->store('uploads/avatars');
+
+            $file = $result->getFile();
+            echo "Avatar uploaded: {$file['stored_name']}\n";
+            
+        } catch (RuntimeException $e) {
+            echo "Upload failed: " . $e->getMessage() . "\n";
+        }
+    }
+
+    /**
+     * Example: Bulk upload with mixed file types
+     */
+    public static function uploadMixed(): void
+    {
+        try {
+            $result = Upload::file($_FILES['mixed_files'])
+                ->allowed(['documents', 'images', 'archives'])
+                ->maxSize(20 * 1024 * 1024) // 20MB
+                ->compress(75) // Only affects images
+                ->process()
+                ->store('uploads/mixed');
+
+            echo "Uploaded {$result->count()} files:\n";
+            foreach ($result->getFiles() as $file) {
+                echo "- {$file['stored_name']} ({$file['type']})\n";
+            }
+            
+        } catch (RuntimeException $e) {
+            echo "Upload failed: " . $e->getMessage() . "\n";
+        }
+    }
+
+    /**
+     * Example: Using predefined configurations
+     */
+    public static function uploadWithConfig(): void
+    {
+        $config = UploadConfig::avatars();
+        
+        try {
+            $upload = Upload::file($_FILES['avatar'])
+                ->allowed($config['allowed'])
+                ->maxSize($config['maxSize'])
+                ->compress($config['compress'])
+                ->resize(...$config['resize'])
+                ->convertTo($config['convertTo'])
+                ->rename($config['rename']);
+
+            $result = $upload->process()->store('uploads/avatars');
+            
+            echo "Avatar uploaded with config: " . $result->getPath() . "\n";
+            
+        } catch (RuntimeException $e) {
+            echo "Upload failed: " . $e->getMessage() . "\n";
+        }
+    }
+}
