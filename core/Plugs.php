@@ -12,6 +12,7 @@ use Plugs\Container\Container;
 use Plugs\Http\Request\Request;
 use Plugs\Http\Response\Response;
 use Plugs\Services\ServiceProvider;
+use Plugs\Config;
 use Plugs\Exceptions\Handler\ExceptionHandler;
 use Plugs\Services\Providers\ViewServiceProvider;
 use Plugs\Services\Providers\SessionServiceProvider;
@@ -23,7 +24,7 @@ class Plugs
      */
     private static ?Plugs $instance = null;
 
-    private Container $container;
+    public Container $container;
 
     /**
      * The base path of the application.
@@ -153,7 +154,31 @@ class Plugs
      */
     public function storagePath(string $path = ''): string
     {
-        return $this->basePath('routes') . ($path ? DIRECTORY_SEPARATOR . $path : '');
+        return $this->basePath('storage') . ($path ? DIRECTORY_SEPARATOR . $path : '');
+    }
+
+    /**
+     * Get the path to the application directory.
+     */
+    public function appPath(string $path = ''): string
+    {
+        return $this->basePath('app') . ($path ? DIRECTORY_SEPARATOR . $path : '');
+    }
+
+    /**
+     * Get the path to the resources directory.
+     */
+    public function resourcePath(string $path = ''): string
+    {
+        return $this->basePath('resources') . ($path ? DIRECTORY_SEPARATOR . $path : '');
+    }
+
+    /**
+     * Get the path to the public directory.
+     */
+    public function publicPath(string $path = ''): string
+    {
+        return $this->basePath('public') . ($path ? DIRECTORY_SEPARATOR . $path : '');
     }
 
     /**
@@ -167,7 +192,7 @@ class Plugs
 
         $this->loadFunctions();
         $this->loadEnvironmentConfiguration();
-        $this->loadConfiguration();
+        $this->loadConfiguration(); // This now initializes Config class
         $this->registerServiceProviders();
         $this->bootServiceProviders();
         $this->loadRoutes();
@@ -353,6 +378,7 @@ class Plugs
             [
                 'app' => [self::class, Container::class],
                 'view' => [View::class, 'Plugs\View\View'],
+                'config' => [Config::class, 'Plugs\Config\Config'], // Add config alias
                 // 'router' => [Router::class, 'Plugs\Http\Router\Router'],
             ] as $key => $aliases
         ) {
@@ -368,8 +394,12 @@ class Plugs
     protected function bindPathsInContainer(): void
     {
         $this->container->instance('path.base', $this->basePath());
+        $this->container->instance('path.app', $this->appPath());
         $this->container->instance('path.config', $this->configPath());
         $this->container->instance('path.routes', $this->routesPath());
+        $this->container->instance('path.storage', $this->storagePath());
+        $this->container->instance('path.resources', $this->resourcePath());
+        $this->container->instance('path.public', $this->publicPath());
         $this->container->instance('path.url', $this->urlPath());
     }
 
@@ -392,9 +422,83 @@ class Plugs
     }
 
     /**
-     * Load configuration files.
+     * Load configuration files using the new Config class.
      */
     protected function loadConfiguration(): void
+    {
+        try {
+            // Initialize the Config class with the config directory
+            Config::initialize($this->configPath());
+
+            // Load all configuration files
+            Config::loadAll();
+
+            // Apply environment-specific overrides if they exist
+            $this->loadEnvironmentSpecificConfiguration();
+
+            // Bind config instance to container
+            $this->container->singleton('config', function () {
+                return new class {
+                    public function get(string $key, mixed $default = null): mixed
+                    {
+                        return Config::get($key, $default);
+                    }
+
+                    public function set(string $key, mixed $value): void
+                    {
+                        Config::set($key, $value);
+                    }
+
+                    public function has(string $key): bool
+                    {
+                        return Config::has($key);
+                    }
+
+                    public function all(): array
+                    {
+                        return Config::all();
+                    }
+                };
+            });
+
+            // Update environment and URL path from config if not set in .env
+            if (!isset($_ENV['APP_ENV'])) {
+                $this->environment = Config::get('app.env', $this->environment);
+            }
+
+            if (!isset($_ENV['APP_URL_PATH'])) {
+                $this->urlPath = Config::get('app.url_path', $this->urlPath);
+            }
+        } catch (\Exception $e) {
+            // Fallback to old configuration loading if Config class fails
+            $this->loadLegacyConfiguration();
+        }
+    }
+
+    /**
+     * Load environment-specific configuration overrides.
+     */
+    protected function loadEnvironmentSpecificConfiguration(): void
+    {
+        $envConfigFile = $this->configPath("environments/{$this->environment}.php");
+
+        if (file_exists($envConfigFile)) {
+            $envConfig = require $envConfigFile;
+
+            if (is_array($envConfig)) {
+                foreach ($envConfig as $file => $config) {
+                    if (is_array($config)) {
+                        Config::merge($file, $config);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Fallback method for legacy configuration loading.
+     */
+    protected function loadLegacyConfiguration(): void
     {
         $configPath = $this->configPath('app.php');
 
@@ -409,13 +513,29 @@ class Plugs
      */
     protected function registerServiceProviders(): void
     {
-        $providersFile = $this->configPath('providers.php');
+        // Try to get providers from new Config class first
+        try {
+            $providers = Config::get('app.providers', []);
 
-        if (file_exists($providersFile)) {
-            $providers = require $providersFile;
+            // Fallback to old providers.php file if config doesn't have providers
+            if (empty($providers)) {
+                $providersFile = $this->configPath('providers.php');
+                if (file_exists($providersFile)) {
+                    $providers = require $providersFile;
+                }
+            }
 
             foreach ($providers as $provider) {
                 $this->register($provider);
+            }
+        } catch (\Exception $e) {
+            // Fallback to legacy providers file
+            $providersFile = $this->configPath('providers.php');
+            if (file_exists($providersFile)) {
+                $providers = require $providersFile;
+                foreach ($providers as $provider) {
+                    $this->register($provider);
+                }
             }
         }
     }
@@ -454,6 +574,18 @@ class Plugs
         // Logic to determine if middleware should be skipped
         // For example, check for specific routes or request types
         return false;
+    }
+
+    /**
+     * Get a configuration value (helper method).
+     */
+    public function config(string $key, mixed $default = null): mixed
+    {
+        try {
+            return Config::get($key, $default);
+        } catch (\Exception $e) {
+            return $default;
+        }
     }
 
     /**
