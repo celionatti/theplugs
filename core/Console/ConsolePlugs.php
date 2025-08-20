@@ -19,6 +19,7 @@ class ConsolePlugs
         $name   = $parser->commandName() ?? 'help';
         $input  = $parser->input();
         $output = new Output();
+        $output->header("Plugs Console");
 
         try {
             $command = $this->kernel->resolve($name);

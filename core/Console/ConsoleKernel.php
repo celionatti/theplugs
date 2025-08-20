@@ -8,6 +8,8 @@ use Plugs\Console\Commands\HelpCommand;
 use Plugs\Console\Commands\DbSeedCommand;
 use Plugs\Console\Commands\MakeModelCommand;
 use Plugs\Console\Commands\RouteListCommand;
+use Plugs\Console\Commands\CacheClearCommand;
+use Plugs\Console\Commands\ConfigCacheCommand;
 use Plugs\Console\Commands\KeyGenerateCommand;
 use Plugs\Console\Commands\MakeCommandCommand;
 use Plugs\Console\Commands\MakeFrameworkCommand;
@@ -25,8 +27,8 @@ class ConsoleKernel
         'make:migration'  => MakeMigrationCommand::class,
         'make:command'    => MakeCommandCommand::class,
         'key:generate'    => KeyGenerateCommand::class,
-        // 'cache:clear'     => CacheClearCommand::class,
-        // 'config:cache'    => ConfigCacheCommand::class,
+        'cache:clear'     => CacheClearCommand::class,
+        'config:cache'    => ConfigCacheCommand::class,
         'route:list'      => RouteListCommand::class,
         'db:seed'         => DbSeedCommand::class,
     ];
