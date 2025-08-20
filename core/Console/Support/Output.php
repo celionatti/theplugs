@@ -53,19 +53,22 @@ class Output
 
     public function header(string $text): void
     {
-        $width = max(60, strlen($text) + 20);
-        $padding = ($width - strlen($text) - 2) / 2;
+        // Account for emoji width (🚀 = 2 display chars but 4 bytes)
+        $textWithEmojis = "🚀 $text 🚀";
+        $displayWidth = mb_strwidth($textWithEmojis);
+        $width = max(60, $displayWidth + 10);
+        $padding = ($width - $displayWidth) / 2;
         
         echo "\n";
         echo self::GRADIENT_PURPLE . self::BOLD . "╔" . str_repeat("═", $width - 2) . "╗" . self::RESET . "\n";
-        echo self::GRADIENT_PURPLE . self::BOLD . "║" . str_repeat(" ", (int)floor($padding)) . "🚀 " . self::BRIGHT_WHITE . self::BOLD . $text . self::GRADIENT_PURPLE . " 🚀" . str_repeat(" ", (int)ceil($padding) - 1) . "║" . self::RESET . "\n";
+        echo self::GRADIENT_PURPLE . self::BOLD . "║" . str_repeat(" ", (int)floor($padding)) . "🚀 " . self::BRIGHT_WHITE . self::BOLD . $text . self::GRADIENT_PURPLE . " 🚀" . str_repeat(" ", (int)ceil($padding)) . "║" . self::RESET . "\n";
         echo self::GRADIENT_PURPLE . self::BOLD . "╚" . str_repeat("═", $width - 2) . "╝" . self::RESET . "\n\n";
     }
 
     public function subHeader(string $text): void
     {
         echo "\n" . self::GRADIENT_TEAL . self::BOLD . "▶ " . $text . self::RESET . "\n";
-        echo self::DIM . str_repeat("─", strlen($text) + 2) . self::RESET . "\n";
+        echo self::DIM . str_repeat("─", mb_strwidth($text) + 2) . self::RESET . "\n";
     }
 
     public function line(string $text = ''): void
@@ -108,16 +111,32 @@ class Output
         $this->line(self::DIM . "🐛 Debug: " . $text . self::RESET);
     }
 
-    public function spinner(string $message, int $seconds = 2): void
+    public function spinner(string $message, int|callable $secondsOrCallback = 2): void
     {
         $frames = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
-        $end = time() + $seconds;
         $i = 0;
         
-        while (time() < $end) {
-            echo "\r" . self::BRIGHT_CYAN . $frames[$i++ % count($frames)] . self::RESET . " $message";
-            usleep(120000);
+        if (is_callable($secondsOrCallback)) {
+            // Use closure to determine when to stop
+            while (!$secondsOrCallback()) {
+                echo "\r" . self::BRIGHT_CYAN . $frames[$i++ % count($frames)] . self::RESET . " $message";
+                usleep(120000);
+                
+                // Prevent infinite loops - max 60 seconds
+                if ($i > 500) {
+                    $this->warning("Spinner timeout reached");
+                    break;
+                }
+            }
+        } else {
+            // Use time-based approach
+            $end = time() + $secondsOrCallback;
+            while (time() < $end) {
+                echo "\r" . self::BRIGHT_CYAN . $frames[$i++ % count($frames)] . self::RESET . " $message";
+                usleep(120000);
+            }
         }
+        
         echo "\r" . self::BRIGHT_GREEN . "✔" . self::RESET . " $message" . str_repeat(" ", 10) . "\n";
     }
 
@@ -148,15 +167,15 @@ class Output
         }
 
         $cols = count($headers);
-        $widths = array_map(static fn($h) => mb_strlen((string)$h), $headers);
+        $widths = array_map(static fn($h) => mb_strwidth((string)$h), $headers);
         
         foreach ($rows as $row) {
             for ($i = 0; $i < $cols; $i++) {
-                $widths[$i] = max($widths[$i], mb_strlen((string)($row[$i] ?? '')));
+                $widths[$i] = max($widths[$i], mb_strwidth((string)($row[$i] ?? '')));
             }
         }
 
-        $pad = fn($s, $w) => str_pad((string)$s, $w);
+        $pad = fn($s, $w) => str_pad((string)$s, $w + (strlen($s) - mb_strwidth($s)));
         
         // Top border
         echo self::BRIGHT_CYAN . "╭" . implode("┬", array_map(fn($w) => str_repeat("─", $w + 2), $widths)) . "╮" . self::RESET . "\n";
@@ -190,9 +209,16 @@ class Output
     public function box(string $content, string $title = '', string $type = 'info'): void
     {
         $lines = explode("\n", $content);
-        $maxWidth = max(array_map('strlen', $lines));
-        $maxWidth = max($maxWidth, strlen($title));
-        $width = $maxWidth + 4;
+        
+        // Calculate actual display width accounting for multibyte characters and ANSI codes
+        $maxContentWidth = 0;
+        foreach ($lines as $line) {
+            $maxContentWidth = max($maxContentWidth, mb_strwidth($this->stripAnsiCodes($line)));
+        }
+        
+        $titleWidth = mb_strwidth($title);
+        $contentWidth = max($maxContentWidth, $titleWidth);
+        $boxWidth = $contentWidth + 4; // 2 spaces on each side
 
         $colors = [
             'info' => self::BRIGHT_BLUE,
@@ -205,23 +231,33 @@ class Output
         $color = $colors[$type] ?? self::BRIGHT_BLUE;
 
         // Top border
-        echo $color . "╭" . str_repeat("─", $width - 2) . "╮" . self::RESET . "\n";
+        echo $color . "╭" . str_repeat("─", $boxWidth - 2) . "╮" . self::RESET . "\n";
         
         // Title
         if ($title) {
-            $titlePadding = ($width - strlen($title) - 4) / 2;
+            $titlePadding = ($boxWidth - $titleWidth - 4) / 2;
             echo $color . "│" . self::RESET . str_repeat(" ", (int)floor($titlePadding)) . self::BOLD . $title . self::RESET . str_repeat(" ", (int)ceil($titlePadding)) . $color . "│" . self::RESET . "\n";
-            echo $color . "├" . str_repeat("─", $width - 2) . "┤" . self::RESET . "\n";
+            echo $color . "├" . str_repeat("─", $boxWidth - 2) . "┤" . self::RESET . "\n";
         }
         
         // Content
         foreach ($lines as $line) {
-            $padding = $width - strlen($line) - 4;
+            $cleanLine = $this->stripAnsiCodes($line);
+            $lineWidth = mb_strwidth($cleanLine);
+            $padding = $contentWidth - $lineWidth;
             echo $color . "│" . self::RESET . " " . $line . str_repeat(" ", $padding + 1) . $color . "│" . self::RESET . "\n";
         }
         
         // Bottom border
-        echo $color . "╰" . str_repeat("─", $width - 2) . "╯" . self::RESET . "\n\n";
+        echo $color . "╰" . str_repeat("─", $boxWidth - 2) . "╯" . self::RESET . "\n\n";
+    }
+
+    /**
+     * Strip ANSI escape codes from string for accurate width calculation
+     */
+    private function stripAnsiCodes(string $text): string
+    {
+        return preg_replace('/\033\[[0-9;]*m/', '', $text);
     }
 
     public function countdown(int $seconds, string $message = 'Starting in'): void
@@ -246,12 +282,13 @@ class Output
             self::BRIGHT_BLUE
         ];
         
-        $len = strlen($text);
+        $chars = mb_str_split($text);
+        $len = count($chars);
         $colorCount = count($colors);
         
         for ($i = 0; $i < $len; $i++) {
-            $colorIndex = (int)(($i / $len) * ($colorCount - 1));
-            echo $colors[$colorIndex] . $text[$i];
+            $colorIndex = (int)(($i / max(1, $len - 1)) * ($colorCount - 1));
+            echo $colors[$colorIndex] . $chars[$i];
         }
         echo self::RESET . "\n";
     }
@@ -259,9 +296,10 @@ class Output
     public function banner(string $text): void
     {
         echo "\n";
-        $this->gradient(str_repeat("█", strlen($text) + 10));
+        $bannerChars = str_repeat("█", mb_strwidth($text) + 10);
+        $this->gradient($bannerChars);
         echo self::BOLD . self::BRIGHT_WHITE . str_repeat(" ", 5) . $text . str_repeat(" ", 5) . self::RESET . "\n";
-        $this->gradient(str_repeat("█", strlen($text) + 10));
+        $this->gradient($bannerChars);
         echo "\n";
     }
 
