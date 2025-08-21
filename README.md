@@ -1,5 +1,7 @@
 # The Plug's
 
+![Project Logo](/docs/logo.png)
+
 [![Latest Version](https://img.shields.io/packagist/v/theplugs/theplugs.svg?style=flat-square)](https://packagist.org/packages/theplugs/theplugs)
 [![Total Downloads](https://img.shields.io/packagist/dt/theplugs/theplugs.svg?style=flat-square)](https://packagist.org/packages/theplugs/theplugs)
 [![License](https://img.shields.io/packagist/l/theplugs/theplugs.svg?style=flat-square)](https://packagist.org/packages/theplugs/theplugs)
@@ -15,9 +17,9 @@ A modern, expressive PHP framework for building robust web applications. Inspire
 - **HTTP Layer**: Clean request/response abstraction
 - **Database Toolkit**: Query builder, migrations, factories, and ORM
 - **Validation**: Intuitive data validation system
-- **Console Commands**: Artisan-like command system
-- **Email Services**: SMTP, Mailgun, and other drivers
-- **Template Engine**: Blade-like templating system
+- **Console Commands**: Artisan-like(theplugs) command system
+- **Email Services**: SMTP, and other drivers
+- **Template Engine**: Blade-like(plug) templating system
 - **Authentication**: Ready-to-use auth system
 - **Testing Helpers**: Built-in testing support
 
