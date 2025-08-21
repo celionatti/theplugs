@@ -9,6 +9,7 @@
 /resources/
 /routes/
 /config/
+/storage/
 /app
 /notes
 /bootstrap
