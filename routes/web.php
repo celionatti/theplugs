@@ -11,7 +11,7 @@ Route::get('/', function() {
 
 Route::get('/user', function() {
     return '<h1>Welcome to Plugs Framework!</h1> <br> This is the user page.';
-})->name('user');
+});
 
 Route::get('/contact', [HomeController::class, 'contact'])->name('contact')->middleware('auth');
 
