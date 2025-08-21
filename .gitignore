@@ -7,6 +7,7 @@
 /.idea/
 /.cache/
 /resources/
+/routes/
 /app
 /notes
 /bootstrap
