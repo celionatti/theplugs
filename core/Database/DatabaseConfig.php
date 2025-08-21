@@ -67,7 +67,7 @@ class DatabaseConfig
         ];
     }
 
-    public static function getConnection(string $name = null): PDO
+    public static function getConnection(?string $name = null): PDO
     {
         $name = $name ?? self::$config['default'];
 

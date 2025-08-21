@@ -84,18 +84,6 @@ class Router
 
     // Route registration
 
-    // private function addRoute(array $methods, string $uri, mixed $action): RouteDefinition
-    // {
-    //     $route = new RouteDefinition($methods, $uri, $action);
-
-    //     // Apply current group attributes
-    //     $this->applyGroupAttributes($route);
-
-    //     $this->routes->add($route);
-
-    //     return $route;
-    // }
-
     private function addRoute(array $methods, string $uri, mixed $action): RouteDefinition
     {
         // Prepend base path to the URI if it's not empty
@@ -206,20 +194,6 @@ class Router
 
         return $this->buildUrl($route->getUri(), $parameters);
     }
-
-    // private function buildUrl(string $pattern, array $parameters): string
-    // {
-    //     $url = $pattern;
-
-    //     foreach ($parameters as $key => $value) {
-    //         $url = str_replace(['{' . $key . '}', '{' . $key . '?}'], $value, $url);
-    //     }
-
-    //     // Remove optional parameters that weren't provided
-    //     $url = preg_replace('/\{[^}]+\?\}/', '', $url);
-
-    //     return $url;
-    // }
 
     private function buildUrl(string $pattern, array $parameters): string
     {
