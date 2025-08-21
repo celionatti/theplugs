@@ -42,4 +42,4 @@ If you discover any security-related issues, please email <celionatti@gmail.com>
 
 ## License
 
-The MIT License (MIT). Please see [License File](LICENSE.md) for more information.
+ThePlugs is open-sourced software licensed under the [MIT license](LICENSE.md).
