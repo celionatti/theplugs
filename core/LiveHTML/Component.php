@@ -73,7 +73,7 @@ abstract class Component
     /**
      * Mount method - handle initial parameters
      */
-    public function mount(): void
+    public function mount(...$parameters): void
     {
         // Override in child classes to handle parameters
     }
