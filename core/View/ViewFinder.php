@@ -4,287 +4,153 @@ declare(strict_types=1);
 
 namespace Plugs\View;
 
-use Plugs\Exceptions\View\ViewException;
+use Plugs\Exceptions\View\ViewNotFoundException;
 
 class ViewFinder
 {
     protected array $paths = [];
-    protected array $extensions = ['.plug.php', '.php', '.html'];
-    protected array $viewCache = [];
+    protected array $views = [];
+    protected array $extensions = ['plug.php', 'php'];
+    protected array $namespaces = [];
 
     public function __construct(array $paths = [])
     {
-        $this->paths = array_map(fn($path) => rtrim($path, '/'), $paths);
+        $this->paths = array_map([$this, 'resolvePath'], $paths);
     }
 
-    /**
-     * Add a new view path.
-     */
-    public function addPath(string $path): void
+    public function find(string $name): string
     {
-        $path = rtrim($path, '/');
-        if (!in_array($path, $this->paths)) {
-            $this->paths[] = $path;
+        if (isset($this->views[$name])) {
+            return $this->views[$name];
+        }
+
+        if ($this->hasHintInformation($name)) {
+            return $this->views[$name] = $this->findNamespacedView($name);
+        }
+
+        return $this->views[$name] = $this->findInPaths($name, $this->paths);
+    }
+
+    protected function findNamespacedView(string $name): string
+    {
+        [$namespace, $view] = $this->parseNamespace($name);
+
+        return $this->findInPaths($view, $this->namespaces[$namespace]);
+    }
+
+    protected function parseNamespace(string $name): array
+    {
+        $segments = explode('::', $name);
+        
+        if (count($segments) !== 2) {
+            throw new \InvalidArgumentException("View [{$name}] has an invalid name.");
+        }
+
+        if (!isset($this->namespaces[$segments[0]])) {
+            throw new \InvalidArgumentException("No hint path defined for [{$segments[0]}].");
+        }
+
+        return $segments;
+    }
+
+    protected function findInPaths(string $name, array $paths): string
+    {
+        foreach ($paths as $path) {
+            foreach ($this->getPossibleViewFiles($name) as $file) {
+                if (file_exists($viewPath = $path . DIRECTORY_SEPARATOR . $file)) {
+                    return $viewPath;
+                }
+            }
+        }
+
+        throw new ViewNotFoundException($name, $paths);
+    }
+
+    protected function getPossibleViewFiles(string $name): array
+    {
+        return array_map(function ($extension) use ($name) {
+            return str_replace('.', DIRECTORY_SEPARATOR, $name) . '.' . $extension;
+        }, $this->extensions);
+    }
+
+    protected function hasHintInformation(string $name): bool
+    {
+        return strpos($name, '::') > 0;
+    }
+
+    public function addLocation(string $location): void
+    {
+        $this->paths[] = $this->resolvePath($location);
+    }
+
+    public function prependLocation(string $location): void
+    {
+        array_unshift($this->paths, $this->resolvePath($location));
+    }
+
+    public function addNamespace(string $namespace, string|array $hints): void
+    {
+        $hints = (array) $hints;
+        
+        if (isset($this->namespaces[$namespace])) {
+            $hints = array_merge($this->namespaces[$namespace], $hints);
+        }
+
+        $this->namespaces[$namespace] = $hints;
+    }
+
+    public function prependNamespace(string $namespace, string|array $hints): void
+    {
+        $hints = (array) $hints;
+        
+        if (isset($this->namespaces[$namespace])) {
+            $hints = array_merge($hints, $this->namespaces[$namespace]);
+        }
+
+        $this->namespaces[$namespace] = $hints;
+    }
+
+    public function addExtension(string $extension): void
+    {
+        if (($index = array_search($extension, $this->extensions)) !== false) {
+            unset($this->extensions[$index]);
+        }
+
+        array_unshift($this->extensions, $extension);
+    }
+
+    public function exists(string $view): bool
+    {
+        try {
+            $this->find($view);
+            return true;
+        } catch (ViewNotFoundException) {
+            return false;
         }
     }
 
-    /**
-     * Prepend a view path to the beginning.
-     */
-    public function prependPath(string $path): void
+    public function flush(): void
     {
-        $path = rtrim($path, '/');
-        array_unshift($this->paths, $path);
+        $this->views = [];
     }
 
-    /**
-     * Get all registered paths.
-     */
+    protected function resolvePath(string $path): string
+    {
+        return realpath($path) ?: $path;
+    }
+
     public function getPaths(): array
     {
         return $this->paths;
     }
 
-    /**
-     * Set the view file extensions.
-     */
-    public function addExtension(string $extension): void
+    public function getNamespaces(): array
     {
-        if (!in_array($extension, $this->extensions)) {
-            $this->extensions[] = $extension;
-        }
+        return $this->namespaces;
     }
 
-    /**
-     * Get registered extensions.
-     */
     public function getExtensions(): array
     {
         return $this->extensions;
-    }
-
-    /**
-     * Find a view file by name.
-     */
-    public function find(string $name): string
-    {
-        // Check cache first
-        if (isset($this->viewCache[$name])) {
-            return $this->viewCache[$name];
-        }
-
-        // Normalize view name (convert dots to slashes)
-        $name = $this->normalizeName($name);
-
-        // Search through paths and extensions
-        foreach ($this->paths as $path) {
-            foreach ($this->extensions as $extension) {
-                $viewPath = $path . '/' . $name . $extension;
-                
-                if (file_exists($viewPath)) {
-                    return $this->viewCache[$name] = $viewPath;
-                }
-            }
-        }
-
-        throw new ViewException(
-            "View '{$name}' not found. Searched in paths: " . implode(', ', $this->paths) . 
-            " with extensions: " . implode(', ', $this->extensions)
-        );
-    }
-
-    /**
-     * Check if a view exists.
-     */
-    public function exists(string $name): bool
-    {
-        try {
-            $this->find($name);
-            return true;
-        } catch (ViewException $e) {
-            return false;
-        }
-    }
-
-    /**
-     * Get the fully qualified location of the view.
-     */
-    public function getViewLocation(string $name): array
-    {
-        $path = $this->find($name);
-        
-        return [
-            'path' => $path,
-            'name' => $name,
-            'extension' => $this->getFileExtension($path),
-            'directory' => dirname($path),
-            'filename' => basename($path)
-        ];
-    }
-
-    /**
-     * Clear the view cache.
-     */
-    public function clearCache(): void
-    {
-        $this->viewCache = [];
-    }
-
-    /**
-     * Get all views in the registered paths.
-     */
-    public function getAllViews(): array
-    {
-        $views = [];
-
-        foreach ($this->paths as $path) {
-            if (!is_dir($path)) {
-                continue;
-            }
-
-            $iterator = new \RecursiveIteratorIterator(
-                new \RecursiveDirectoryIterator($path, \RecursiveDirectoryIterator::SKIP_DOTS)
-            );
-
-            foreach ($iterator as $file) {
-                if ($file->isFile()) {
-                    $extension = '.' . $file->getExtension();
-                    
-                    if (in_array($extension, $this->extensions)) {
-                        $relativePath = $this->getRelativePath($file->getPathname(), $path);
-                        $viewName = $this->pathToViewName($relativePath, $extension);
-                        $views[$viewName] = $file->getPathname();
-                    }
-                }
-            }
-        }
-
-        return $views;
-    }
-
-    /**
-     * Get views that match a pattern.
-     */
-    public function getViewsMatching(string $pattern): array
-    {
-        $allViews = $this->getAllViews();
-        $matchingViews = [];
-
-        foreach ($allViews as $name => $path) {
-            if ($this->matchesPattern($name, $pattern)) {
-                $matchingViews[$name] = $path;
-            }
-        }
-
-        return $matchingViews;
-    }
-
-    /**
-     * Normalize view name (convert dots to directory separators).
-     */
-    protected function normalizeName(string $name): string
-    {
-        return str_replace('.', '/', $name);
-    }
-
-    /**
-     * Get file extension from path.
-     */
-    protected function getFileExtension(string $path): string
-    {
-        foreach ($this->extensions as $extension) {
-            if (str_ends_with($path, $extension)) {
-                return $extension;
-            }
-        }
-
-        return pathinfo($path, PATHINFO_EXTENSION);
-    }
-
-    /**
-     * Get relative path from base path.
-     */
-    protected function getRelativePath(string $fullPath, string $basePath): string
-    {
-        return ltrim(str_replace($basePath, '', $fullPath), '/\\');
-    }
-
-    /**
-     * Convert file path to view name.
-     */
-    protected function pathToViewName(string $path, string $extension): string
-    {
-        $name = str_replace($extension, '', $path);
-        return str_replace(['/', '\\'], '.', $name);
-    }
-
-    /**
-     * Check if view name matches pattern.
-     */
-    protected function matchesPattern(string $name, string $pattern): bool
-    {
-        // Simple exact match
-        if ($pattern === $name) {
-            return true;
-        }
-
-        // Wildcard matching
-        if (str_contains($pattern, '*')) {
-            $regex = str_replace('\*', '.*', preg_quote($pattern, '/'));
-            return (bool) preg_match("/^{$regex}$/", $name);
-        }
-
-        // Prefix matching (ends with *)
-        if (str_ends_with($pattern, '*')) {
-            $prefix = rtrim($pattern, '*');
-            return str_starts_with($name, $prefix);
-        }
-
-        return false;
-    }
-
-    /**
-     * Get view namespace from name.
-     */
-    public function getNamespace(string $name): ?string
-    {
-        if (str_contains($name, '::')) {
-            return explode('::', $name, 2)[0];
-        }
-
-        return null;
-    }
-
-    /**
-     * Parse namespaced view name.
-     */
-    public function parseNamespaceView(string $name): array
-    {
-        if (str_contains($name, '::')) {
-            $segments = explode('::', $name, 2);
-            return ['namespace' => $segments[0], 'view' => $segments[1]];
-        }
-
-        return ['namespace' => null, 'view' => $name];
-    }
-
-    /**
-     * Add a namespace hint.
-     */
-    public function addNamespace(string $namespace, string|array $hints): void
-    {
-        $hints = (array) $hints;
-        
-        foreach ($hints as $hint) {
-            $this->addPath($hint);
-        }
-    }
-
-    /**
-     * Flush the view cache and recompile all views.
-     */
-    public function flush(): void
-    {
-        $this->clearCache();
     }
 }

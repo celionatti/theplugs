@@ -1,5 +1,43 @@
 <?php
 
+if (!function_exists('view')) {
+    /**
+     * Get the evaluated view contents for the given view.
+     */
+    function view(?string $view = null, array $data = [], array $mergeData = []): mixed
+    {
+        $factory = app('view');
+
+        if (func_num_args() === 0) {
+            return $factory;
+        }
+
+        $data = array_merge($mergeData, $data);
+
+        return $factory->make($view, $data);
+    }
+}
+
+if (!function_exists('resource_path')) {
+    /**
+     * Get the path to the resources folder.
+     */
+    function resource_path(string $path = ''): string
+    {
+        return app()->resourcePath($path);
+    }
+}
+
+if (!function_exists('storage_path')) {
+    /**
+     * Get the path to the storage folder.
+     */
+    function storage_path(string $path = ''): string
+    {
+        return app()->storagePath($path);
+    }
+}
+
 if (!function_exists('asset')) {
     /**
      * Generate an asset URL.
@@ -14,16 +52,16 @@ if (!function_exists('asset')) {
     }
 }
 
-if (!function_exists('url')) {
-    /**
-     * Generate a URL for the application.
-     */
-    function url(string $path = ''): string
-    {
-        $app = app();
-        return $app->urlPath($path);
-    }
-}
+// if (!function_exists('url')) {
+//     /**
+//      * Generate a URL for the application.
+//      */
+//     function url(string $path = ''): string
+//     {
+//         $app = app();
+//         return $app->urlPath($path);
+//     }
+// }
 
 if (!function_exists('route')) {
     /**

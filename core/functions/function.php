@@ -15,20 +15,32 @@ if (!function_exists('env')) {
      */
     function env(string $key, mixed $default = null): mixed
     {
-        $value = $_ENV[$key] ?? $_SERVER[$key] ?? null;
+        $value = $_ENV[$key] ?? $_SERVER[$key] ?? getenv($key);
 
-        if ($value === null) {
+        if ($value === false) {
             return $default;
         }
 
-        // Handle boolean-like strings
-        return match (strtolower(trim($value))) {
-            'true', '(true)', '1', 'yes', 'on' => true,
-            'false', '(false)', '0', 'no', 'off', '' => false,
-            'null', '(null)' => null,
-            'empty', '(empty)' => '',
-            default => $value
-        };
+        switch (strtolower($value)) {
+            case 'true':
+            case '(true)':
+                return true;
+            case 'false':
+            case '(false)':
+                return false;
+            case 'empty':
+            case '(empty)':
+                return '';
+            case 'null':
+            case '(null)':
+                return null;
+        }
+
+        if (str_starts_with($value, '"') && str_ends_with($value, '"')) {
+            return substr($value, 1, -1);
+        }
+
+        return $value;
     }
 }
 
@@ -102,20 +114,6 @@ if (!function_exists('resolve')) {
     function resolve(string $name, array $parameters = []): mixed
     {
         return app($name, $parameters);
-    }
-}
-
-if (!function_exists("view")) {
-    /**
-     * Get the evaluated view contents for the given view.
-     *
-     * @param string|null $view
-     * @param array $data
-     * @return \Plugs\View\View|string
-     */
-    function view(?string $view = null, array $data = []): View
-    {
-        return View::make($view, $data);
     }
 }
 
