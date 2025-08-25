@@ -24,7 +24,7 @@ class SessionManager implements SessionInterface
     {
         $this->config = $config;
         $this->driver = $this->createDriver();
-        
+
         if ($config['encrypt'] ?? false) {
             $this->encryptor = new SessionEncryptor($config['key']);
         }
@@ -36,7 +36,7 @@ class SessionManager implements SessionInterface
     private function createDriver(): SessionDriverInterface
     {
         $driver = $this->config['driver'] ?? 'file';
-        
+
         return match ($driver) {
             'file' => new FileSessionDriver($this->config),
             'database' => new DatabaseSessionDriver($this->config),
@@ -55,7 +55,7 @@ class SessionManager implements SessionInterface
         }
 
         $this->configureSession();
-        
+
         if (session_status() === PHP_SESSION_NONE) {
             if (!session_start()) {
                 return false;
@@ -83,7 +83,7 @@ class SessionManager implements SessionInterface
         ini_set('session.cookie_httponly', $this->config['http_only'] ? '1' : '0');
         ini_set('session.cookie_samesite', $this->config['same_site'] ?? 'Lax');
         ini_set('session.gc_maxlifetime', $this->config['lifetime'] * 60);
-        
+
         // Set custom session handler
         session_set_save_handler(
             [$this, 'open'],
@@ -101,13 +101,13 @@ class SessionManager implements SessionInterface
     private function loadSessionData(): void
     {
         $data = $this->driver->read($this->sessionId);
-        
+
         if ($data && $this->encryptor) {
             $data = $this->encryptor->decrypt($data);
         }
-        
+
         $this->data = $data ? unserialize($data) : [];
-        
+
         // Security checks
         if ($this->config['check_ip'] ?? false) {
             $currentIp = $_SERVER['REMOTE_ADDR'] ?? '';
@@ -117,7 +117,7 @@ class SessionManager implements SessionInterface
             }
             $this->data['_ip'] = $currentIp;
         }
-        
+
         if ($this->config['check_user_agent'] ?? false) {
             $currentAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
             if (isset($this->data['_user_agent']) && $this->data['_user_agent'] !== $currentAgent) {
@@ -134,14 +134,14 @@ class SessionManager implements SessionInterface
     private function handleFlashData(): void
     {
         $this->flashKeys = $this->data['_flash']['new'] ?? [];
-        
+
         // Remove old flash data
         if (isset($this->data['_flash']['old'])) {
             foreach ($this->data['_flash']['old'] as $key) {
                 unset($this->data[$key]);
             }
         }
-        
+
         // Move new flash data to old
         $this->data['_flash'] = [
             'old' => $this->flashKeys,
@@ -179,7 +179,7 @@ class SessionManager implements SessionInterface
     public function forget(string|array $keys): void
     {
         $keys = is_array($keys) ? $keys : [$keys];
-        
+
         foreach ($keys as $key) {
             unset($this->data[$key]);
         }
@@ -190,7 +190,7 @@ class SessionManager implements SessionInterface
      */
     public function all(): array
     {
-        return array_filter($this->data, function($key) {
+        return array_filter($this->data, function ($key) {
             return !str_starts_with($key, '_');
         }, ARRAY_FILTER_USE_KEY);
     }
@@ -253,7 +253,7 @@ class SessionManager implements SessionInterface
         if (!$this->has('_token')) {
             $this->put('_token', bin2hex(random_bytes(32)));
         }
-        
+
         return $this->get('_token');
     }
 
@@ -278,17 +278,23 @@ class SessionManager implements SessionInterface
 
     public function read($sessionId): string
     {
-        return $this->driver->read($sessionId);
+        $data = $this->driver->read($sessionId);
+
+        if ($data && $this->encryptor) {
+            $data = $this->encryptor->decrypt($data);
+        }
+
+        return $data ?: '';
     }
 
     public function write($sessionId, $sessionData): bool
     {
-        $data = serialize($this->data);
-        
+        $data = $sessionData; // already serialized by PHP
+
         if ($this->encryptor) {
             $data = $this->encryptor->encrypt($data);
         }
-        
+
         return $this->driver->write($sessionId, $data);
     }
 

@@ -6,14 +6,17 @@ namespace Plugs\Middleware;
 
 use Plugs\Http\Request\Request;
 use Plugs\Http\Response\Response;
+use Plugs\Container\Container;
 
 class MiddlewarePipeline
 {
     private array $middleware = [];
+    private Container $container;
 
-    public function __construct(array $middleware = [])
+    public function __construct(array $middleware, Container $container)
     {
-        $this->middleware = $middleware;
+        $this->middleware = $middleware ?? [];
+        $this->container = $container;
     }
 
     public function handle(Request $request, callable $destination): Response
@@ -40,9 +43,33 @@ class MiddlewarePipeline
         }
 
         if (is_string($middleware)) {
-            return new $middleware();
+            // Use the container to resolve the middleware
+            if ($this->container->has($middleware)) {
+                return $this->container->get($middleware);
+            }
+            
+            // If it's a short name like 'auth', try to resolve it from config
+            $middlewareClass = $this->resolveMiddlewareClass($middleware);
+            
+            if (class_exists($middlewareClass)) {
+                return $this->container->make($middlewareClass);
+            }
+            
+            throw new \InvalidArgumentException("Middleware {$middleware} not found");
         }
 
         throw new \InvalidArgumentException('Invalid middleware type');
+    }
+
+    private function resolveMiddlewareClass(string $shortName): string
+    {
+        // Try to get middleware mapping from config
+        try {
+            $mapping = $this->container->get('config')->get('middleware', []);
+            return $mapping[$shortName] ?? $shortName;
+        } catch (\Exception $e) {
+            // Fallback to a default namespace
+            return 'App\\Middleware\\' . ucfirst($shortName) . 'Middleware';
+        }
     }
 }

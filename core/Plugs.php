@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Plugs;
 
 use Throwable;
+use Plugs\Config;
 use Plugs\View\View;
 use Plugs\Http\Router\Route;
 use Plugs\Http\Router\Router;
@@ -12,10 +13,10 @@ use Plugs\Container\Container;
 use Plugs\Http\Request\Request;
 use Plugs\Http\Response\Response;
 use Plugs\Services\ServiceProvider;
-use Plugs\Config;
 use Plugs\Exceptions\Handler\ExceptionHandler;
 use Plugs\Services\Providers\ViewServiceProvider;
 use Plugs\Services\Providers\SessionServiceProvider;
+use Plugs\Services\Providers\MiddlewareServiceProvider;
 
 class Plugs
 {
@@ -53,6 +54,11 @@ class Plugs
     private array $loadedProviders = [];
 
     /**
+     * Deferred service providers.
+     */
+    private array $deferredServices = [];
+
+    /**
      * The HTTP kernel instance.
      */
     private ?Kernel $kernel = null;
@@ -62,13 +68,13 @@ class Plugs
      */
     private ?ExceptionHandler $exceptionHandler = null;
 
-
     public function __construct(string $basePath)
     {
         $this->container = new Container();
         $this->registerBaseBindings();
         $this->registerBaseServiceProviders();
         $this->registerCoreContainerAliases();
+        
         if ($basePath) {
             $this->setBasePath($basePath);
         }
@@ -94,9 +100,7 @@ class Plugs
     public function setBasePath(string $basePath): self
     {
         $this->basePath = rtrim($basePath, '/');
-
         $this->bindPathsInContainer();
-
         return $this;
     }
 
@@ -123,7 +127,7 @@ class Plugs
     public function urlPath(string $path = ''): string
     {
         $baseUrlPath = $this->urlPath ?? '/';
-        $baseUrlPath = rtrim($baseUrlPath, '/'); // Remove trailing slash
+        $baseUrlPath = rtrim($baseUrlPath, '/');
 
         if ($path === '') {
             return $baseUrlPath ?: '/';
@@ -150,7 +154,7 @@ class Plugs
     }
 
     /**
-     * Get the path to the application routes files.
+     * Get the path to the storage directory.
      */
     public function storagePath(string $path = ''): string
     {
@@ -192,27 +196,27 @@ class Plugs
 
         $this->loadFunctions();
         $this->loadEnvironmentConfiguration();
-        $this->loadConfiguration(); // This now initializes Config class
-        $this->registerServiceProviders();
+        $this->loadConfiguration();
+        $this->registerConfiguredServiceProviders();
         $this->bootServiceProviders();
         $this->loadRoutes();
 
         $this->hasBeenBootstrapped = true;
     }
 
+    /**
+     * Load helper functions.
+     */
     private function loadFunctions(): void
     {
         $functionsDir = __DIR__ . '/functions/';
 
-        // Check if directory exists
         if (!is_dir($functionsDir)) {
             return;
         }
 
-        // Get all PHP files in the directory
         $files = glob($functionsDir . '*.php');
 
-        // Load each file
         foreach ($files as $file) {
             if (file_exists($file) && is_file($file)) {
                 require_once $file;
@@ -227,7 +231,6 @@ class Plugs
     {
         try {
             $this->bootstrap();
-
             return $this->getKernel()->handle($request);
         } catch (Throwable $e) {
             return $this->handleException($request, $e);
@@ -246,24 +249,31 @@ class Plugs
         $providerName = get_class($provider);
 
         // If already registered and not forcing, return existing instance
-        if (isset($this->loadedProviders[$providerName])) {
-            if (!$force) {
-                return $this->loadedProviders[$providerName];
-            }
+        if (isset($this->loadedProviders[$providerName]) && !$force) {
+            return $this->loadedProviders[$providerName];
+        }
+
+        // If forcing and already registered, unregister first
+        if ($force && isset($this->loadedProviders[$providerName])) {
             $this->unregister($providerName);
         }
 
         $this->serviceProviders[] = $provider;
         $this->loadedProviders[$providerName] = $provider;
 
-        // Immediately register if not deferred
-        $provider->register();
+        // Handle deferred providers
+        if ($provider->isDeferred()) {
+            $this->addDeferredServices($provider);
+        } else {
+            // Immediately register if not deferred
+            $provider->register();
+        }
 
         return $provider;
     }
 
     /**
-     * Unregister a service provider
+     * Unregister a service provider.
      */
     public function unregister(string $providerName): void
     {
@@ -273,6 +283,52 @@ class Plugs
                 $this->serviceProviders,
                 fn($p) => get_class($p) !== $providerName
             );
+            
+            // Remove from deferred services if applicable
+            $this->deferredServices = array_filter(
+                $this->deferredServices,
+                fn($provider) => $provider !== $providerName
+            );
+        }
+    }
+
+    /**
+     * Add deferred services to the list.
+     */
+    protected function addDeferredServices(ServiceProvider $provider): void
+    {
+        $services = $provider->provides();
+        
+        foreach ($services as $service) {
+            $this->deferredServices[$service] = get_class($provider);
+        }
+    }
+
+    /**
+     * Load a deferred service provider.
+     */
+    protected function loadDeferredProvider(string $service): void
+    {
+        if (!isset($this->deferredServices[$service])) {
+            return;
+        }
+
+        $providerClass = $this->deferredServices[$service];
+        
+        if (!isset($this->loadedProviders[$providerClass])) {
+            $this->register($providerClass);
+        }
+
+        unset($this->deferredServices[$service]);
+    }
+
+    /**
+     * Register multiple service providers at once.
+     */
+    public function registerProviders(array $providers): void
+    {
+        foreach ($providers as $provider) {
+            $this->register($provider);
         }
     }
 
@@ -288,9 +344,29 @@ class Plugs
         }
     }
 
-    public function isProviderRegistered(string $provider): bool
+    /**
+     * Check if a service provider is registered.
+     */
+    public function isProviderRegistered(string|object $provider): bool
     {
-        return isset($this->loadedProviders[$provider]);
+        $providerName = is_string($provider) ? $provider : get_class($provider);
+        return isset($this->loadedProviders[$providerName]);
+    }
+
+    /**
+     * Get all registered service providers.
+     */
+    public function getProviders(): array
+    {
+        return $this->serviceProviders;
+    }
+
+    /**
+     * Get all loaded service providers.
+     */
+    public function getLoadedProviders(): array
+    {
+        return $this->loadedProviders;
     }
 
     /**
@@ -309,6 +385,9 @@ class Plugs
         return in_array($this->environment(), $environments);
     }
 
+    /**
+     * Detect the environment using a callback.
+     */
     public function detectEnvironment(callable $callback): void
     {
         $this->environment = call_user_func($callback) ?: 'production';
@@ -359,14 +438,13 @@ class Plugs
             return new ExceptionHandler($app);
         });
 
-        // Initialize router directly without container
+        // Initialize router directly
         $this->initializeRouter();
 
-        // These would be core framework providers
-        $this->register(new ViewServiceProvider($this->container));
-        $this->register(new SessionServiceProvider($this->container));
-        // $this->register(new RoutingServiceProvider($this));
-        // $this->register(new ExceptionServiceProvider($this));
+        // Register core framework providers
+        $this->register(new ViewServiceProvider($this));
+        $this->register(new SessionServiceProvider($this));
+        $this->register(new MiddlewareServiceProvider($this));
     }
 
     /**
@@ -374,14 +452,11 @@ class Plugs
      */
     protected function registerCoreContainerAliases(): void
     {
-        foreach (
-            [
-                'app' => [self::class, Container::class],
-                'view' => [View::class, 'Plugs\View\View'],
-                'config' => [Config::class, 'Plugs\Config\Config'], // Add config alias
-                // 'router' => [Router::class, 'Plugs\Http\Router\Router'],
-            ] as $key => $aliases
-        ) {
+        foreach ([
+            'app' => [self::class, Container::class],
+            'view' => [View::class, 'Plugs\View\View'],
+            'config' => [Config::class, 'Plugs\Config\Config'],
+        ] as $key => $aliases) {
             foreach ($aliases as $alias) {
                 $this->container->alias($key, $alias);
             }
@@ -509,37 +584,69 @@ class Plugs
     }
 
     /**
-     * Register all service providers from configuration.
+     * Register service providers from configuration.
      */
-    protected function registerServiceProviders(): void
+    protected function registerConfiguredServiceProviders(): void
     {
-        // Try to get providers from new Config class first
-        try {
-            $providers = Config::get('app.providers', []);
+        $providers = $this->getConfiguredProviders();
 
-            // Fallback to old providers.php file if config doesn't have providers
-            if (empty($providers)) {
-                $providersFile = $this->configPath('providers.php');
-                if (file_exists($providersFile)) {
-                    $providers = require $providersFile;
-                }
-            }
-
-            foreach ($providers as $provider) {
+        foreach ($providers as $provider) {
+            if (class_exists($provider)) {
                 $this->register($provider);
-            }
-        } catch (\Exception $e) {
-            // Fallback to legacy providers file
-            $providersFile = $this->configPath('providers.php');
-            if (file_exists($providersFile)) {
-                $providers = require $providersFile;
-                foreach ($providers as $provider) {
-                    $this->register($provider);
-                }
+            } else {
+                // Log warning or throw exception for missing provider
+                error_log("Service provider not found: {$provider}");
             }
         }
     }
 
+    /**
+     * Get service providers from configuration.
+     */
+    protected function getConfiguredProviders(): array
+    {
+        $providers = [];
+
+        // Try to get providers from new Config class first
+        try {
+            $providers = Config::get('app.providers', []);
+
+            // Also check for environment-specific providers
+            $envProviders = Config::get("app.providers.{$this->environment}", []);
+            if (!empty($envProviders)) {
+                $providers = array_merge($providers, $envProviders);
+            }
+
+            // If empty, try to load from dedicated providers file
+            if (empty($providers)) {
+                $providers = $this->loadProvidersFromFile();
+            }
+        } catch (\Exception $e) {
+            // Fallback to legacy providers file
+            $providers = $this->loadProvidersFromFile();
+        }
+
+        return array_unique($providers);
+    }
+
+    /**
+     * Load service providers from dedicated providers file.
+     */
+    protected function loadProvidersFromFile(): array
+    {
+        $providersFile = $this->configPath('providers.php');
+        
+        if (file_exists($providersFile)) {
+            $providers = require $providersFile;
+            return is_array($providers) ? $providers : [];
+        }
+
+        return [];
+    }
+
+    /**
+     * Initialize the router.
+     */
     protected function initializeRouter(): void
     {
         // Create router instance
@@ -553,8 +660,9 @@ class Plugs
         // Set it in the Route facade
         Route::setRouter($router);
 
-        // Make it available in the app if needed
+        // Make it available in the container
         $this->container->instance(Router::class, $router);
+        // $this->container->alias('router', Router::class);
     }
 
     /**
@@ -562,13 +670,28 @@ class Plugs
      */
     protected function loadRoutes(): void
     {
-        $webRoutesFile = $this->routesPath('web.php');
+        $routeFiles = [
+            'web.php',
+            'api.php',
+        ];
 
-        if (file_exists($webRoutesFile)) {
-            require $webRoutesFile;
+        foreach ($routeFiles as $routeFile) {
+            $routePath = $this->routesPath($routeFile);
+            if (file_exists($routePath)) {
+                require $routePath;
+            }
+        }
+
+        // Load environment-specific routes if they exist
+        $envRoutesFile = $this->routesPath("{$this->environment}.php");
+        if (file_exists($envRoutesFile)) {
+            require $envRoutesFile;
         }
     }
 
+    /**
+     * Check if middleware should be skipped.
+     */
     public function shouldSkipMiddleware(Request $request): bool
     {
         // Logic to determine if middleware should be skipped
@@ -586,6 +709,27 @@ class Plugs
         } catch (\Exception $e) {
             return $default;
         }
+    }
+
+    /**
+     * Resolve a service from the container or load deferred provider.
+     */
+    public function make(string $abstract, array $parameters = []): mixed
+    {
+        // Check if this is a deferred service
+        if (isset($this->deferredServices[$abstract])) {
+            $this->loadDeferredProvider($abstract);
+        }
+
+        return $this->container->get($abstract, $parameters);
+    }
+
+    /**
+     * Determine if the given abstract type has been bound.
+     */
+    public function bound(string $abstract): bool
+    {
+        return $this->container->has($abstract) || isset($this->deferredServices[$abstract]);
     }
 
     /**
@@ -622,6 +766,34 @@ class Plugs
             if ($key !== '' && !array_key_exists($key, $_ENV)) {
                 $_ENV[$key] = $value;
                 putenv("$key=$value");
+            }
+        }
+    }
+
+    /**
+     * Get service provider instance by class name.
+     */
+    public function getProvider(string $providerClass): ?ServiceProvider
+    {
+        return $this->loadedProviders[$providerClass] ?? null;
+    }
+
+    /**
+     * Check if the application has been bootstrapped.
+     */
+    public function hasBeenBootstrapped(): bool
+    {
+        return $this->hasBeenBootstrapped;
+    }
+
+    /**
+     * Terminate the application.
+     */
+    public function terminate(Request $request, Response $response): void
+    {
+        foreach ($this->serviceProviders as $provider) {
+            if (method_exists($provider, 'terminate')) {
+                $provider->terminate($request, $response);
             }
         }
     }

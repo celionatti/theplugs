@@ -6,12 +6,14 @@ namespace Plugs\View;
 
 use Exception;
 use Plugs\View\Compiler\ViewCompiler;
+use Plugs\View\Engines\EngineResolver;
 use Plugs\Exceptions\View\ViewException;
 
 class View
 {
     protected static array $sharedData = [];
-    protected static array $paths = [];
+    protected static ?ViewFinder $finder = null;
+    protected static ?EngineResolver $engineResolver = null;
     protected static ?ViewCompiler $compiler = null;
     protected static ?string $cachePath = null;
     protected static bool $cacheEnabled = false;
@@ -111,12 +113,30 @@ class View
 
     public static function addPath(string $path): void
     {
-        static::$paths[] = rtrim($path, '/');
+        static::getFinder()->addPath($path);
+    }
+
+    public static function setFinder(ViewFinder $finder): void
+    {
+        static::$finder = $finder;
+    }
+
+    public static function setEngineResolver(EngineResolver $resolver): void
+    {
+        static::$engineResolver = $resolver;
     }
 
     public static function setCompiler(ViewCompiler $compiler): void
     {
         static::$compiler = $compiler;
+        
+        // Also set compiler on the PlugsEngine if available
+        if (static::$engineResolver && static::$engineResolver->hasEngine('plugs')) {
+            $plugsEngine = static::$engineResolver->resolve('plugs');
+            if (method_exists($plugsEngine, 'setCompiler')) {
+                $plugsEngine->setCompiler($compiler);
+            }
+        }
     }
 
     public static function setCaching(bool $enabled, ?string $cachePath = null): void
@@ -129,11 +149,39 @@ class View
                 mkdir(static::$cachePath, 0755, true);
             }
         }
+
+        // Also configure caching on engines that support it
+        if (static::$engineResolver) {
+            foreach (['plugs'] as $engineName) {
+                if (static::$engineResolver->hasEngine($engineName)) {
+                    $engine = static::$engineResolver->resolve($engineName);
+                    if (method_exists($engine, 'setCaching')) {
+                        $engine->setCaching($enabled, $cachePath);
+                    }
+                }
+            }
+        }
     }
 
     public static function setAuthChecker(callable $checker): void
     {
         static::$authChecker = $checker;
+    }
+
+    protected static function getFinder(): ViewFinder
+    {
+        if (static::$finder === null) {
+            static::$finder = new ViewFinder();
+        }
+        return static::$finder;
+    }
+
+    protected static function getEngineResolver(): EngineResolver
+    {
+        if (static::$engineResolver === null) {
+            static::$engineResolver = new EngineResolver();
+        }
+        return static::$engineResolver;
     }
 
     protected static function getCompiler(): ViewCompiler
@@ -151,86 +199,21 @@ class View
 
     public function render(): string
     {
-        $templatePath = $this->findTemplate($this->template);
-
-        // Check cache first if enabled
-        $cacheKey = null;
-        $cacheFile = null;
-
-        if (static::$cacheEnabled && static::$cachePath) {
-            $cacheKey = md5($templatePath . filemtime($templatePath));
-            $cacheFile = static::$cachePath . '/' . $cacheKey . '.php';
-
-            if (file_exists($cacheFile) && filemtime($cacheFile) >= filemtime($templatePath)) {
-                return $this->renderFromCache($cacheFile);
-            }
-        }
-
-        // Read and compile template
-        $content = file_get_contents($templatePath);
-        if ($content === false) {
-            throw new ViewException("Unable to read template file: {$templatePath}");
-        }
-
-        $compiled = static::getCompiler()->compile($content);
-
-        // Save to cache if enabled
-        if (static::$cacheEnabled && $cacheFile) {
-            file_put_contents($cacheFile, $compiled);
-            return $this->renderFromCache($cacheFile);
-        }
-
-        return $this->renderCompiled($compiled);
-    }
-
-    protected function renderFromCache(string $cacheFile): string
-    {
-        return $this->renderCompiledFile($cacheFile);
-    }
-
-    protected function renderCompiled(string $compiled): string
-    {
-        // Create temporary file with compiled PHP
-        $tempFile = tempnam(sys_get_temp_dir(), 'view_') . '.php';
-        if (file_put_contents($tempFile, $compiled) === false) {
-            throw new ViewException("Failed to write compiled template");
-        }
-
         try {
-            $result = $this->renderCompiledFile($tempFile);
-            unlink($tempFile);
-            return $result;
-        } catch (Exception $e) {
-            if (file_exists($tempFile)) {
-                unlink($tempFile);
-            }
-            throw $e;
-        }
-    }
-
-    protected function renderCompiledFile(string $file): string
-    {
-        try {
-            // CRITICAL: Use $__view to avoid variable collision
-            // Also extract data but protect special variables
-            $__view = $this;
-            $__data = $this->data;
-
-            // Extract variables but exclude reserved names
-            extract($__data, EXTR_SKIP);
-
-            ob_start();
-            include $file;
-            $output = ob_get_clean();
-
-            if ($output === false) {
-                throw new ViewException("Failed to capture template output");
-            }
-
+            $templatePath = static::getFinder()->find($this->template);
+            $engineResolver = static::getEngineResolver();
+            
+            // Determine which engine to use
+            $engineName = $engineResolver->getEngineFromPath($templatePath);
+            $engine = $engineResolver->resolve($engineName);
+            
+            // Get the rendered content
+            $content = $engine->get($templatePath, $this->prepareDataForEngine());
+            
             // Handle layout if present
             if ($this->layout) {
                 $layoutView = new static($this->layout, array_merge($this->data, [
-                    'content' => $output
+                    'content' => $content
                 ]));
                 $layoutView->sections = array_merge($this->sections, $layoutView->sections);
                 $layoutView->stacks = $this->stacks;
@@ -238,27 +221,47 @@ class View
                 return $layoutView->render();
             }
 
-            return $output;
+            return $content;
+            
         } catch (Exception $e) {
             throw new ViewException("Template rendering failed: " . $e->getMessage(), 0, $e);
         }
     }
 
-    protected function findTemplate(string $name): string
+    /**
+     * Prepare data for the rendering engine.
+     */
+    protected function prepareDataForEngine(): array
     {
-        $name = str_replace('.', '/', $name);
-        $extensions = ['.plug.php', '.php', '.html'];
+        // Add the view instance to data for template access
+        $data = $this->data;
+        $data['__view'] = $this;
+        
+        return $data;
+    }
 
-        foreach (static::$paths as $path) {
-            foreach ($extensions as $ext) {
-                $templatePath = $path . '/' . $name . $ext;
-                if (file_exists($templatePath)) {
-                    return $templatePath;
-                }
-            }
-        }
+    /**
+     * Check if a view exists.
+     */
+    public static function exists(string $template): bool
+    {
+        return static::getFinder()->exists($template);
+    }
 
-        throw new ViewException("Template '{$name}' not found in paths: " . implode(', ', static::$paths));
+    /**
+     * Get all available views.
+     */
+    public static function getAllViews(): array
+    {
+        return static::getFinder()->getAllViews();
+    }
+
+    /**
+     * Get views matching a pattern.
+     */
+    public static function getViewsMatching(string $pattern): array
+    {
+        return static::getFinder()->getViewsMatching($pattern);
     }
 
     // Layout and section methods
@@ -358,6 +361,21 @@ class View
                 }
             }
         }
+
+        // Also clear cache on engines that support it
+        if (static::$engineResolver) {
+            foreach (['plugs'] as $engineName) {
+                if (static::$engineResolver->hasEngine($engineName)) {
+                    $engine = static::$engineResolver->resolve($engineName);
+                    if (method_exists($engine, 'clearCache')) {
+                        $engine->clearCache();
+                    }
+                }
+            }
+        }
+
+        // Clear finder cache
+        static::getFinder()->clearCache();
     }
 
     public function __toString(): string
@@ -375,14 +393,16 @@ class View
         return [
             'template' => $this->template,
             'data' => $this->data,
-            'paths' => static::$paths,
+            'paths' => static::getFinder()->getPaths(),
             'layout' => $this->layout,
             'sections' => array_keys($this->sections),
             'stacks' => array_keys($this->stacks),
             'fragments' => array_keys($this->fragments),
             'cache_enabled' => static::$cacheEnabled,
             'cache_path' => static::$cachePath,
-            'reserved_variables' => static::getCompiler()->getReservedVariables()
+            'reserved_variables' => static::getCompiler()->getReservedVariables(),
+            'engines' => static::getEngineResolver()->getEngines(),
+            'finder_extensions' => static::getFinder()->getExtensions()
         ];
     }
 
@@ -401,7 +421,7 @@ class View
         return $this;
     }
 
-    /** Extras */
+    /** Asset Management */
 
     public static function setAssetPath(string $path): void
     {
@@ -656,5 +676,77 @@ class View
         http_response_code($status);
         header("Location: $url");
         return '';
+    }
+
+    /**
+     * Get the view finder instance.
+     */
+    public static function finder(): ViewFinder
+    {
+        return static::getFinder();
+    }
+
+    /**
+     * Get the engine resolver instance.
+     */
+    public static function engines(): EngineResolver
+    {
+        return static::getEngineResolver();
+    }
+
+    /**
+     * Get the compiler instance.
+     */
+    public static function compiler(): ViewCompiler
+    {
+        return static::getCompiler();
+    }
+
+    /**
+     * Register a custom engine.
+     */
+    public static function registerEngine(string $name, \Closure $resolver): void
+    {
+        static::getEngineResolver()->register($name, $resolver);
+    }
+
+    /**
+     * Add namespace support for views.
+     */
+    public static function addNamespace(string $namespace, string|array $hints): void
+    {
+        static::getFinder()->addNamespace($namespace, $hints);
+    }
+
+    /**
+     * Prepend a view path.
+     */
+    public static function prependPath(string $path): void
+    {
+        static::getFinder()->prependPath($path);
+    }
+
+    /**
+     * Add a view file extension.
+     */
+    public static function addExtension(string $extension): void
+    {
+        static::getFinder()->addExtension($extension);
+    }
+
+    /**
+     * Flush all view data and clear caches.
+     */
+    public static function flush(): void
+    {
+        static::clearCache();
+        static::getFinder()->flush();
+        if (static::$engineResolver) {
+            static::$engineResolver->clearResolved();
+        }
+        static::$sharedData = [];
+        static::$viewComposers = [];
+        static::$viewCreators = [];
+        static::$macros = [];
     }
 }

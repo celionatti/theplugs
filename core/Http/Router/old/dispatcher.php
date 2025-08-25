@@ -10,13 +10,12 @@ use Plugs\Http\Request\Request;
 use Plugs\Http\Response\Response;
 use Plugs\Routing\RouteDefinition;
 use Plugs\Middleware\MiddlewarePipeline;
-use Plugs\Container\Container;
 
-class RouteDispatcher
+class dispatcher
 {
-    private ?Container $container = null;
+    private ?object $container = null;
 
-    public function __construct(?Container $container = null)
+    public function __construct(?object $container = null)
     {
         $this->container = $container;
     }
@@ -26,8 +25,8 @@ class RouteDispatcher
         // Set route parameters on request
         $request->setParameters($route->getParameters());
 
-        // Create middleware pipeline with container
-        $pipeline = new MiddlewarePipeline($route->getMiddleware(), $this->container);
+        // Create middleware pipeline
+        $pipeline = new MiddlewarePipeline($route->getMiddleware());
 
         // Dispatch through middleware pipeline
         return $pipeline->handle($request, function (Request $req) use ($route) {
