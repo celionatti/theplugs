@@ -19,7 +19,7 @@ if (!function_exists('response')) {
      * @param array $headers
      * @return \Plugs\Http\Response\Response
      */
-    function response(string $content = '', int $status = 200, array $headers = []): \Plugs\Http\Response\Response
+    function response($content = '', int $status = 200, array $headers = []): \Plugs\Http\Response\Response
     {
         return new \Plugs\Http\Response\Response($content, $status, $headers);
     }

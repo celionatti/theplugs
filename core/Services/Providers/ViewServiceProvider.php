@@ -4,198 +4,197 @@ declare(strict_types=1);
 
 namespace Plugs\Services\Providers;
 
+use Plugs\Plugs;
 use Plugs\View\View;
-use Plugs\View\ViewFinder;
-use Plugs\View\ViewFactory;
-use Plugs\View\EngineResolver;
-use Plugs\View\Engines\PhpEngine;
+use Plugs\Config;
+use Plugs\Container\Container;
 use Plugs\Services\ServiceProvider;
-use Plugs\View\Compiler\PlugCompiler;
-use Plugs\View\Engines\CompilerEngine;
-use Plugs\View\ViewFactoryWithLayouts;
+use Plugs\View\Compiler\ViewCompiler;
 
 class ViewServiceProvider extends ServiceProvider
 {
+    /**
+     * Register view services.
+     */
     public function register(): void
     {
-        $this->registerViewFinder();
-        $this->registerEngineResolver();
+        $this->registerViewCompiler();
         $this->registerViewFactory();
+        $this->registerViewBindings();
     }
 
-    protected function registerViewFinder(): void
+    /**
+     * Register the view compiler implementation.
+     */
+    protected function registerViewCompiler(): void
     {
-        $this->bind('view.finder', function () {
-            $paths = $this->getViewPaths();
-            return new ViewFinder($paths);
+        $this->app->container->singleton(ViewCompiler::class, function (Container $app) {
+            $compiler = new ViewCompiler();
+            // Register built-in directives
+            $this->registerDefaultDirectives($compiler);
+            return $compiler;
         });
     }
 
-    protected function registerEngineResolver(): void
-    {
-        $this->bind('view.engine.resolver', function () {
-            $resolver = new EngineResolver();
-            
-            // Register PHP engine
-            $resolver->register('php', function () {
-                return new PhpEngine();
-            });
-            
-            // Register Plug compiler engine
-            $resolver->register('plug', function () {
-                $compiler = $this->createPlugCompiler();
-                return new CompilerEngine($compiler);
-            });
-            
-            return $resolver;
-        });
-    }
-
+    /**
+     * Register the view factory implementation.
+     */
     protected function registerViewFactory(): void
     {
-        $this->singleton('view', function () {
-            $resolver = $this->container->get('view.engine.resolver');
-            $finder = $this->container->get('view.finder');
-            
-            $factory = new ViewFactoryWithLayouts($resolver, $finder);
-            
-            // Add default extensions
-            $factory->addExtension('plug.php', 'plug');
-            $factory->addExtension('php', 'php');
-            
-            return $factory;
+        $this->app->container->bind('view', function (Container $app) {
+            return new View(''); // Template will be set when actually used
         });
-
-        $this->alias('view', ViewFactoryWithLayouts::class);
     }
 
+    /**
+     * Register additional view bindings and aliases.
+     */
+    protected function registerViewBindings(): void
+    {
+        // Alias for convenience
+        $this->app->container->alias('view', View::class);
+        // Share the container instance with views
+        View::share('app', $this->app);
+    }
+
+    /**
+     * Register default compiler directives.
+     */
+    protected function registerDefaultDirectives(ViewCompiler $compiler): void
+    {
+        $compiler->directive('dump', fn($exp) => "<?php dump($exp); ?>");
+        $compiler->directive('dd', fn($exp) => "<?php dd($exp); ?>");
+        $compiler->directive('json', fn($exp) => "<?php echo json_encode($exp, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>");
+    }
+
+    /**
+     * Bootstrap view services.
+     */
     public function boot(): void
     {
-        $this->loadViewConfiguration();
-        $this->registerCustomDirectives();
+        $this->configureViewPaths();
+        $this->configureViewCaching();
+        $this->shareGlobalVariables();
     }
 
-    protected function createPlugCompiler(): PlugCompiler
+    /**
+     * Configure view paths.
+     */
+    protected function configureViewPaths(): void
     {
-        $cachePath = $this->getCompilerCachePath();
-        $compiler = new PlugCompiler($cachePath);
+        $app = $this->app->container->get(Plugs::class);
         
-        // Register custom directives
-        $this->registerPlugDirectives($compiler);
+        // Add default view path
+        View::addPath($app->basePath('resources/views'));
         
-        return $compiler;
-    }
+        // Set asset path
+        $assetPath = rtrim($app->urlPath(), '/') . '/assets';
+        View::setAssetPath($assetPath);
 
-    protected function registerPlugDirectives(PlugCompiler $compiler): void
-    {
-        // Add custom directives specific to your framework
-        $compiler->directive('asset', function ($matches) {
-            $asset = trim($matches[1], "()\"'");
-            return "<?php echo asset('{$asset}'); ?>";
-        });
-
-        $compiler->directive('url', function ($matches) {
-            $url = trim($matches[1], "()\"'");
-            return "<?php echo url('{$url}'); ?>";
-        });
-
-        $compiler->directive('route', function ($matches) {
-            $route = trim($matches[1], "()\"'");
-            return "<?php echo route('{$route}'); ?>";
-        });
-
-        $compiler->directive('csrf', function ($matches) {
-            return "<?php echo csrf_token(); ?>";
-        });
-
-        $compiler->directive('method', function ($matches) {
-            $method = trim($matches[1], "()\"'");
-            return "<?php echo method_field('{$method}'); ?>";
-        });
-    }
-
-    protected function registerCustomDirectives(): void
-    {
-        // This method can be overridden to add more custom directives
-        // or you can add them via configuration
-    }
-
-    protected function getViewPaths(): array
-    {
-        $config = $this->getViewConfig();
-        $paths = $config['paths'] ?? [$this->app->resourcePath('views')];
-        
-        // Ensure all paths exist
-        foreach ($paths as $path) {
-            if (!is_dir($path)) {
-                mkdir($path, 0755, true);
+        // Add additional paths from config if available
+        try {
+            // Use the Config class directly instead of array access
+            $viewPaths = Config::get('view.paths', []);
+            
+            if (is_array($viewPaths)) {
+                foreach ($viewPaths as $path) {
+                    View::addPath($path);
+                }
             }
-        }
-        
-        return $paths;
-    }
-
-    protected function getCompilerCachePath(): string
-    {
-        $config = $this->getViewConfig();
-        $cachePath = $config['compiled'] ?? $this->app->storagePath('framework/views');
-        
-        if (!is_dir($cachePath)) {
-            mkdir($cachePath, 0755, true);
-        }
-        
-        return $cachePath;
-    }
-
-    protected function loadViewConfiguration(): void
-    {
-        $view = $this->container->get('view');
-        $config = $this->getViewConfig();
-        
-        // Add additional view paths
-        if (isset($config['paths'])) {
-            foreach ($config['paths'] as $path) {
-                $view->addLocation($path);
-            }
-        }
-        
-        // Add view namespaces
-        if (isset($config['namespaces'])) {
-            foreach ($config['namespaces'] as $namespace => $paths) {
-                $view->addNamespace($namespace, $paths);
-            }
-        }
-
-        // Share global variables
-        if (isset($config['shared'])) {
-            foreach ($config['shared'] as $key => $value) {
-                $view->share($key, $value);
+        } catch (\Exception $e) {
+            // Fallback to legacy config access if Config class fails
+            if ($this->app->container->has('config')) {
+                $config = $this->app->container->get('config');
+                
+                // Check if it's the old array format
+                if (is_array($config) && isset($config['view']['paths'])) {
+                    foreach ($config['view']['paths'] as $path) {
+                        View::addPath($path);
+                    }
+                }
+                // Check if it's the new config wrapper object
+                elseif (is_object($config) && method_exists($config, 'get')) {
+                    $viewPaths = $config->get('view.paths', []);
+                    if (is_array($viewPaths)) {
+                        foreach ($viewPaths as $path) {
+                            View::addPath($path);
+                        }
+                    }
+                }
             }
         }
     }
 
-    protected function getViewConfig(): array
+    /**
+     * Configure view caching based on environment.
+     */
+    protected function configureViewCaching(): void
     {
-        $config = $this->config('view', []);
+        $app = $this->app->container->get(Plugs::class);
         
-        if (empty($config)) {
-            $config = $this->loadConfig('view.php', $this->getDefaultConfig());
+        // Get cache setting from config, defaulting to environment-based logic
+        $cacheEnabled = Config::get('view.cache', $app->environment() === 'production');
+        
+        if ($cacheEnabled) {
+            $cachePath = Config::get('view.compiled', $app->basePath('storage/cache/views'));
+            View::setCaching(true, $cachePath);
         }
-        
-        return $config;
     }
 
-    protected function getDefaultConfig(): array
+    /**
+     * Share variables with all views.
+     */
+    protected function shareGlobalVariables(): void
     {
-        return [
-            'paths' => [
-                $this->app->resourcePath('views'),
-            ],
-            'compiled' => $this->app->storagePath('framework/views'),
-            'namespaces' => [],
-            'shared' => [
-                'app' => $this->app,
-            ],
-        ];
+        // Share app instance
+        View::share('app', $this->app->container->get(Plugs::class));
+        
+        // Share configuration values that might be useful in views
+        try {
+            View::share('appName', Config::get('app.name', 'Plugs Framework'));
+            View::share('appEnv', Config::get('app.env', 'production'));
+            View::share('appDebug', Config::get('app.debug', false));
+            View::share('appUrl', Config::get('app.url', '/'));
+            
+            // Share the entire config for advanced usage (create a view-safe wrapper)
+            View::share('config', new class {
+                public function get(string $key, mixed $default = null): mixed {
+                    return Config::get($key, $default);
+                }
+                
+                public function has(string $key): bool {
+                    return Config::has($key);
+                }
+            });
+            
+        } catch (\Exception $e) {
+            // Fallback: share basic app information if Config fails
+            $app = $this->app->container->get(Plugs::class);
+            View::share('appName', 'Plugs Framework');
+            View::share('appEnv', $app->environment());
+            View::share('appDebug', $app->environment() !== 'production');
+        }
+    }
+
+    /**
+     * Register additional view directives based on configuration.
+     */
+    protected function registerConfigurableDirectives(): void
+    {
+        try {
+            $customDirectives = Config::get('view.directives', []);
+            
+            if (is_array($customDirectives) && $this->app->container->has(ViewCompiler::class)) {
+                $compiler = $this->app->container->get(ViewCompiler::class);
+                
+                foreach ($customDirectives as $name => $callback) {
+                    if (is_callable($callback)) {
+                        $compiler->directive($name, $callback);
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            // Silently fail if custom directives can't be loaded
+        }
     }
 }

@@ -4,11 +4,10 @@ declare(strict_types=1);
 
 namespace Plugs\Http\Response;
 
-use RuntimeException;
 use InvalidArgumentException;
-use Plugs\View\Contracts\ViewInterface;
+use RuntimeException;
 
-class Response
+class response
 {
     private mixed $content = '';
     private int $statusCode = 200;
@@ -88,22 +87,10 @@ class Response
 
     public function setContent(mixed $content): self
     {
-        // Handle View objects
-        if ($content instanceof ViewInterface) {
-            $this->content = $content->render();
-            
-            // Set content type to HTML if not already set
-            if (!$this->hasHeader('Content-Type')) {
-                $this->contentType('text/html');
-            }
-            
-            return $this;
-        }
-
         if (null !== $content && !is_string($content) && !is_numeric($content) && !is_callable($content) && 
             (!is_object($content) || !method_exists($content, '__toString'))) {
             throw new InvalidArgumentException(sprintf(
-                'The Response content must be a string, View object, or object implementing __toString(), "%s" given.',
+                'The Response content must be a string or object implementing __toString(), "%s" given.',
                 gettype($content)
             ));
         }
@@ -235,16 +222,16 @@ class Response
 
         $escapedUrl = htmlspecialchars($url, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
         $this->content = sprintf('<!DOCTYPE html>
-        <html>
-            <head>
-                <meta charset="UTF-8" />
-                <meta http-equiv="refresh" content="0;url=\'%1$s\'" />
-                <title>Redirecting to %1$s</title>
-            </head>
-            <body>
-                Redirecting to <a href="%1$s">%1$s</a>.
-            </body>
-        </html>', $escapedUrl);
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <meta http-equiv="refresh" content="0;url=\'%1$s\'" />
+        <title>Redirecting to %1$s</title>
+    </head>
+    <body>
+        Redirecting to <a href="%1$s">%1$s</a>.
+    </body>
+</html>', $escapedUrl);
 
         return $this;
     }
@@ -349,19 +336,6 @@ class Response
     public static function html(string $html, int $statusCode = 200, array $headers = []): self
     {
         return (new self($html, $statusCode, $headers))
-            ->contentType('text/html');
-    }
-
-    /**
-     * Create a view response
-     */
-    public static function view(string|ViewInterface $view, array $data = [], int $statusCode = 200, array $headers = []): self
-    {
-        if (is_string($view)) {
-            $view = app('view')->make($view, $data);
-        }
-
-        return (new self($view, $statusCode, $headers))
             ->contentType('text/html');
     }
 
