@@ -82,9 +82,9 @@ class ViewCompiler
 
     protected function compileEchos(string $template): string
     {
-        // Raw echo {!! $var !!} - no escaping
+        // Raw echo {{{ $var }}} - no escaping
         $template = preg_replace(
-            '/\{\!\!\s*(.+?)\s*\!\!\}/s',
+            '/\{\{\{\s*(.+?)\s*\}\}\}/s',
             '<?php echo $1; ?>',
             $template
         );
