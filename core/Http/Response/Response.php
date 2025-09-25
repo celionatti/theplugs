@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Plugs\Http\Response;
 
+use Plugs\View\View;
 use RuntimeException;
 use InvalidArgumentException;
-use Plugs\View\Contracts\ViewInterface;
 
 class Response
 {
@@ -14,7 +14,9 @@ class Response
     private int $statusCode = 200;
     private string $statusText = 'OK';
     private array $headers = [];
+    private array $cookies = []; // Added for cookie support
     private string $version = '1.1';
+    private bool $sent = false; // Added to track if response was sent
     private array $statusTexts = [
         100 => 'Continue',
         101 => 'Switching Protocols',
@@ -84,24 +86,68 @@ class Response
         $this->setContent($content);
         $this->setStatusCode($statusCode);
         $this->setHeaders($headers);
+        $this->setDefaultHeaders(); // Added default security headers
+    }
+
+    /**
+     * Set default security headers (from Trees\Response)
+     */
+    private function setDefaultHeaders(): void
+    {
+        $defaultHeaders = [
+            'content-security-policy' => "default-src 'self'; " .
+                "script-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " .
+                "style-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com 'unsafe-inline'; " .
+                "img-src 'self' data: https:; " .
+                "font-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com;",
+            'x-content-type-options' => 'nosniff',
+            'x-frame-options' => 'DENY',
+            'x-xss-protection' => '1; mode=block',
+            'referrer-policy' => 'strict-origin-when-cross-origin',
+            'x-framework' => 'ThePlugs'
+        ];
+
+        // Only set headers if not already set by user
+        foreach ($defaultHeaders as $name => $value) {
+            if (!$this->hasHeader($name)) {
+                $this->setHeader($name, $value);
+            }
+        }
+
+        // Only add HSTS in production/HTTPS
+        if ($this->isHttps() && !$this->hasHeader('strict-transport-security')) {
+            $this->setHeader('strict-transport-security', 'max-age=31536000; includeSubDomains');
+        }
+    }
+
+    /**
+     * Check if connection is HTTPS (from Trees\Response)
+     */
+    private function isHttps(): bool
+    {
+        return (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ||
+            (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https') ||
+            (!empty($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443);
     }
 
     public function setContent(mixed $content): self
     {
         // Handle View objects
-        if ($content instanceof ViewInterface) {
+        if ($content instanceof View) {
             $this->content = $content->render();
-            
+
             // Set content type to HTML if not already set
             if (!$this->hasHeader('Content-Type')) {
                 $this->contentType('text/html');
             }
-            
+
             return $this;
         }
 
-        if (null !== $content && !is_string($content) && !is_numeric($content) && !is_callable($content) && 
-            (!is_object($content) || !method_exists($content, '__toString'))) {
+        if (
+            null !== $content && !is_string($content) && !is_numeric($content) && !is_callable($content) &&
+            (!is_object($content) || !method_exists($content, '__toString'))
+        ) {
             throw new InvalidArgumentException(sprintf(
                 'The Response content must be a string, View object, or object implementing __toString(), "%s" given.',
                 gettype($content)
@@ -156,7 +202,7 @@ class Response
     public function setHeader(string $name, string $value, bool $replace = true): self
     {
         $normalized = strtolower($name);
-        
+
         if ($replace || !isset($this->headers[$normalized])) {
             $this->headers[$normalized] = [$value];
         } else {
@@ -214,12 +260,38 @@ class Response
         return $this;
     }
 
+    /**
+     * Set cache headers (from Trees\Response)
+     */
+    public function cache(int $seconds): self
+    {
+        $this->setHeader('Cache-Control', "max-age={$seconds}");
+        $this->setHeader('Expires', gmdate('D, d M Y H:i:s', time() + $seconds) . ' GMT');
+        return $this;
+    }
+
     public function noCache(): self
     {
         $this->setHeaders([
             'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0, post-check=0, pre-check=0',
             'Pragma' => 'no-cache',
             'Expires' => 'Mon, 01 Jan 1990 00:00:00 GMT',
+        ]);
+        return $this;
+    }
+
+    /**
+     * Set CORS headers (from Trees\Response)
+     */
+    public function cors(
+        array $origins = ['*'],
+        array $methods = ['GET', 'POST', 'PUT', 'DELETE'],
+        array $headers = ['Content-Type', 'Authorization']
+    ): self {
+        $this->setHeaders([
+            'Access-Control-Allow-Origin' => implode(', ', $origins),
+            'Access-Control-Allow-Methods' => implode(', ', $methods),
+            'Access-Control-Allow-Headers' => implode(', ', $headers)
         ]);
         return $this;
     }
@@ -249,12 +321,59 @@ class Response
         return $this;
     }
 
+    // public function download(
+    //     string $filePath,
+    //     ?string $name = null,
+    //     bool $deleteAfterSend = false,
+    //     bool $inline = false
+    // ): self {
+    //     if (!is_readable($filePath)) {
+    //         throw new RuntimeException("File not found or not readable: $filePath");
+    //     }
+
+    //     $name = $name ?? basename($filePath);
+    //     $disposition = $inline ? 'inline' : 'attachment';
+
+    //     $this->setHeaders([
+    //         'Content-Type' => $this->guessContentType($filePath) ?: 'application/octet-stream',
+    //         'Content-Disposition' => sprintf('%s; filename="%s"', $disposition, $this->quoteFilename($name)),
+    //         'Content-Length' => filesize($filePath),
+    //         'Content-Transfer-Encoding' => 'binary',
+    //         'Pragma' => 'public',
+    //         'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
+    //         'Last-Modified' => gmdate('D, d M Y H:i:s T', filemtime($filePath)),
+    //         'Expires' => '0',
+    //     ]);
+
+    //     $this->content = function () use ($filePath, $deleteAfterSend) {
+    //         $output = fopen('php://output', 'wb');
+    //         $file = fopen($filePath, 'rb');
+
+    //         stream_copy_to_stream($file, $output);
+
+    //         fclose($file);
+    //         fclose($output);
+
+    //         if ($deleteAfterSend) {
+    //             unlink($filePath);
+    //         }
+    //     };
+
+    //     return $this;
+    // }
+
     public function download(
         string $filePath,
         ?string $name = null,
         bool $deleteAfterSend = false,
-        bool $inline = false
+        bool $inline = false,
+        bool $stream = false // Added streaming option
     ): self {
+        if ($stream) {
+            return $this->stream($filePath, $name);
+        }
+
+        // Your existing download logic...
         if (!is_readable($filePath)) {
             throw new RuntimeException("File not found or not readable: $filePath");
         }
@@ -290,11 +409,115 @@ class Response
         return $this;
     }
 
+    /**
+     * Stream a file (enhanced version from Trees\Response)
+     */
+    public function stream(string $filePath, ?string $filename = null): self
+    {
+        if (!file_exists($filePath)) {
+            throw new RuntimeException("File not found: {$filePath}");
+        }
+
+        $filename = $filename ?: basename($filePath);
+        $size = filesize($filePath);
+        $mimeType = $this->guessContentType($filePath) ?: 'application/octet-stream';
+
+        $this->setHeaders([
+            'Content-Type' => $mimeType,
+            'Content-Length' => (string)$size,
+            'Content-Disposition' => 'inline; filename="' . $this->quoteFilename($filename) . '"',
+            'Accept-Ranges' => 'bytes'
+        ]);
+
+        $this->content = function () use ($filePath) {
+            $handle = fopen($filePath, 'rb');
+            if ($handle) {
+                while (!feof($handle)) {
+                    echo fread($handle, 8192);
+                    flush();
+                }
+                fclose($handle);
+            }
+        };
+
+        return $this;
+    }
+
+    /**
+     * Set XML content type (from Trees\Response)
+     */
+    public function xml(string $content): self
+    {
+        $this->content = $content;
+        $this->setHeader('Content-Type', 'application/xml; charset=UTF-8');
+        return $this;
+    }
+
+    /**
+     * Set CSV content type (from Trees\Response)
+     */
+    public function csv(string $content, string $filename = 'export.csv'): self
+    {
+        $this->content = $content;
+        $this->setHeaders([
+            'Content-Type' => 'text/csv; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"'
+        ]);
+        return $this;
+    }
+
+    // public function send(): void
+    // {
+    //     $this->sendHeaders();
+    //     $this->sendContent();
+    // }
+
     public function send(): void
     {
+        if ($this->sent) {
+            throw new RuntimeException('Response already sent');
+        }
+
+        $this->sent = true;
         $this->sendHeaders();
         $this->sendContent();
     }
+
+    /**
+     * Output content directly without storing it (from Trees\Response)
+     */
+    public function output(string $content): self
+    {
+        if ($this->sent) {
+            throw new RuntimeException('Response already sent');
+        }
+
+        $this->sendHeaders();
+
+        echo $content;
+        $this->sent = true;
+
+        return $this;
+    }
+
+    // protected function sendHeaders(): void
+    // {
+    //     if (headers_sent()) {
+    //         return;
+    //     }
+
+    //     // Status
+    //     header(sprintf('HTTP/%s %s %s', $this->version, $this->statusCode, $this->statusText), true, $this->statusCode);
+
+    //     // Headers
+    //     foreach ($this->headers as $name => $values) {
+    //         $replace = true;
+    //         foreach ($values as $value) {
+    //             header($name.': '.$value, $replace);
+    //             $replace = false;
+    //         }
+    //     }
+    // }
 
     protected function sendHeaders(): void
     {
@@ -309,9 +532,25 @@ class Response
         foreach ($this->headers as $name => $values) {
             $replace = true;
             foreach ($values as $value) {
-                header($name.': '.$value, $replace);
+                header($name . ': ' . $value, $replace);
                 $replace = false;
             }
+        }
+
+        // Cookies (from Trees\Response)
+        foreach ($this->cookies as $cookie) {
+            setcookie(
+                $cookie['name'],
+                $cookie['value'],
+                [
+                    'expires' => $cookie['expires'],
+                    'path' => $cookie['path'],
+                    'domain' => $cookie['domain'],
+                    'secure' => $cookie['secure'],
+                    'httponly' => $cookie['httpOnly'],
+                    'samesite' => $cookie['sameSite']
+                ]
+            );
         }
     }
 
@@ -332,9 +571,9 @@ class Response
     ): self {
         $response = new self('', $statusCode, $headers);
         $response->setContent(json_encode($data, $jsonOptions));
-        
+
         if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new InvalidArgumentException('Invalid JSON data: '.json_last_error_msg());
+            throw new InvalidArgumentException('Invalid JSON data: ' . json_last_error_msg());
         }
 
         return $response->contentType('application/json');
@@ -355,7 +594,7 @@ class Response
     /**
      * Create a view response
      */
-    public static function view(string|ViewInterface $view, array $data = [], int $statusCode = 200, array $headers = []): self
+    public static function view(string|View $view, array $data = [], int $statusCode = 200, array $headers = []): self
     {
         if (is_string($view)) {
             $view = app('view')->make($view, $data);
@@ -400,15 +639,15 @@ class Response
         array $headers = []
     ): self {
         $responseData = ['data' => $data];
-        
+
         if (!empty($included)) {
             $responseData['included'] = $included;
         }
-        
+
         if (!empty($meta)) {
             $responseData['meta'] = $meta;
         }
-        
+
         if (!empty($links)) {
             $responseData['links'] = $links;
         }
@@ -431,5 +670,94 @@ class Response
     private function quoteFilename(string $filename): string
     {
         return preg_replace('/[\x00-\x1F\x7F]/', '', $filename);
+    }
+
+    /**
+     * Set a cookie (from Trees\Response)
+     */
+    public function setCookie(
+        string $name,
+        string $value,
+        int $expires = 0,
+        string $path = '/',
+        string $domain = '',
+        bool $secure = false,
+        bool $httpOnly = true,
+        string $sameSite = 'Lax'
+    ): self {
+        $this->cookies[] = [
+            'name' => $name,
+            'value' => $value,
+            'expires' => $expires,
+            'path' => $path,
+            'domain' => $domain,
+            'secure' => $secure,
+            'httpOnly' => $httpOnly,
+            'sameSite' => $sameSite
+        ];
+        return $this;
+    }
+
+    /**
+     * Delete a cookie (from Trees\Response)
+     */
+    public function deleteCookie(string $name, string $path = '/', string $domain = ''): self
+    {
+        return $this->setCookie($name, '', time() - 3600, $path, $domain);
+    }
+
+    /**
+     * Check if response was sent (from Trees\Response)
+     */
+    public function isSent(): bool
+    {
+        return $this->sent;
+    }
+
+    /**
+     * Static method for CSV responses
+     */
+    // public static function csv(
+    //     array $data,
+    //     string $filename = 'export.csv',
+    //     int $statusCode = 200,
+    //     array $headers = []
+    // ): self {
+    //     $csvContent = '';
+        
+    //     if (!empty($data)) {
+    //         // Add headers
+    //         $headers = array_keys($data[0]);
+    //         $csvContent .= implode(',', $headers) . "\n";
+            
+    //         // Add data
+    //         foreach ($data as $row) {
+    //             $csvContent .= implode(',', array_map(function ($value) {
+    //                 return '"' . str_replace('"', '""', $value) . '"';
+    //             }, $row)) . "\n";
+    //         }
+    //     }
+
+    //     return (new self($csvContent, $statusCode, $headers))
+    //         ->csv($csvContent, $filename);
+    // }
+
+    /**
+     * Static method for XML responses
+     */
+    // public static function xml(string $xml, int $statusCode = 200, array $headers = []): self
+    // {
+    //     return (new self($xml, $statusCode, $headers))
+    //         ->xml($xml);
+    // }
+
+    /**
+     * Destructor to auto-send response (from Trees\Response)
+     */
+    public function __destruct()
+    {
+        if (!$this->sent) {
+            $this->send();
+        }
     }
 }
