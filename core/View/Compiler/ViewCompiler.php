@@ -128,6 +128,9 @@ class ViewCompiler
         // Assets
         $template = $this->compileAssets($template);
 
+        // SEO and Meta directives
+        $template = $this->compileSeoDirectives($template);
+
         // Additional directives
         $template = $this->compileEmpty($template);
         $template = $this->compileIsset($template);
@@ -282,6 +285,159 @@ class ViewCompiler
                 $path = $matches[1];
                 $attrs = $matches[2] ?? '[]';
                 return "<?php echo \$__view->img('$path', $attrs); ?>";
+            },
+            $template
+        );
+
+        return $template;
+    }
+
+    protected function compileSeoDirectives(string $template): string
+    {
+        // @metatags - render all meta tags
+        $template = preg_replace('/@metatags/', '<?php echo $__view->renderMetaTags(); ?>', $template);
+
+        // @title('Page Title')
+        $template = preg_replace_callback(
+            '/@title\s*\(\s*[\'"]([^\'"]+)[\'"]\s*(?:,\s*(true|false))?\s*\)/',
+            function ($matches) {
+                $title = $matches[1];
+                $append = $matches[2] ?? 'true';
+                return "<?php \$__view->setTitle('$title', $append); ?>";
+            },
+            $template
+        );
+
+        // @description('Meta description')
+        $template = preg_replace(
+            '/@description\s*\(\s*[\'"]([^\'"]+)[\'"]\s*\)/',
+            '<?php $__view->setDescription(\'$1\'); ?>',
+            $template
+        );
+
+        // @keywords(['keyword1', 'keyword2'])
+        $template = preg_replace_callback(
+            '/@keywords\s*\((.+?)\)/',
+            function ($matches) {
+                return "<?php \$__view->setKeywords($matches[1]); ?>";
+            },
+            $template
+        );
+
+        // @canonical('url')
+        $template = preg_replace(
+            '/@canonical\s*\(\s*[\'"]([^\'"]+)[\'"]\s*\)/',
+            '<?php $__view->setCanonical(\'$1\'); ?>',
+            $template
+        );
+
+        // @robots('index, follow')
+        $template = preg_replace(
+            '/@robots\s*\(\s*[\'"]([^\'"]+)[\'"]\s*\)/',
+            '<?php $__view->setRobots(\'$1\'); ?>',
+            $template
+        );
+
+        // @author('Author Name')
+        $template = preg_replace(
+            '/@author\s*\(\s*[\'"]([^\'"]+)[\'"]\s*\)/',
+            '<?php $__view->setAuthor(\'$1\'); ?>',
+            $template
+        );
+
+        // Open Graph directives
+        // @og:title('Title')
+        $template = preg_replace(
+            '/@og:title\s*\(\s*[\'"]([^\'"]+)[\'"]\s*\)/',
+            '<?php $__view->setOgTitle(\'$1\'); ?>',
+            $template
+        );
+
+        // @og:description('Description')
+        $template = preg_replace(
+            '/@og:description\s*\(\s*[\'"]([^\'"]+)[\'"]\s*\)/',
+            '<?php $__view->setOgDescription(\'$1\'); ?>',
+            $template
+        );
+
+        // @og:image('image.jpg', ['width' => 1200, 'height' => 630])
+        $template = preg_replace_callback(
+            '/@og:image\s*\(\s*[\'"]([^\'"]+)[\'"]\s*(?:,\s*(.+))?\s*\)/',
+            function ($matches) {
+                $image = $matches[1];
+                $properties = $matches[2] ?? '[]';
+                return "<?php \$__view->setOgImage('$image', $properties); ?>";
+            },
+            $template
+        );
+
+        // @og:url('url')
+        $template = preg_replace(
+            '/@og:url\s*\(\s*[\'"]([^\'"]+)[\'"]\s*\)/',
+            '<?php $__view->setOgUrl(\'$1\'); ?>',
+            $template
+        );
+
+        // @og:type('website')
+        $template = preg_replace(
+            '/@og:type\s*\(\s*[\'"]([^\'"]+)[\'"]\s*\)/',
+            '<?php $__view->setOgType(\'$1\'); ?>',
+            $template
+        );
+
+        // Twitter Card directives
+        // @twitter:card('summary_large_image')
+        $template = preg_replace(
+            '/@twitter:card\s*\(\s*[\'"]([^\'"]+)[\'"]\s*\)/',
+            '<?php $__view->setTwitterCard(\'$1\'); ?>',
+            $template
+        );
+
+        // @twitter:site('@username')
+        $template = preg_replace(
+            '/@twitter:site\s*\(\s*[\'"]([^\'"]+)[\'"]\s*\)/',
+            '<?php $__view->setTwitterSite(\'$1\'); ?>',
+            $template
+        );
+
+        // @twitter:title('Title')
+        $template = preg_replace(
+            '/@twitter:title\s*\(\s*[\'"]([^\'"]+)[\'"]\s*\)/',
+            '<?php $__view->setTwitterTitle(\'$1\'); ?>',
+            $template
+        );
+
+        // @twitter:description('Description')
+        $template = preg_replace(
+            '/@twitter:description\s*\(\s*[\'"]([^\'"]+)[\'"]\s*\)/',
+            '<?php $__view->setTwitterDescription(\'$1\'); ?>',
+            $template
+        );
+
+        // @twitter:image('image.jpg')
+        $template = preg_replace(
+            '/@twitter:image\s*\(\s*[\'"]([^\'"]+)[\'"]\s*\)/',
+            '<?php $__view->setTwitterImage(\'$1\'); ?>',
+            $template
+        );
+
+        // @seo(['title' => 'Title', 'description' => 'Desc'])
+        $template = preg_replace_callback(
+            '/@seo\s*\((.+?)\)/',
+            function ($matches) {
+                return "<?php \$__view->seo($matches[1]); ?>";
+            },
+            $template
+        );
+
+        // @autoseo()
+        $template = preg_replace('/@autoseo/', '<?php $__view->autoSeo(); ?>', $template);
+
+        // @jsonld(data)
+        $template = preg_replace_callback(
+            '/@jsonld\s*\((.+?)\)/',
+            function ($matches) {
+                return "<?php \$__view->addStructuredData($matches[1]); ?>";
             },
             $template
         );
