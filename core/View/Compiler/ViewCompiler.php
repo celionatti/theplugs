@@ -41,16 +41,19 @@ class ViewCompiler
         // 1. Handle verbatim blocks first (to protect content)
         $template = $this->compileVerbatim($template);
 
-        // 2. Compile structural directives
+        // 2. Remove comments (BEFORE other compilation to avoid conflicts)
+        $template = $this->compileComments($template);
+
+        // 3. Compile structural directives
         $template = $this->compileDirectives($template);
 
-        // 3. Compile echo statements 
+        // 4. Compile echo statements 
         $template = $this->compileEchos($template);
 
-        // 4. Custom directives
+        // 5. Custom directives
         $template = $this->compileCustomDirectives($template);
 
-        // 5. Restore verbatim blocks
+        // 6. Restore verbatim blocks
         $template = $this->restoreVerbatim($template);
 
         return $template;
@@ -104,6 +107,15 @@ class ViewCompiler
             },
             $template
         );
+
+        return $template;
+    }
+
+    protected function compileComments(string $template): string
+    {
+        // Remove Blade-style comments {{-- comment --}}
+        // These should be completely removed from output (not rendered as HTML comments)
+        $template = preg_replace('/\{\{--.*?--\}\}/s', '', $template);
 
         return $template;
     }
