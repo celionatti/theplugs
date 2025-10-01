@@ -43,16 +43,15 @@ class SeoHelper
     public function generateMetaTags(array $data = []): string
     {
         try {
-            $view = new \ReflectionClass(View::class);
-            $instance = $view->newInstanceWithoutConstructor();
+            $view = View::make('_seo', $data);
             
             if (!empty($data)) {
-                $instance->seo($data);
+                $view->seo($data);
             }
             
-            return $instance->renderMetaTags();
+            return $view->renderMetaTags();
         } catch (\Exception $e) {
-            return '<!-- SEO meta tags generation failed -->';
+            return '<!-- SEO meta tags generation failed: ' . htmlspecialchars($e->getMessage()) . ' -->';
         }
     }
 
@@ -67,13 +66,8 @@ class SeoHelper
 
         $separator = $this->config['title_separator'] ?? ' | ';
         $siteName = $this->config['site_name'] ?? 'Website';
-        $format = $this->config['title_format'] ?? '{title}{separator}{site_name}';
 
-        return str_replace(
-            ['{title}', '{separator}', '{site_name}'],
-            [$title, $separator, $siteName],
-            $format
-        );
+        return $title . $separator . $siteName;
     }
 
     /**
@@ -85,6 +79,37 @@ class SeoHelper
         $noindexEnvs = $this->config['noindex_environments'] ?? [];
         
         return in_array($env, $noindexEnvs, true);
+    }
+
+    /**
+     * Get social sharing URL for a platform.
+     */
+    public function getShareUrl(string $platform, string $url, string $title = '', string $description = ''): string
+    {
+        $url = urlencode($url);
+        $title = urlencode($title);
+        
+        return match($platform) {
+            'facebook' => "https://www.facebook.com/sharer/sharer.php?u={$url}",
+            'twitter' => "https://twitter.com/intent/tweet?text={$title}&url={$url}",
+            'linkedin' => "https://www.linkedin.com/sharing/share-offsite/?url={$url}",
+            'whatsapp' => "https://wa.me/?text={$title} {$url}",
+            'telegram' => "https://t.me/share/url?url={$url}&text={$title}",
+            'pinterest' => "https://pinterest.com/pin/create/button/?url={$url}&description={$title}",
+            'reddit' => "https://reddit.com/submit?url={$url}&title={$title}",
+            default => ''
+        };
+    }
+
+    /**
+     * Build canonical URL from path.
+     */
+    public function canonicalUrl(string $path = ''): string
+    {
+        $baseUrl = rtrim($this->config['canonical_base_url'] ?? '', '/');
+        $path = ltrim($path, '/');
+        
+        return $baseUrl . ($path ? '/' . $path : '');
     }
 
     /**
