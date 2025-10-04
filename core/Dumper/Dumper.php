@@ -19,8 +19,10 @@ class Dumper
     private static int $maxStringLength = 500;
     private static bool $showCallerContext = true;
     private static bool $showMemoryUsage = true;
+    private static bool $showStackTrace = true;
+    private static bool $showFrameworkInfo = true;
     private static bool $darkMode = false;
-    private static bool $showTrace = true;
+    private static int $stackTraceLimit = 10;
 
     // Internal state
     private static bool $cssLoaded = false;
@@ -33,6 +35,7 @@ class Dumper
     private const MAX_DEPTH_LIMIT = 10;
     private const MAX_ITEMS_LIMIT = 100;
     private const MAX_STRING_LIMIT = 2000;
+    private const VERSION = '2.0.0';
 
     /**
      * Initialize the dumper with custom settings
@@ -49,8 +52,10 @@ class Dumper
         self::$maxStringLength = min($config['maxStringLength'] ?? self::$maxStringLength, self::MAX_STRING_LIMIT);
         self::$showCallerContext = $config['showCallerContext'] ?? self::$showCallerContext;
         self::$showMemoryUsage = $config['showMemoryUsage'] ?? self::$showMemoryUsage;
+        self::$showStackTrace = $config['showStackTrace'] ?? self::$showStackTrace;
+        self::$showFrameworkInfo = $config['showFrameworkInfo'] ?? self::$showFrameworkInfo;
         self::$darkMode = $config['darkMode'] ?? self::$darkMode;
-        self::$showTrace = $config['showTrace'] ?? self::$showTrace;
+        self::$stackTraceLimit = $config['stackTraceLimit'] ?? self::$stackTraceLimit;
         self::$allowedIPs = array_merge(self::$allowedIPs, $config['allowedIPs'] ?? []);
 
         self::$initialized = true;
@@ -69,22 +74,49 @@ class Dumper
         ob_start();
 
         $groupId = uniqid('dump-');
-        $backtrace = self::getRelevantBacktrace();
-        $callerContext = self::$showCallerContext ? self::getCallerContext($backtrace) : null;
+        $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, self::$stackTraceLimit + 5);
+        $relevantTrace = self::getRelevantBacktrace();
 
         self::loadAssets($groupId);
 
         echo "<div class='plugs-dump-wrapper' id='{$groupId}'>";
         echo self::getFrameworkHeader();
-        echo self::getGroupHeader($groupId, $backtrace, $callerContext);
+        echo self::getLocationBar($relevantTrace);
+        
+        echo "<div class='dump-grid-container'>";
+        
+        // Left sidebar with context and info
+        echo "<div class='dump-sidebar'>";
+        if (self::$showFrameworkInfo) {
+            echo self::getFrameworkInfoPanel();
+        }
+        if (self::$showCallerContext) {
+            echo self::getCallerContextPanel($relevantTrace);
+        }
+        if (self::$showStackTrace) {
+            echo self::getStackTracePanel($backtrace);
+        }
+        echo "</div>";
+
+        // Main content area with variables
+        echo "<div class='dump-main-content'>";
+        echo "<div class='dump-variables-header'>";
+        echo "<h3>Dumped Variables (" . count($vars) . ")</h3>";
+        echo "<div class='dump-controls'>";
+        echo "<button class='dump-btn dump-expand-all' data-group='{$groupId}'>Expand All</button>";
+        echo "<button class='dump-btn dump-export-json' data-group='{$groupId}'>📥 Export JSON</button>";
+        echo "</div>";
+        echo "</div>";
 
         echo "<div class='dump-variables-grid'>";
         foreach ($vars as $index => $var) {
             self::renderVariable($var, $groupId, $index + 1);
         }
         echo "</div>";
-
         echo "</div>";
+        
+        echo "</div>"; // .dump-grid-container
+        echo "</div>"; // .plugs-dump-wrapper
 
         ob_end_flush();
     }
@@ -135,13 +167,13 @@ class Dumper
         $backtrace = self::getRelevantBacktrace();
         $location = basename($backtrace['file'] ?? 'unknown') . ':' . ($backtrace['line'] ?? 'unknown');
         $timestamp = date('Y-m-d H:i:s');
-
+        
         $logContent = "[$timestamp] $location\n";
         foreach ($vars as $index => $var) {
             $logContent .= "Variable #" . ($index + 1) . ":\n";
             $logContent .= print_r($var, true) . "\n\n";
         }
-
+        
         $logFile = sys_get_temp_dir() . '/plugs-dump.log';
         error_log($logContent, 3, $logFile);
     }
@@ -185,16 +217,65 @@ class Dumper
     }
 
     /**
-     * Get context around the dump call
+     * Get framework info panel
      */
-    private static function getCallerContext(array $backtrace): ?string
+    private static function getFrameworkInfoPanel(): string
+    {
+        $phpVersion = PHP_VERSION;
+        $serverSoftware = $_SERVER['SERVER_SOFTWARE'] ?? 'Unknown';
+        $memoryLimit = ini_get('memory_limit');
+        $memoryUsage = self::formatMemory(memory_get_usage(true));
+        $peakMemory = self::formatMemory(memory_get_peak_usage(true));
+        $env = $_ENV['APP_ENV'] ?? $_SERVER['APP_ENV'] ?? 'unknown';
+
+        return <<<HTML
+        <div class='info-panel'>
+            <div class='panel-header'>
+                <span class='panel-icon'>ℹ️</span>
+                <h3>Environment Info</h3>
+            </div>
+            <div class='panel-content'>
+                <div class='info-row'>
+                    <span class='info-label'>PHP Version</span>
+                    <span class='info-value'>{$phpVersion}</span>
+                </div>
+                <div class='info-row'>
+                    <span class='info-label'>Environment</span>
+                    <span class='info-value env-badge'>{$env}</span>
+                </div>
+                <div class='info-row'>
+                    <span class='info-label'>Memory Usage</span>
+                    <span class='info-value'>{$memoryUsage}</span>
+                </div>
+                <div class='info-row'>
+                    <span class='info-label'>Peak Memory</span>
+                    <span class='info-value'>{$peakMemory}</span>
+                </div>
+                <div class='info-row'>
+                    <span class='info-label'>Memory Limit</span>
+                    <span class='info-value'>{$memoryLimit}</span>
+                </div>
+                <div class='info-row'>
+                    <span class='info-label'>Dumper Version</span>
+                    <span class='info-value'>v{self::VERSION}</span>
+                </div>
+            </div>
+        </div>
+        HTML;
+    }
+
+    /**
+     * Get caller context panel
+     */
+    private static function getCallerContextPanel(array $backtrace): string
     {
         if (!isset($backtrace['file']) || !is_readable($backtrace['file'])) {
-            return null;
+            return '';
         }
 
         $line = $backtrace['line'] ?? 0;
-        $fileContent = file($backtrace['file']);
+        $file = $backtrace['file'];
+        $fileContent = file($file);
         $start = max(0, $line - 5);
         $end = min(count($fileContent), $line + 5);
         $context = [];
@@ -211,10 +292,83 @@ class Dumper
             );
         }
 
-        return sprintf(
-            '<div class="caller-context"><div class="context-header">Code Context</div><div class="code-lines">%s</div></div>',
-            implode("\n", $context)
-        );
+        $fileName = basename($file);
+        $contextHtml = implode("\n", $context);
+
+        return <<<HTML
+        <div class='info-panel'>
+            <div class='panel-header'>
+                <span class='panel-icon'>📄</span>
+                <h3>Code Context</h3>
+            </div>
+            <div class='panel-content no-padding'>
+                <div class='context-file-name'>{$fileName}</div>
+                <div class='code-lines'>
+                    {$contextHtml}
+                </div>
+            </div>
+        </div>
+        HTML;
+    }
+
+    /**
+     * Get stack trace panel
+     */
+    private static function getStackTracePanel(array $backtrace): string
+    {
+        $traces = [];
+        $count = 0;
+
+        foreach ($backtrace as $index => $trace) {
+            if ($count >= self::$stackTraceLimit) {
+                break;
+            }
+
+            // Skip dumper internal calls
+            if (isset($trace['class']) && strpos($trace['class'], 'Plugs\\Dumper\\') === 0) {
+                continue;
+            }
+
+            $file = isset($trace['file']) ? basename($trace['file']) : 'unknown';
+            $line = $trace['line'] ?? '?';
+            $function = $trace['function'] ?? 'unknown';
+            $class = $trace['class'] ?? '';
+            $type = $trace['type'] ?? '';
+
+            $call = $class ? "{$class}{$type}{$function}()" : "{$function}()";
+
+            $traces[] = <<<HTML
+            <div class='trace-item'>
+                <div class='trace-number'>{$count}</div>
+                <div class='trace-details'>
+                    <div class='trace-call'>{$call}</div>
+                    <div class='trace-location'>{$file}:{$line}</div>
+                </div>
+            </div>
+            HTML;
+
+            $count++;
+        }
+
+        if (empty($traces)) {
+            return '';
+        }
+
+        $tracesHtml = implode("\n", $traces);
+        
+        return <<<HTML
+        <div class='info-panel'>
+            <div class='panel-header'>
+                <span class='panel-icon'>📚</span>
+                <h3>Stack Trace</h3>
+            </div>
+            <div class='panel-content no-padding'>
+                <div class='stack-trace'>
+                    {$tracesHtml}
+                </div>
+            </div>
+        </div>
+        HTML;
     }
 
     /**
@@ -242,7 +396,7 @@ class Dumper
         .plugs-dump-wrapper {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
             margin: 24px auto;
-            max-width: 1400px;
+            max-width: 1600px;
             border-radius: 12px;
             overflow: hidden;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
@@ -309,9 +463,9 @@ class Dumper
             border: 1px solid rgba(255, 255, 255, 0.3);
         }
 
-        .dump-location-header {
+        .dump-location-bar {
             background: #f9fafb;
-            padding: 16px 24px;
+            padding: 12px 24px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -320,7 +474,7 @@ class Dumper
             gap: 12px;
         }
 
-        .dump-file-info {
+        .location-info {
             display: flex;
             align-items: center;
             gap: 10px;
@@ -329,9 +483,212 @@ class Dumper
             font-weight: 500;
         }
 
-        .dump-file-info strong {
+        .location-info strong {
             color: #111827;
             font-weight: 600;
+        }
+
+        .dump-grid-container {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 0;
+            background: #f9fafb;
+        }
+
+        .dump-sidebar {
+            background: #ffffff;
+            border-right: 1px solid #e5e7eb;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            max-height: 800px;
+            overflow-y: auto;
+        }
+
+        .dump-main-content {
+            padding: 20px;
+            min-height: 400px;
+        }
+
+        .dump-variables-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+
+        .dump-variables-header h3 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 700;
+            color: #111827;
+        }
+
+        .info-panel {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            background: #f9fafb;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .panel-header h3 {
+            margin: 0;
+            font-size: 14px;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .panel-icon {
+            font-size: 16px;
+        }
+
+        .panel-content {
+            padding: 16px;
+        }
+
+        .panel-content.no-padding {
+            padding: 0;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-size: 12px;
+            color: #6b7280;
+            font-weight: 500;
+        }
+
+        .info-value {
+            font-size: 12px;
+            color: #111827;
+            font-weight: 600;
+            font-family: 'Monaco', 'Menlo', monospace;
+        }
+
+        .env-badge {
+            background: #10b981;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            text-transform: uppercase;
+        }
+
+        .context-file-name {
+            padding: 8px 16px;
+            background: #f3f4f6;
+            font-size: 11px;
+            font-weight: 600;
+            color: #6b7280;
+            font-family: 'Monaco', 'Menlo', monospace;
+        }
+
+        .code-lines {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
+            font-size: 12px;
+            overflow-x: auto;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .code-line {
+            display: flex;
+            padding: 2px 0;
+        }
+
+        .code-line.highlight {
+            background: #fef3c7;
+        }
+
+        .line-number {
+            color: #9ca3af;
+            padding: 0 12px 0 16px;
+            text-align: right;
+            user-select: none;
+            min-width: 50px;
+        }
+
+        .line-content {
+            flex: 1;
+            padding-right: 16px;
+            color: #374151;
+        }
+
+        .stack-trace {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .trace-item {
+            display: flex;
+            gap: 12px;
+            padding: 12px 16px;
+            border-bottom: 1px solid #f3f4f6;
+            transition: background 0.2s;
+        }
+
+        .trace-item:hover {
+            background: #f9fafb;
+        }
+
+        .trace-item:last-child {
+            border-bottom: none;
+        }
+
+        .trace-number {
+            background: #ef4444;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .trace-details {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .trace-call {
+            font-size: 13px;
+            font-weight: 600;
+            color: #111827;
+            font-family: 'Monaco', 'Menlo', monospace;
+            margin-bottom: 2px;
+            word-break: break-all;
+        }
+
+        .trace-location {
+            font-size: 11px;
+            color: #6b7280;
+            font-family: 'Monaco', 'Menlo', monospace;
         }
 
         .dump-controls {
@@ -372,11 +729,9 @@ class Dumper
         }
 
         .dump-variables-grid {
-            padding: 24px;
-            background: #f9fafb;
             display: grid;
-            gap: 20px;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 16px;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
         }
 
         .dump-variable-card {
@@ -476,51 +831,6 @@ class Dumper
             display: none;
         }
 
-        .caller-context {
-            background: #f3f4f6;
-            border-top: 1px solid #e5e7eb;
-        }
-
-        .context-header {
-            padding: 12px 24px;
-            background: #e5e7eb;
-            font-weight: 600;
-            font-size: 12px;
-            color: #374151;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .code-lines {
-            padding: 16px 0;
-            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
-            font-size: 13px;
-            overflow-x: auto;
-        }
-
-        .code-line {
-            display: flex;
-            padding: 2px 0;
-        }
-
-        .code-line.highlight {
-            background: #fef3c7;
-        }
-
-        .line-number {
-            color: #9ca3af;
-            padding: 0 16px 0 24px;
-            text-align: right;
-            user-select: none;
-            min-width: 60px;
-        }
-
-        .line-content {
-            flex: 1;
-            padding-right: 24px;
-            color: #374151;
-        }
-
         .dump-content::-webkit-scrollbar {
             width: 8px;
             height: 8px;
@@ -537,6 +847,19 @@ class Dumper
 
         .dump-content::-webkit-scrollbar-thumb:hover {
             background: #6b7280;
+        }
+
+        .dump-sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .dump-sidebar::-webkit-scrollbar-track {
+            background: #f9fafb;
+        }
+
+        .dump-sidebar::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 3px;
         }
 
         /* Syntax highlighting */
@@ -590,12 +913,29 @@ class Dumper
         }
 
         /* Responsive */
-        @media (max-width: 768px) {
-            .plugs-dump-wrapper {
-                margin: 12px;
-                border-radius: 8px;
+        @media (max-width: 1200px) {
+            .dump-grid-container {
+                grid-template-columns: 320px 1fr;
+            }
+        }
+
+        @media (max-width: 968px) {
+            .dump-grid-container {
+                grid-template-columns: 1fr;
             }
 
+            .dump-sidebar {
+                border-right: none;
+                border-bottom: 1px solid #e5e7eb;
+                max-height: none;
+            }
+
+            .plugs-dump-wrapper {
+                margin: 12px;
+            }
+        }
+
+        @media (max-width: 768px) {
             .plugs-framework-header {
                 padding: 16px;
                 flex-direction: column;
@@ -605,14 +945,20 @@ class Dumper
 
             .dump-variables-grid {
                 grid-template-columns: 1fr;
-                padding: 16px;
-                gap: 16px;
             }
 
-            .dump-location-header {
+            .dump-location-bar {
                 flex-direction: column;
                 align-items: flex-start;
                 padding: 12px 16px;
+            }
+
+            .dump-main-content {
+                padding: 16px;
+            }
+
+            .dump-sidebar {
+                padding: 16px;
             }
 
             .dump-controls {
@@ -633,6 +979,12 @@ class Dumper
             .plugs-title {
                 font-size: 18px;
             }
+
+            .dump-variables-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
         }
 
         @media (max-width: 480px) {
@@ -652,6 +1004,10 @@ class Dumper
 
             .line-content {
                 padding-right: 12px;
+            }
+
+            .dump-variables-grid {
+                grid-template-columns: 1fr;
             }
         }
         </style>
@@ -762,63 +1118,45 @@ class Dumper
 
     private static function getFrameworkHeader(): string
     {
-        $memoryUsage = self::$showMemoryUsage ? ' • ' . self::formatMemory(memory_get_usage(true)) : '';
+        $timestamp = date('Y-m-d H:i:s');
 
         return <<<HTML
         <div class='plugs-framework-header'>
             <div class='plugs-brand'>
-                <div class='plugs-logo'>
-                    P
-                </div>
+                <div class='plugs-logo'>P</div>
                 <div>
                     <h2 class='plugs-title'>Plugs Framework</h2>
                     <p class='plugs-subtitle'>Debug Data Dumper</p>
                 </div>
             </div>
             <div class='plugs-info-badge'>
-                Development Mode{$memoryUsage}
+                {$timestamp}
             </div>
         </div>
         HTML;
     }
 
-    private static function getGroupHeader(string $groupId, array $backtrace, ?string $callerContext = null): string
+    private static function getLocationBar(array $backtrace): string
     {
         if (!is_array($backtrace)) {
             $backtrace = [];
         }
 
-        $file = isset($backtrace['file']) && is_string($backtrace['file'])
-            ? htmlspecialchars(basename($backtrace['file']), ENT_QUOTES, 'UTF-8')
+        $file = isset($backtrace['file']) && is_string($backtrace['file']) 
+            ? htmlspecialchars($backtrace['file'], ENT_QUOTES, 'UTF-8') 
             : 'unknown';
         $line = htmlspecialchars((string)($backtrace['line'] ?? 'unknown'), ENT_QUOTES, 'UTF-8');
-        $timestamp = date('H:i:s');
+        $fileName = basename($file);
 
-        $controls = implode('', [
-            '<button class="dump-btn dump-expand-all" data-group="' . $groupId . '">Expand All</button>',
-            '<button class="dump-btn dump-export-json" data-group="' . $groupId . '">📥 Export</button>',
-        ]);
-
-        $header = <<<HTML
-        <div class='dump-location-header'>
-            <div class='dump-file-info'>
-                <strong>{$file}</strong>
+        return <<<HTML
+        <div class='dump-location-bar'>
+            <div class='location-info'>
+                <strong>📍 {$fileName}</strong>
                 <span>•</span>
                 <span>Line {$line}</span>
-                <span>•</span>
-                <span>{$timestamp}</span>
-            </div>
-            <div class='dump-controls'>
-                {$controls}
             </div>
         </div>
         HTML;
-
-        if ($callerContext) {
-            $header .= $callerContext;
-        }
-
-        return $header;
     }
 
     private static function renderVariable($var, string $groupId, int $varNumber): void
@@ -950,7 +1288,6 @@ class Dumper
         $objectId = spl_object_id($var);
         $shortClassName = basename(str_replace('\\', '/', $className));
 
-        // Check for circular reference
         if (isset(self::$processedObjects[$objectId])) {
             return '<span class="dump-circular">*CIRCULAR REFERENCE* ' . $shortClassName . '</span>';
         }
@@ -1043,9 +1380,7 @@ class Dumper
         return sprintf('%.2f %s', $bytes, $units[$index]);
     }
 
-    /**
-     * Configuration setters with validation
-     */
+    // Configuration setters
     public static function setMaxDepth(int $depth): void
     {
         self::$maxDepth = max(1, min(self::MAX_DEPTH_LIMIT, $depth));
@@ -1081,9 +1416,19 @@ class Dumper
         self::$showMemoryUsage = $enabled;
     }
 
-    public static function setShowTrace(bool $enabled): void
+    public static function setShowStackTrace(bool $enabled): void
     {
-        self::$showTrace = $enabled;
+        self::$showStackTrace = $enabled;
+    }
+
+    public static function setShowFrameworkInfo(bool $enabled): void
+    {
+        self::$showFrameworkInfo = $enabled;
+    }
+
+    public static function setStackTraceLimit(int $limit): void
+    {
+        self::$stackTraceLimit = max(1, min(50, $limit));
     }
 
     public static function setAllowedIPs(array $ips): void
@@ -1108,9 +1453,6 @@ class Dumper
         self::$allowedIPs = ['127.0.0.1', '::1'];
     }
 
-    /**
-     * Get current configuration
-     */
     public static function getConfig(): array
     {
         return [
@@ -1120,15 +1462,14 @@ class Dumper
             'maxStringLength' => self::$maxStringLength,
             'showCallerContext' => self::$showCallerContext,
             'showMemoryUsage' => self::$showMemoryUsage,
+            'showStackTrace' => self::$showStackTrace,
+            'showFrameworkInfo' => self::$showFrameworkInfo,
             'darkMode' => self::$darkMode,
-            'showTrace' => self::$showTrace,
+            'stackTraceLimit' => self::$stackTraceLimit,
             'allowedIPs' => self::$allowedIPs,
         ];
     }
 
-    /**
-     * Reset configuration to defaults
-     */
     public static function resetConfig(): void
     {
         self::$maxDepth = 5;
@@ -1137,8 +1478,10 @@ class Dumper
         self::$maxStringLength = 500;
         self::$showCallerContext = true;
         self::$showMemoryUsage = true;
+        self::$showStackTrace = true;
+        self::$showFrameworkInfo = true;
         self::$darkMode = false;
-        self::$showTrace = true;
+        self::$stackTraceLimit = 10;
         self::$allowedIPs = ['127.0.0.1', '::1'];
         self::$initialized = false;
     }
