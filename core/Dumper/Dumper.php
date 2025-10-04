@@ -20,6 +20,7 @@ class Dumper
     private static bool $showCallerContext = true;
     private static bool $showMemoryUsage = true;
     private static bool $darkMode = false;
+    private static bool $showTrace = true;
 
     // Internal state
     private static bool $cssLoaded = false;
@@ -42,7 +43,6 @@ class Dumper
             return;
         }
 
-        // Apply configuration
         self::$maxDepth = min($config['maxDepth'] ?? self::$maxDepth, self::MAX_DEPTH_LIMIT);
         self::$maxArrayItems = min($config['maxArrayItems'] ?? self::$maxArrayItems, self::MAX_ITEMS_LIMIT);
         self::$maxObjectProps = min($config['maxObjectProps'] ?? self::$maxObjectProps, self::MAX_ITEMS_LIMIT);
@@ -50,6 +50,7 @@ class Dumper
         self::$showCallerContext = $config['showCallerContext'] ?? self::$showCallerContext;
         self::$showMemoryUsage = $config['showMemoryUsage'] ?? self::$showMemoryUsage;
         self::$darkMode = $config['darkMode'] ?? self::$darkMode;
+        self::$showTrace = $config['showTrace'] ?? self::$showTrace;
         self::$allowedIPs = array_merge(self::$allowedIPs, $config['allowedIPs'] ?? []);
 
         self::$initialized = true;
@@ -64,17 +65,13 @@ class Dumper
             return;
         }
 
-        // Reset processed objects for each dump call
         self::$processedObjects = [];
-
-        // Capture output to prevent breaking the layout
         ob_start();
 
         $groupId = uniqid('dump-');
         $backtrace = self::getRelevantBacktrace();
         $callerContext = self::$showCallerContext ? self::getCallerContext($backtrace) : null;
 
-        // Load assets only once
         self::loadAssets($groupId);
 
         echo "<div class='plugs-dump-wrapper' id='{$groupId}'>";
@@ -89,8 +86,16 @@ class Dumper
 
         echo "</div>";
 
-        // Flush the output buffer
         ob_end_flush();
+    }
+
+    /**
+     * Dump and die
+     */
+    public static function dd(...$vars): void
+    {
+        self::dump(...$vars);
+        die(1);
     }
 
     /**
@@ -107,12 +112,13 @@ class Dumper
         $backtrace = self::getRelevantBacktrace();
         $location = basename($backtrace['file'] ?? 'unknown') . ':' . ($backtrace['line'] ?? 'unknown');
 
-        echo "<div class='plugs-quick-dump' style='margin:20px 0;'>";
-        echo "<div style='background:#2d3748;color:white;padding:8px 12px;font-family:monospace;font-size:12px;'>";
-        echo "Quick Dump @ {$location}";
+        echo "<div class='plugs-quick-dump'>";
+        echo "<div class='quick-dump-header'>";
+        echo "<span class='quick-dump-icon'>⚡</span>";
+        echo "<span>Quick Dump @ {$location}</span>";
         echo "</div>";
 
-        echo "<pre style='background:#f8fafc;padding:12px;border:1px solid #e2e8f0;margin:0;font-size:12px;max-height:300px;overflow:auto;'>";
+        echo "<pre class='quick-dump-content'>";
         foreach ($vars as $var) {
             echo htmlspecialchars(print_r($var, true)), "\n---\n";
         }
@@ -122,23 +128,39 @@ class Dumper
     }
 
     /**
+     * Log dump to file
+     */
+    public static function log(...$vars): void
+    {
+        $backtrace = self::getRelevantBacktrace();
+        $location = basename($backtrace['file'] ?? 'unknown') . ':' . ($backtrace['line'] ?? 'unknown');
+        $timestamp = date('Y-m-d H:i:s');
+
+        $logContent = "[$timestamp] $location\n";
+        foreach ($vars as $index => $var) {
+            $logContent .= "Variable #" . ($index + 1) . ":\n";
+            $logContent .= print_r($var, true) . "\n\n";
+        }
+
+        $logFile = sys_get_temp_dir() . '/plugs-dump.log';
+        error_log($logContent, 3, $logFile);
+    }
+
+    /**
      * Check if debugging is allowed
      */
     private static function isDebuggingAllowed(): bool
     {
-        // Check environment
         $env = strtolower($_ENV['APP_ENV'] ?? $_SERVER['APP_ENV'] ?? 'production');
         if (!in_array($env, ['local', 'development', 'dev', 'testing', 'staging'])) {
             return false;
         }
 
-        // Check IP restriction
         $clientIP = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
         if (!in_array($clientIP, self::$allowedIPs) && !in_array('*', self::$allowedIPs)) {
             return false;
         }
 
-        // Check if headers already sent
         if (headers_sent()) {
             return false;
         }
@@ -153,7 +175,6 @@ class Dumper
     {
         $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 10);
 
-        // Skip internal framework calls
         foreach ($backtrace as $entry) {
             if (!isset($entry['class']) || strpos($entry['class'], 'Plugs\\Dumper\\') !== 0) {
                 return $entry;
@@ -181,9 +202,9 @@ class Dumper
         for ($i = $start; $i < $end; $i++) {
             $currentLine = $i + 1;
             $content = htmlspecialchars($fileContent[$i] ?? '', ENT_QUOTES, 'UTF-8');
-            $highlight = ($currentLine === $line) ? 'style="background:#fff3bf;"' : '';
+            $highlight = ($currentLine === $line) ? 'highlight' : '';
             $context[] = sprintf(
-                '<tr %s><td class="line-number">%d</td><td class="line-content">%s</td></tr>',
+                '<div class="code-line %s"><span class="line-number">%d</span><span class="line-content">%s</span></div>',
                 $highlight,
                 $currentLine,
                 $content
@@ -191,7 +212,7 @@ class Dumper
         }
 
         return sprintf(
-            '<div class="caller-context"><table>%s</table></div>',
+            '<div class="caller-context"><div class="context-header">Code Context</div><div class="code-lines">%s</div></div>',
             implode("\n", $context)
         );
     }
@@ -214,170 +235,167 @@ class Dumper
 
     private static function getCss(): string
     {
-        $darkModeStyles = self::$darkMode ? <<<'CSS'
-        .plugs-dump-wrapper {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%) !important;
-            color: #e2e8f0 !important;
-        }
-        .dump-variable-card {
-            background: #2d3748 !important;
-            border-color: #4a5568 !important;
-        }
-        .dump-content {
-            background: #1a202c !important;
-            color: #e2e8f0 !important;
-        }
-        .dump-location-header {
-            background: rgba(0, 0, 0, 0.5) !important;
-            color: #e2e8f0 !important;
-            border-color: #4a5568 !important;
-        }
-        .dump-file-info {
-            color: #cbd5e0 !important;
-        }
-        .dump-content::-webkit-scrollbar-track {
-            background: #2d3748 !important;
-        }
-        .dump-content::-webkit-scrollbar-thumb {
-            background: #4a5568 !important;
-        }
-        CSS : '';
-
-        return <<<CSS
+        return <<<'CSS'
         <style>
+        * { box-sizing: border-box; }
+        
         .plugs-dump-wrapper {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            margin: 20px 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            margin: 24px auto;
+            max-width: 1400px;
             border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            position: relative;
-            max-width: 100%;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
         }
 
         .plugs-framework-header {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
             color: white;
-            padding: 16px 20px;
+            padding: 20px 24px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 3px solid #b91c1c;
         }
 
         .plugs-brand {
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 14px;
         }
 
         .plugs-logo {
-            width: 28px;
-            height: 28px;
-            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
-            border-radius: 6px;
+            width: 48px;
+            height: 48px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: bold;
-            font-size: 14px;
+            font-weight: 800;
+            font-size: 20px;
             color: white;
+            letter-spacing: -1px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
 
         .plugs-title {
-            font-size: 16px;
-            font-weight: 600;
+            font-size: 20px;
+            font-weight: 700;
             color: #ffffff;
             margin: 0;
+            letter-spacing: -0.5px;
         }
 
         .plugs-subtitle {
-            font-size: 11px;
-            color: #a0aec0;
-            margin: 0;
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.85);
+            margin: 2px 0 0 0;
             font-weight: 400;
         }
 
         .plugs-info-badge {
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.2);
             backdrop-filter: blur(10px);
-            padding: 6px 12px;
-            border-radius: 16px;
-            font-size: 11px;
-            color: #e2e8f0;
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.3);
         }
 
         .dump-location-header {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            padding: 12px 20px;
+            background: #f9fafb;
+            padding: 16px 24px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            border-bottom: 1px solid #e5e7eb;
+            flex-wrap: wrap;
+            gap: 12px;
         }
 
         .dump-file-info {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
             font-size: 13px;
-            color: #4a5568;
+            color: #6b7280;
             font-weight: 500;
+        }
+
+        .dump-file-info strong {
+            color: #111827;
+            font-weight: 600;
         }
 
         .dump-controls {
             display: flex;
             gap: 8px;
+            flex-wrap: wrap;
         }
 
         .dump-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none;
-            color: white;
-            padding: 6px 12px;
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            color: #374151;
+            padding: 8px 14px;
             border-radius: 6px;
-            font-size: 11px;
+            font-size: 12px;
             font-weight: 500;
             cursor: pointer;
-            transition: transform 0.2s ease;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
         }
 
         .dump-btn:hover {
+            background: #f3f4f6;
+            border-color: #d1d5db;
             transform: translateY(-1px);
         }
 
-        .dump-btn.secondary {
-            background: #f7fafc;
-            color: #4a5568;
-            border: 1px solid #e2e8f0;
+        .dump-btn.primary {
+            background: #ef4444;
+            color: white;
+            border-color: #dc2626;
+        }
+
+        .dump-btn.primary:hover {
+            background: #dc2626;
         }
 
         .dump-variables-grid {
-            padding: 20px;
-            background: #f8fafc;
+            padding: 24px;
+            background: #f9fafb;
             display: grid;
-            gap: 16px;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
         }
 
         .dump-variable-card {
             background: white;
             border-radius: 8px;
             overflow: hidden;
-            border: 1px solid rgba(0, 0, 0, 0.05);
-            transition: transform 0.2s ease;
+            border: 1px solid #e5e7eb;
+            transition: all 0.2s ease;
         }
 
         .dump-variable-card:hover {
-            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            transform: translateY(-2px);
         }
 
         .dump-variable-header {
-            background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+            background: #374151;
             color: white;
-            padding: 12px 16px;
+            padding: 14px 18px;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -386,52 +404,55 @@ class Dumper
         .dump-variable-info {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
         }
 
         .variable-number {
             background: rgba(255, 255, 255, 0.2);
             color: white;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: 600;
-            min-width: 20px;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            min-width: 28px;
             text-align: center;
         }
 
         .dump-type-badge {
-            background: #4299e1;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 10px;
-            font-weight: 500;
+            background: #3b82f6;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
             color: white;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .dump-class-badge {
-            background: #38a169;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 10px;
-            font-weight: 500;
+            background: #10b981;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 600;
             color: white;
         }
 
         .dump-variable-actions {
             display: flex;
-            gap: 4px;
+            gap: 6px;
         }
 
         .dump-toggle, .dump-copy {
             background: rgba(255, 255, 255, 0.2);
             border: none;
             color: white;
-            padding: 4px 8px;
-            border-radius: 4px;
+            padding: 6px 12px;
+            border-radius: 6px;
             font-size: 12px;
+            font-weight: 500;
             cursor: pointer;
-            transition: background 0.2s ease;
+            transition: all 0.2s ease;
         }
 
         .dump-toggle:hover, .dump-copy:hover {
@@ -439,14 +460,15 @@ class Dumper
         }
 
         .dump-content {
-            background: #fafafa;
-            padding: 16px;
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
-            line-height: 1.4;
+            background: #1f2937;
+            color: #e5e7eb;
+            padding: 20px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
+            font-size: 13px;
+            line-height: 1.6;
             overflow-x: auto;
             white-space: pre;
-            max-height: 400px;
+            max-height: 500px;
             overflow-y: auto;
         }
 
@@ -455,221 +477,306 @@ class Dumper
         }
 
         .caller-context {
-            background: #f8f9fa;
-            padding: 10px;
-            border-top: 1px solid #e9ecef;
-            font-family: 'Courier New', monospace;
+            background: #f3f4f6;
+            border-top: 1px solid #e5e7eb;
+        }
+
+        .context-header {
+            padding: 12px 24px;
+            background: #e5e7eb;
+            font-weight: 600;
             font-size: 12px;
-            max-height: 200px;
-            overflow: auto;
+            color: #374151;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
-        .caller-context table {
-            width: 100%;
-            border-collapse: collapse;
+        .code-lines {
+            padding: 16px 0;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
+            font-size: 13px;
+            overflow-x: auto;
         }
 
-        .caller-context .line-number {
-            color: #6c757d;
-            padding-right: 10px;
+        .code-line {
+            display: flex;
+            padding: 2px 0;
+        }
+
+        .code-line.highlight {
+            background: #fef3c7;
+        }
+
+        .line-number {
+            color: #9ca3af;
+            padding: 0 16px 0 24px;
             text-align: right;
             user-select: none;
+            min-width: 60px;
         }
 
-        .caller-context .line-content {
-            white-space: pre;
+        .line-content {
+            flex: 1;
+            padding-right: 24px;
+            color: #374151;
         }
 
         .dump-content::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
+            width: 8px;
+            height: 8px;
         }
 
         .dump-content::-webkit-scrollbar-track {
-            background: #f1f1f1;
+            background: #111827;
         }
 
         .dump-content::-webkit-scrollbar-thumb {
-            background: #c1c1c1;
-            border-radius: 3px;
+            background: #4b5563;
+            border-radius: 4px;
+        }
+
+        .dump-content::-webkit-scrollbar-thumb:hover {
+            background: #6b7280;
         }
 
         /* Syntax highlighting */
-        .dump-string { color: #22863a; }
-        .dump-number { color: #6f42c1; }
-        .dump-boolean { color: #d73a49; }
-        .dump-null { color: #6a737d; font-style: italic; }
-        .dump-array-key { color: #e36209; }
-        .dump-object-property { color: #005cc5; }
-        .dump-visibility { color: #6f42c1; font-style: italic; }
-        .dump-resource { color: #b08800; }
-        .dump-class-name { color: #22863a; font-weight: bold; }
-        .dump-truncated { color: #6a737d; font-style: italic; }
-        .dump-circular { color: #d73a49; font-style: italic; }
+        .dump-string { color: #34d399; }
+        .dump-number { color: #a78bfa; }
+        .dump-boolean { color: #f87171; }
+        .dump-null { color: #9ca3af; font-style: italic; }
+        .dump-array-key { color: #fbbf24; }
+        .dump-object-property { color: #60a5fa; }
+        .dump-visibility { color: #a78bfa; font-style: italic; }
+        .dump-resource { color: #fb923c; }
+        .dump-class-name { color: #34d399; font-weight: bold; }
+        .dump-truncated { color: #9ca3af; font-style: italic; }
+        .dump-circular { color: #f87171; font-style: italic; }
 
-        /* Dark mode syntax highlighting */
-        .dark-mode .dump-string { color: #9ecbff; }
-        .dark-mode .dump-number { color: #b392f0; }
-        .dark-mode .dump-boolean { color: #ff8383; }
-        .dark-mode .dump-null { color: #8b949e; }
-        .dark-mode .dump-array-key { color: #ffab70; }
-        .dark-mode .dump-object-property { color: #79b8ff; }
-        .dark-mode .dump-visibility { color: #b392f0; }
-        .dark-mode .dump-resource { color: #e3b341; }
-        .dark-mode .dump-class-name { color: #7ee787; }
-        .dark-mode .dump-truncated { color: #8b949e; }
-        .dark-mode .dump-circular { color: #ff8383; }
+        /* Quick dump styles */
+        .plugs-quick-dump {
+            margin: 20px auto;
+            max-width: 1200px;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e5e7eb;
+        }
+
+        .quick-dump-header {
+            background: #374151;
+            color: white;
+            padding: 12px 16px;
+            font-family: monospace;
+            font-size: 13px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .quick-dump-icon {
+            font-size: 16px;
+        }
+
+        .quick-dump-content {
+            background: #1f2937;
+            color: #e5e7eb;
+            padding: 20px;
+            margin: 0;
+            font-size: 13px;
+            max-height: 400px;
+            overflow: auto;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', 'Consolas', monospace;
+        }
 
         /* Responsive */
         @media (max-width: 768px) {
+            .plugs-dump-wrapper {
+                margin: 12px;
+                border-radius: 8px;
+            }
+
+            .plugs-framework-header {
+                padding: 16px;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+            }
+
             .dump-variables-grid {
                 grid-template-columns: 1fr;
                 padding: 16px;
+                gap: 16px;
             }
 
             .dump-location-header {
                 flex-direction: column;
                 align-items: flex-start;
-                gap: 8px;
+                padding: 12px 16px;
             }
 
             .dump-controls {
                 width: 100%;
-                justify-content: flex-end;
+            }
+
+            .dump-btn {
+                flex: 1;
+                justify-content: center;
+            }
+
+            .plugs-logo {
+                width: 40px;
+                height: 40px;
+                font-size: 18px;
+            }
+
+            .plugs-title {
+                font-size: 18px;
             }
         }
 
-        {$darkModeStyles}
+        @media (max-width: 480px) {
+            .dump-content {
+                font-size: 11px;
+                padding: 12px;
+            }
+
+            .code-lines {
+                font-size: 11px;
+            }
+
+            .line-number {
+                padding: 0 8px 0 12px;
+                min-width: 40px;
+            }
+
+            .line-content {
+                padding-right: 12px;
+            }
+        }
         </style>
         CSS;
     }
 
     private static function getJavaScript(string $groupId): string
     {
-        return <<<JS
+        return <<<'JS'
         <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Toggle individual variables
-            document.querySelectorAll('.dump-toggle').forEach(button => {
-                button.addEventListener('click', function() {
-                    const targetId = this.getAttribute('data-target');
-                    const target = document.getElementById(targetId);
-                    const isCollapsed = target.classList.contains('collapsed');
+        (function() {
+            'use strict';
 
-                    if (isCollapsed) {
-                        target.classList.remove('collapsed');
-                        this.textContent = '▼';
-                    } else {
-                        target.classList.add('collapsed');
-                        this.textContent = '▶';
-                    }
-                });
-            });
-
-            // Copy functionality
-            document.querySelectorAll('.dump-copy').forEach(button => {
-                button.addEventListener('click', async function() {
-                    const card = this.closest('.dump-variable-card');
-                    const content = card.querySelector('.dump-content').textContent;
-                    const originalText = this.textContent;
-
-                    try {
-                        if (navigator.clipboard) {
-                            await navigator.clipboard.writeText(content);
-                        } else {
-                            // Fallback for older browsers
-                            const textArea = document.createElement('textarea');
-                            textArea.value = content;
-                            document.body.appendChild(textArea);
-                            textArea.select();
-                            document.execCommand('copy');
-                            document.body.removeChild(textArea);
-                        }
-
-                        this.textContent = '✓ Copied!';
-                        setTimeout(() => this.textContent = originalText, 2000);
-                    } catch (err) {
-                        this.textContent = '✗ Failed';
-                        setTimeout(() => this.textContent = originalText, 2000);
-                    }
-                });
-            });
-
-            // Expand/Collapse all
-            document.querySelectorAll('.dump-expand-all').forEach(button => {
-                button.addEventListener('click', function() {
-                    const groupId = this.getAttribute('data-group');
-                    const shouldExpand = this.textContent.includes('Expand');
-
-                    document.querySelectorAll(`#\${groupId} .dump-toggle`).forEach(toggle => {
-                        const targetId = toggle.getAttribute('data-target');
+            document.addEventListener('DOMContentLoaded', function() {
+                // Toggle individual variables
+                document.querySelectorAll('.dump-toggle').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const targetId = this.getAttribute('data-target');
                         const target = document.getElementById(targetId);
+                        const isCollapsed = target.classList.contains('collapsed');
 
-                        if (shouldExpand) {
-                            target.classList.remove('collapsed');
-                            toggle.textContent = '▼';
-                        } else {
-                            target.classList.add('collapsed');
-                            toggle.textContent = '▶';
+                        target.classList.toggle('collapsed');
+                        this.textContent = isCollapsed ? '▼' : '▶';
+                    });
+                });
+
+                // Copy functionality
+                document.querySelectorAll('.dump-copy').forEach(button => {
+                    button.addEventListener('click', async function() {
+                        const card = this.closest('.dump-variable-card');
+                        const content = card.querySelector('.dump-content').textContent;
+                        const originalText = this.textContent;
+
+                        try {
+                            if (navigator.clipboard) {
+                                await navigator.clipboard.writeText(content);
+                            } else {
+                                const textArea = document.createElement('textarea');
+                                textArea.value = content;
+                                textArea.style.position = 'fixed';
+                                textArea.style.left = '-9999px';
+                                document.body.appendChild(textArea);
+                                textArea.select();
+                                document.execCommand('copy');
+                                document.body.removeChild(textArea);
+                            }
+
+                            this.textContent = '✓ Copied';
+                            setTimeout(() => this.textContent = originalText, 2000);
+                        } catch (err) {
+                            this.textContent = '✗ Failed';
+                            setTimeout(() => this.textContent = originalText, 2000);
                         }
                     });
-
-                    this.textContent = shouldExpand ? 'Collapse All' : 'Expand All';
                 });
-            });
 
-            // Export to JSON
-            document.querySelectorAll('.dump-export-json').forEach(button => {
-                button.addEventListener('click', function() {
-                    const groupId = this.getAttribute('data-group');
-                    const cards = document.querySelectorAll(`#\${groupId} .dump-variable-card`);
-                    const data = [];
+                // Expand/Collapse all
+                document.querySelectorAll('.dump-expand-all').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const groupId = this.getAttribute('data-group');
+                        const shouldExpand = this.textContent.includes('Expand');
 
-                    cards.forEach(card => {
-                        const content = card.querySelector('.dump-content').textContent;
-                        data.push(content);
+                        document.querySelectorAll(`#${groupId} .dump-toggle`).forEach(toggle => {
+                            const targetId = toggle.getAttribute('data-target');
+                            const target = document.getElementById(targetId);
+
+                            if (shouldExpand) {
+                                target.classList.remove('collapsed');
+                                toggle.textContent = '▼';
+                            } else {
+                                target.classList.add('collapsed');
+                                toggle.textContent = '▶';
+                            }
+                        });
+
+                        this.textContent = shouldExpand ? 'Collapse All' : 'Expand All';
                     });
+                });
 
-                    const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = url;
-                    a.download = `dump-\${groupId}.json`;
-                    document.body.appendChild(a);
-                    a.click();
-                    document.body.removeChild(a);
-                    URL.revokeObjectURL(url);
+                // Export to JSON
+                document.querySelectorAll('.dump-export-json').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const groupId = this.getAttribute('data-group');
+                        const cards = document.querySelectorAll(`#${groupId} .dump-variable-card`);
+                        const data = [];
+
+                        cards.forEach(card => {
+                            const content = card.querySelector('.dump-content').textContent;
+                            data.push(content);
+                        });
+
+                        const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+                        const url = URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = `dump-${Date.now()}.json`;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                    });
                 });
             });
-
-            // Toggle dark mode
-            document.querySelectorAll('.dump-toggle-dark-mode').forEach(button => {
-                button.addEventListener('click', function() {
-                    const wrapper = document.querySelector('.plugs-dump-wrapper');
-                    wrapper.classList.toggle('dark-mode');
-                    this.textContent = wrapper.classList.contains('dark-mode') ? '☀️ Light' : '🌙 Dark';
-                });
-            });
-        });
+        })();
         </script>
         JS;
     }
 
     private static function getFrameworkHeader(): string
     {
-        $memoryUsage = self::$showMemoryUsage ? self::formatMemory(memory_get_usage(true)) : '';
+        $memoryUsage = self::$showMemoryUsage ? ' • ' . self::formatMemory(memory_get_usage(true)) : '';
 
         return <<<HTML
         <div class='plugs-framework-header'>
             <div class='plugs-brand'>
-                <div class='plugs-logo'>🔌</div>
+                <div class='plugs-logo'>
+                    P
+                </div>
                 <div>
                     <h2 class='plugs-title'>Plugs Framework</h2>
                     <p class='plugs-subtitle'>Debug Data Dumper</p>
                 </div>
             </div>
             <div class='plugs-info-badge'>
-                Development Mode {$memoryUsage}
+                Development Mode{$memoryUsage}
             </div>
         </div>
         HTML;
@@ -681,29 +788,31 @@ class Dumper
             $backtrace = [];
         }
 
-        $file = isset($backtrace['file']) && is_string($backtrace['file']) ? htmlspecialchars(basename($backtrace['file']), ENT_QUOTES, 'UTF-8') : 'unknown';
-        $line = htmlspecialchars((string)$backtrace['line'] ?? 'unknown', ENT_QUOTES, 'UTF-8');
+        $file = isset($backtrace['file']) && is_string($backtrace['file'])
+            ? htmlspecialchars(basename($backtrace['file']), ENT_QUOTES, 'UTF-8')
+            : 'unknown';
+        $line = htmlspecialchars((string)($backtrace['line'] ?? 'unknown'), ENT_QUOTES, 'UTF-8');
         $timestamp = date('H:i:s');
 
         $controls = implode('', [
             '<button class="dump-btn dump-expand-all" data-group="' . $groupId . '">Expand All</button>',
-            '<button class="dump-btn dump-export-json" data-group="' . $groupId . '">Export JSON</button>',
-            '<button class="dump-btn dump-toggle-dark-mode" data-group="' . $groupId . '">' . (self::$darkMode ? '☀️ Light' : '🌙 Dark') . '</button>'
+            '<button class="dump-btn dump-export-json" data-group="' . $groupId . '">📥 Export</button>',
         ]);
 
         $header = <<<HTML
-    <div class='dump-location-header'>
-        <div class='dump-file-info'>
-            <strong>{$file}</strong>
-            <span>Line {$line}</span>
-            <span>•</span>
-            <span>{$timestamp}</span>
+        <div class='dump-location-header'>
+            <div class='dump-file-info'>
+                <strong>{$file}</strong>
+                <span>•</span>
+                <span>Line {$line}</span>
+                <span>•</span>
+                <span>{$timestamp}</span>
+            </div>
+            <div class='dump-controls'>
+                {$controls}
+            </div>
         </div>
-        <div class='dump-controls'>
-            {$controls}
-        </div>
-    </div>
-    HTML;
+        HTML;
 
         if ($callerContext) {
             $header .= $callerContext;
@@ -812,7 +921,7 @@ class Dumper
         foreach ($var as $key => $value) {
             if ($itemCount >= self::$maxArrayItems) {
                 $remaining = $count - self::$maxArrayItems;
-                $output .= "{$spaces}  <span class=\"dump-truncated\">... {$remaining} more</span>\n";
+                $output .= "{$spaces}  <span class=\"dump-truncated\">... {$remaining} more items</span>\n";
                 break;
             }
 
@@ -820,7 +929,7 @@ class Dumper
                 ? "<span class=\"dump-number\">{$key}</span>"
                 : "<span class=\"dump-string\">\"" . htmlspecialchars($key, ENT_QUOTES, 'UTF-8') . "\"</span>";
 
-            $newPath = $path ? "{$path}.{$key}" : "[{$key}]";
+            $newPath = $path ? "{$path}[{$key}]" : "[{$key}]";
 
             $output .= sprintf(
                 "%s  %s => %s,\n",
@@ -843,7 +952,7 @@ class Dumper
 
         // Check for circular reference
         if (isset(self::$processedObjects[$objectId])) {
-            return '<span class="dump-circular">*RECURSION* ' . $shortClassName . '</span>';
+            return '<span class="dump-circular">*CIRCULAR REFERENCE* ' . $shortClassName . '</span>';
         }
 
         self::$processedObjects[$objectId] = true;
@@ -854,12 +963,13 @@ class Dumper
 
             $output = "<span class=\"dump-class-name\">{$shortClassName}</span> {\n";
             $propCount = 0;
-            $maxProps = min(self::$maxObjectProps, count($properties));
+            $totalProps = count($properties);
+            $maxProps = min(self::$maxObjectProps, $totalProps);
 
             foreach ($properties as $property) {
                 if ($propCount >= $maxProps) {
-                    $remaining = count($properties) - $maxProps;
-                    $output .= "{$spaces}  <span class=\"dump-truncated\">... {$remaining} more</span>\n";
+                    $remaining = $totalProps - $maxProps;
+                    $output .= "{$spaces}  <span class=\"dump-truncated\">... {$remaining} more properties</span>\n";
                     break;
                 }
 
@@ -930,7 +1040,7 @@ class Dumper
             $index++;
         }
 
-        return sprintf('(%.2f %s)', $bytes, $units[$index]);
+        return sprintf('%.2f %s', $bytes, $units[$index]);
     }
 
     /**
@@ -971,6 +1081,11 @@ class Dumper
         self::$showMemoryUsage = $enabled;
     }
 
+    public static function setShowTrace(bool $enabled): void
+    {
+        self::$showTrace = $enabled;
+    }
+
     public static function setAllowedIPs(array $ips): void
     {
         self::$allowedIPs = $ips;
@@ -981,5 +1096,50 @@ class Dumper
         if (!in_array($ip, self::$allowedIPs)) {
             self::$allowedIPs[] = $ip;
         }
+    }
+
+    public static function removeAllowedIP(string $ip): void
+    {
+        self::$allowedIPs = array_values(array_diff(self::$allowedIPs, [$ip]));
+    }
+
+    public static function clearAllowedIPs(): void
+    {
+        self::$allowedIPs = ['127.0.0.1', '::1'];
+    }
+
+    /**
+     * Get current configuration
+     */
+    public static function getConfig(): array
+    {
+        return [
+            'maxDepth' => self::$maxDepth,
+            'maxArrayItems' => self::$maxArrayItems,
+            'maxObjectProps' => self::$maxObjectProps,
+            'maxStringLength' => self::$maxStringLength,
+            'showCallerContext' => self::$showCallerContext,
+            'showMemoryUsage' => self::$showMemoryUsage,
+            'darkMode' => self::$darkMode,
+            'showTrace' => self::$showTrace,
+            'allowedIPs' => self::$allowedIPs,
+        ];
+    }
+
+    /**
+     * Reset configuration to defaults
+     */
+    public static function resetConfig(): void
+    {
+        self::$maxDepth = 5;
+        self::$maxArrayItems = 20;
+        self::$maxObjectProps = 20;
+        self::$maxStringLength = 500;
+        self::$showCallerContext = true;
+        self::$showMemoryUsage = true;
+        self::$darkMode = false;
+        self::$showTrace = true;
+        self::$allowedIPs = ['127.0.0.1', '::1'];
+        self::$initialized = false;
     }
 }
