@@ -95,11 +95,11 @@ class Response
     private function setDefaultHeaders(): void
     {
         $defaultHeaders = [
-            // 'content-security-policy' => "default-src 'self'; " .
-            //     "script-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " .
-            //     "style-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com 'unsafe-inline'; " .
-            //     "img-src 'self' data: https:; " .
-            //     "font-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com;",
+            'content-security-policy' => "default-src 'self'; " .
+                "script-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " .
+                "style-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com 'unsafe-inline'; " .
+                "img-src 'self' data: https:; " .
+                "font-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com;",
             'x-content-type-options' => 'nosniff',
             'x-frame-options' => 'DENY',
             'x-xss-protection' => '1; mode=block',
@@ -699,6 +699,23 @@ class Response
     //     return (new self($xml, $statusCode, $headers))
     //         ->xml($xml);
     // }
+
+    public function disableSecurityHeaders(): self
+    {
+        $securityHeaders = [
+            'content-security-policy',
+            'x-content-type-options',
+            'x-frame-options',
+            'x-xss-protection',
+            'strict-transport-security'
+        ];
+
+        foreach ($securityHeaders as $header) {
+            $this->removeHeader($header);
+        }
+
+        return $this;
+    }
 
     /**
      * Destructor to auto-send response (from Trees\Response)

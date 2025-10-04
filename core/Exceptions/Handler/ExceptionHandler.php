@@ -974,7 +974,7 @@ class ExceptionHandler
         </html>
 <?php
         $html = ob_get_clean();
-        return new Response($html, 500, ['Content-Type' => 'text/html']);
+        return (new Response($html, 500))->contentType('text/html')->disableSecurityHeaders();
     }
 
     protected function renderProductionResponse(Throwable $exception): Response
