@@ -20,6 +20,14 @@ if(!function_exists('quick_dump')) {
     }
 }
 
+if(!function_exists('dump_log')) {
+    function dump_log(...$args)
+    {
+        Dumper::log(...$args);
+        exit;
+    }
+}
+
 if (!function_exists('dd')) {
     /**
      * Dump the passed variables and continue execution.
@@ -29,11 +37,7 @@ if (!function_exists('dd')) {
      */
     function dd(mixed ...$vars): void
     {
-        foreach ($vars as $var) {
-            echo '<pre>';
-            var_dump($var);
-            echo '</pre>';
-        }
+        Dumper::dd(...$vars);
         exit(1);
     }
 }
