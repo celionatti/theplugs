@@ -119,18 +119,6 @@ class Request
         return $sanitized;
     }
 
-    // private function sanitizeInput(array $input): array
-    // {
-    //     $sanitized = [];
-    //     foreach ($input as $key => $value) {
-    //         $sanitizedKey = preg_replace('/[^a-zA-Z0-9_-]/', '', $key);
-    //         $sanitized[$sanitizedKey] = is_array($value)
-    //             ? $this->sanitizeInput($value)
-    //             : htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-    //     }
-    //     return $sanitized;
-    // }
-
     private function sanitizeInput(array $input): array
     {
         $sanitized = [];
@@ -506,24 +494,6 @@ class Request
     {
         return file_get_contents('php://input') ?: '';
     }
-
-    // public function json(): array
-    // {
-    //     if ($this->jsonData === null) {
-    //         $this->jsonData = [];
-
-    //         if ($this->isJson()) {
-    //             $content = $this->getContent();
-    //             $this->jsonData = json_decode($content, true) ?? [];
-
-    //             if (json_last_error() !== JSON_ERROR_NONE) {
-    //                 throw new InvalidArgumentException('Invalid JSON payload');
-    //             }
-    //         }
-    //     }
-
-    //     return $this->jsonData;
-    // }
 
     public function jsonGet(string $key, mixed $default = null): mixed
     {

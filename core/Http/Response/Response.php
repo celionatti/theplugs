@@ -95,11 +95,11 @@ class Response
     private function setDefaultHeaders(): void
     {
         $defaultHeaders = [
-            'content-security-policy' => "default-src 'self'; " .
-                "script-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " .
-                "style-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com 'unsafe-inline'; " .
-                "img-src 'self' data: https:; " .
-                "font-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com;",
+            // 'content-security-policy' => "default-src 'self'; " .
+            //     "script-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; " .
+            //     "style-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com 'unsafe-inline'; " .
+            //     "img-src 'self' data: https:; " .
+            //     "font-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com;",
             'x-content-type-options' => 'nosniff',
             'x-frame-options' => 'DENY',
             'x-xss-protection' => '1; mode=block',
@@ -321,47 +321,6 @@ class Response
         return $this;
     }
 
-    // public function download(
-    //     string $filePath,
-    //     ?string $name = null,
-    //     bool $deleteAfterSend = false,
-    //     bool $inline = false
-    // ): self {
-    //     if (!is_readable($filePath)) {
-    //         throw new RuntimeException("File not found or not readable: $filePath");
-    //     }
-
-    //     $name = $name ?? basename($filePath);
-    //     $disposition = $inline ? 'inline' : 'attachment';
-
-    //     $this->setHeaders([
-    //         'Content-Type' => $this->guessContentType($filePath) ?: 'application/octet-stream',
-    //         'Content-Disposition' => sprintf('%s; filename="%s"', $disposition, $this->quoteFilename($name)),
-    //         'Content-Length' => filesize($filePath),
-    //         'Content-Transfer-Encoding' => 'binary',
-    //         'Pragma' => 'public',
-    //         'Cache-Control' => 'must-revalidate, post-check=0, pre-check=0',
-    //         'Last-Modified' => gmdate('D, d M Y H:i:s T', filemtime($filePath)),
-    //         'Expires' => '0',
-    //     ]);
-
-    //     $this->content = function () use ($filePath, $deleteAfterSend) {
-    //         $output = fopen('php://output', 'wb');
-    //         $file = fopen($filePath, 'rb');
-
-    //         stream_copy_to_stream($file, $output);
-
-    //         fclose($file);
-    //         fclose($output);
-
-    //         if ($deleteAfterSend) {
-    //             unlink($filePath);
-    //         }
-    //     };
-
-    //     return $this;
-    // }
-
     public function download(
         string $filePath,
         ?string $name = null,
@@ -395,12 +354,12 @@ class Response
         $this->content = function () use ($filePath, $deleteAfterSend) {
             $output = fopen('php://output', 'wb');
             $file = fopen($filePath, 'rb');
-            
+
             stream_copy_to_stream($file, $output);
-            
+
             fclose($file);
             fclose($output);
-            
+
             if ($deleteAfterSend) {
                 unlink($filePath);
             }
@@ -466,11 +425,6 @@ class Response
         return $this;
     }
 
-    // public function send(): void
-    // {
-    //     $this->sendHeaders();
-    //     $this->sendContent();
-    // }
 
     public function send(): void
     {
@@ -499,25 +453,6 @@ class Response
 
         return $this;
     }
-
-    // protected function sendHeaders(): void
-    // {
-    //     if (headers_sent()) {
-    //         return;
-    //     }
-
-    //     // Status
-    //     header(sprintf('HTTP/%s %s %s', $this->version, $this->statusCode, $this->statusText), true, $this->statusCode);
-
-    //     // Headers
-    //     foreach ($this->headers as $name => $values) {
-    //         $replace = true;
-    //         foreach ($values as $value) {
-    //             header($name.': '.$value, $replace);
-    //             $replace = false;
-    //         }
-    //     }
-    // }
 
     protected function sendHeaders(): void
     {
@@ -563,20 +498,34 @@ class Response
         }
     }
 
+    // public static function json(
+    //     array $data,
+    //     int $statusCode = 200,
+    //     array $headers = [],
+    //     int $jsonOptions = JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES
+    // ): self {
+    //     $response = new self('', $statusCode, $headers);
+    //     $response->setContent(json_encode($data, $jsonOptions));
+
+    //     if (json_last_error() !== JSON_ERROR_NONE) {
+    //         throw new InvalidArgumentException('Invalid JSON data: ' . json_last_error_msg());
+    //     }
+
+    //     return $response->contentType('application/json');
+    // }
+
     public static function json(
         array $data,
         int $statusCode = 200,
         array $headers = [],
-        int $jsonOptions = JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES
+        int $options = JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE
     ): self {
-        $response = new self('', $statusCode, $headers);
-        $response->setContent(json_encode($data, $jsonOptions));
-
+        $json = json_encode($data, $options);
         if (json_last_error() !== JSON_ERROR_NONE) {
-            throw new InvalidArgumentException('Invalid JSON data: ' . json_last_error_msg());
+            throw new InvalidArgumentException(json_last_error_msg());
         }
-
-        return $response->contentType('application/json');
+        return (new self($json, $statusCode, $headers))
+            ->contentType('application/json');
     }
 
     public static function text(string $text, int $statusCode = 200, array $headers = []): self
@@ -724,12 +673,12 @@ class Response
     //     array $headers = []
     // ): self {
     //     $csvContent = '';
-        
+
     //     if (!empty($data)) {
     //         // Add headers
     //         $headers = array_keys($data[0]);
     //         $csvContent .= implode(',', $headers) . "\n";
-            
+
     //         // Add data
     //         foreach ($data as $row) {
     //             $csvContent .= implode(',', array_map(function ($value) {
@@ -756,7 +705,7 @@ class Response
      */
     public function __destruct()
     {
-        if (!$this->sent) {
+        if (!$this->sent && php_sapi_name() !== 'cli') {
             $this->send();
         }
     }
