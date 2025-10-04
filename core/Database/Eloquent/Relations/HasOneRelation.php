@@ -23,7 +23,10 @@ class HasOneRelation extends Relation
     public function addConstraints(): void
     {
         if ($this->parent->exists) {
-            $this->query->where($this->foreignKey, $this->parent->getAttribute($this->localKey));
+            $localKeyValue = $this->parent->getAttribute($this->localKey);
+            if ($localKeyValue !== null) {
+                $this->query->where($this->foreignKey, '=', $localKeyValue);
+            }
         }
     }
 
@@ -56,6 +59,8 @@ class HasOneRelation extends Relation
             $key = $model->getAttribute($this->localKey);
             if (isset($dictionary[$key])) {
                 $model->setRelation($relation, $dictionary[$key]);
+            } else {
+                $model->setRelation($relation, null);
             }
         }
 
@@ -64,8 +69,7 @@ class HasOneRelation extends Relation
 
     public function getResults(): ?Model
     {
-        $result = $this->query->first();
-        return $result ? $this->hydrate([$result])[0] : null;
+        return $this->query->first();
     }
 
     public function save(Model $model): bool
@@ -77,6 +81,22 @@ class HasOneRelation extends Relation
     public function create(array $attributes = []): Model
     {
         $attributes[$this->foreignKey] = $this->parent->getAttribute($this->localKey);
-        return $this->related::create($attributes);
+        
+        $instance = $this->newRelatedInstance();
+        $instance->fill($attributes);
+        $instance->save();
+        
+        return $instance;
+    }
+
+    public function update(array $attributes): bool
+    {
+        return $this->query->update($attributes) > 0;
+    }
+
+    public function delete(): bool
+    {
+        $model = $this->getResults();
+        return $model ? $model->delete() : false;
     }
 }

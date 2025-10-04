@@ -298,7 +298,7 @@ abstract class Model implements JsonSerializable
             if ($current === null && $original === null) {
                 return false;
             }
-            
+
             if ($current === null || $original === null) {
                 return $current !== $original;
             }
@@ -632,6 +632,15 @@ abstract class Model implements JsonSerializable
     protected function freshTimestamp(): Carbon
     {
         return Carbon::now();
+    }
+
+    public function fresh(): ?static
+    {
+        if (!$this->exists) {
+            return null;
+        }
+
+        return static::find($this->getKey());
     }
 
     protected function syncOriginal(): void

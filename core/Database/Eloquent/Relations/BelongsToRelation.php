@@ -23,7 +23,10 @@ class BelongsToRelation extends Relation
     public function addConstraints(): void
     {
         if ($this->parent->exists) {
-            $this->query->where($this->ownerKey, $this->parent->getAttribute($this->foreignKey));
+            $foreignKeyValue = $this->parent->getAttribute($this->foreignKey);
+            if ($foreignKeyValue !== null) {
+                $this->query->where($this->ownerKey, '=', $foreignKeyValue);
+            }
         }
     }
 
@@ -56,6 +59,9 @@ class BelongsToRelation extends Relation
             $key = $model->getAttribute($this->foreignKey);
             if (isset($dictionary[$key])) {
                 $model->setRelation($relation, $dictionary[$key]);
+            } else {
+                // Set null if no relation found
+                $model->setRelation($relation, null);
             }
         }
 
@@ -64,19 +70,36 @@ class BelongsToRelation extends Relation
 
     public function getResults(): ?Model
     {
-        $result = $this->query->first();
-        return $result ? $this->hydrate([$result])[0] : null;
+        return $this->query->first();
     }
 
-    public function associate(Model $model): Model
+    public function associate(?Model $model): Model
     {
+        if ($model === null) {
+            return $this->dissociate();
+        }
+
         $this->parent->setAttribute($this->foreignKey, $model->getAttribute($this->ownerKey));
+        $this->parent->setRelation(
+            $this->getRelationName(),
+            $model
+        );
+
         return $this->parent;
     }
 
     public function dissociate(): Model
     {
         $this->parent->setAttribute($this->foreignKey, null);
+        $this->parent->setRelation($this->getRelationName(), null);
+
         return $this->parent;
+    }
+
+    // Helper to get relation name from backtrace
+    protected function getRelationName(): string
+    {
+        $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 3);
+        return $backtrace[2]['function'] ?? 'relation';
     }
 }

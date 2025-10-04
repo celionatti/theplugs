@@ -23,7 +23,10 @@ class HasManyRelation extends Relation
     public function addConstraints(): void
     {
         if ($this->parent->exists) {
-            $this->query->where($this->foreignKey, $this->parent->getAttribute($this->localKey));
+            $localKeyValue = $this->parent->getAttribute($this->localKey);
+            if ($localKeyValue !== null) {
+                $this->query->where($this->foreignKey, '=', $localKeyValue);
+            }
         }
     }
 
@@ -66,8 +69,7 @@ class HasManyRelation extends Relation
 
     public function getResults(): array
     {
-        $results = $this->query->get();
-        return $this->hydrate($results);
+        return $this->query->get();
     }
 
     public function save(Model $model): bool
@@ -87,7 +89,12 @@ class HasManyRelation extends Relation
     public function create(array $attributes = []): Model
     {
         $attributes[$this->foreignKey] = $this->parent->getAttribute($this->localKey);
-        return $this->related::create($attributes);
+
+        $instance = $this->newRelatedInstance();
+        $instance->fill($attributes);
+        $instance->save();
+
+        return $instance;
     }
 
     public function createMany(array $records): array
@@ -97,5 +104,10 @@ class HasManyRelation extends Relation
             $models[] = $this->create($record);
         }
         return $models;
+    }
+
+    public function delete(): int
+    {
+        return $this->query->delete();
     }
 }
