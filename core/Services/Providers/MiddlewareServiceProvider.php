@@ -86,6 +86,7 @@ class MiddlewareServiceProvider extends ServiceProvider
         return [
             'global' => [
                 // Global middleware that runs on every request
+                'csrf' => \Plugs\Http\Middleware\HandleCsrf::class,
             ],
             'groups' => [
                 'web' => [
@@ -97,9 +98,9 @@ class MiddlewareServiceProvider extends ServiceProvider
             ],
             'route' => [
                 // Route-specific middleware aliases
-                'auth' => \Plugs\Http\Middleware\AuthMiddleware::class,
-                'guest' => \Plugs\Http\Middleware\GuestMiddleware::class,
-                'throttle' => \Plugs\Http\Middleware\ThrottleMiddleware::class,
+                // 'auth' => \Plugs\Http\Middleware\AuthMiddleware::class,
+                // 'guest' => \Plugs\Http\Middleware\GuestMiddleware::class,
+                // 'throttle' => \Plugs\Http\Middleware\ThrottleMiddleware::class,
             ],
         ];
     }

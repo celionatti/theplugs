@@ -11,6 +11,7 @@ use Plugs\Pipeline;
 use Plugs\Http\Router\Router;
 use Plugs\Http\Request\Request;
 use Plugs\Http\Response\Response;
+use Plugs\Middleware\MiddlewareManager;
 
 class Kernel
 {
@@ -18,6 +19,7 @@ class Kernel
      * The application instance.
      */
     protected Container $container;
+    
     /**
      * The base path of the application.
      */
@@ -29,38 +31,9 @@ class Kernel
     protected Router $router;
 
     /**
-     * The application's global HTTP middleware stack.
+     * The middleware manager instance.
      */
-    protected array $middleware = [
-        // Add global middleware here
-        // \App\Http\Middleware\TrustProxies::class,
-        // \App\Http\Middleware\HandleCors::class,
-    ];
-
-    /**
-     * The application's route middleware groups.
-     */
-    protected array $middlewareGroups = [
-        'web' => [
-            // Add web middleware here
-            // \App\Http\Middleware\EncryptCookies::class,
-            // \App\Http\Middleware\VerifyCsrfToken::class,
-        ],
-        'api' => [
-            // Add API middleware here
-            // 'throttle:api',
-            // \App\Http\Middleware\ForceJsonResponse::class,
-        ],
-    ];
-
-    /**
-     * The application's route middleware.
-     */
-    protected array $routeMiddleware = [
-        // 'auth' => \App\Http\Middleware\Authenticate::class,
-        // 'guest' => \App\Http\Middlesware\RedirectIfAuthenticated::class,
-        // Add more route middleware here
-    ];
+    protected ?MiddlewareManager $middlewareManager = null;
 
     /**
      * Create a new HTTP kernel instance.
@@ -95,10 +68,27 @@ class Kernel
     {
         $this->container->instance('request', $request);
 
+        // Get middleware from MiddlewareManager
+        $middleware = $this->gatherMiddleware($request);
+
         return (new Pipeline($this->container))
             ->send($request)
-            ->through($this->app->shouldSkipMiddleware($request) ? [] : $this->middleware)
+            ->through($this->app->shouldSkipMiddleware($request) ? [] : $middleware)
             ->then($this->dispatchToRouter());
+    }
+
+    /**
+     * Gather all middleware for the request.
+     */
+    protected function gatherMiddleware(Request $request): array
+    {
+        // Lazy load the middleware manager
+        if ($this->middlewareManager === null) {
+            $this->middlewareManager = $this->container->get(MiddlewareManager::class);
+        }
+
+        // Get global middleware from MiddlewareManager
+        return $this->middlewareManager->getGlobal();
     }
 
     /**
@@ -114,18 +104,26 @@ class Kernel
     }
 
     /**
-     * Get the middleware groups.
+     * Get the middleware groups from MiddlewareManager.
      */
     public function getMiddlewareGroups(): array
     {
-        return $this->middlewareGroups;
+        if ($this->middlewareManager === null) {
+            $this->middlewareManager = $this->container->get(MiddlewareManager::class);
+        }
+        
+        return $this->middlewareManager->getGroups();
     }
 
     /**
-     * Get the route middleware.
+     * Get the route middleware from MiddlewareManager.
      */
     public function getRouteMiddleware(): array
     {
-        return $this->routeMiddleware;
+        if ($this->middlewareManager === null) {
+            $this->middlewareManager = $this->container->get(MiddlewareManager::class);
+        }
+        
+        return $this->middlewareManager->getRouteMiddlewares();
     }
 }

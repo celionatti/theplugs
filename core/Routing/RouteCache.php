@@ -10,7 +10,7 @@ class RouteCache
 
     public function __construct(string|null $cacheFile)
     {
-        $this->cacheFile = $cacheFile ?: __DIR__ . '/../../cache/routes.php';
+        $this->cacheFile = $cacheFile ?: ROOT_PATH . '/cache/routes.php';
     }
 
     public function isCached(): bool
