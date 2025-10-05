@@ -4,45 +4,21 @@ declare(strict_types=1);
 
 namespace Plugs\Session;
 
-use Plugs\Session\Driver\FileSessionDriver;
-use Plugs\Session\Driver\ArraySessionDriver;
 use Plugs\Session\Interface\SessionInterface;
-use Plugs\Session\Driver\DatabaseSessionDriver;
-use Plugs\Session\Interface\SessionDriverInterface;
 
 class SessionManager implements SessionInterface
 {
-    private SessionDriverInterface $driver;
     private array $config;
-    private array $data = [];
-    private ?string $sessionId = null;
     private bool $started = false;
     private ?SessionEncryptor $encryptor = null;
-    private array $flashKeys = [];
 
     public function __construct(array $config)
     {
         $this->config = $config;
-        $this->driver = $this->createDriver();
 
         if ($config['encrypt'] ?? false) {
             $this->encryptor = new SessionEncryptor($config['key']);
         }
-    }
-
-    /**
-     * Create session driver based on config
-     */
-    private function createDriver(): SessionDriverInterface
-    {
-        $driver = $this->config['driver'] ?? 'file';
-
-        return match ($driver) {
-            'file' => new FileSessionDriver($this->config),
-            'database' => new DatabaseSessionDriver($this->config),
-            'array' => new ArraySessionDriver(),
-            default => throw new \InvalidArgumentException("Unsupported session driver: {$driver}")
-        };
     }
 
     /**
@@ -54,17 +30,17 @@ class SessionManager implements SessionInterface
             return true;
         }
 
-        $this->configureSession();
-
+        // Only configure if session hasn't started yet
         if (session_status() === PHP_SESSION_NONE) {
+            $this->configureSession();
+
             if (!session_start()) {
                 return false;
             }
         }
 
-        $this->sessionId = session_id();
-        $this->loadSessionData();
         $this->handleFlashData();
+        $this->handleSecurityChecks();
         $this->started = true;
 
         return true;
@@ -75,56 +51,58 @@ class SessionManager implements SessionInterface
      */
     private function configureSession(): void
     {
-        ini_set('session.name', $this->config['cookie']);
-        ini_set('session.cookie_lifetime', $this->config['expire_on_close'] ? 0 : $this->config['lifetime'] * 60);
+        // Session cookie configuration
+        ini_set('session.name', $this->config['cookie'] ?? 'plugs_session');
+        ini_set('session.cookie_lifetime', $this->config['expire_on_close'] ? '0' : (string)($this->config['lifetime'] * 60));
         ini_set('session.cookie_path', $this->config['path'] ?? '/');
         ini_set('session.cookie_domain', $this->config['domain'] ?? '');
         ini_set('session.cookie_secure', $this->config['secure'] ? '1' : '0');
         ini_set('session.cookie_httponly', $this->config['http_only'] ? '1' : '0');
         ini_set('session.cookie_samesite', $this->config['same_site'] ?? 'Lax');
-        ini_set('session.gc_maxlifetime', $this->config['lifetime'] * 60);
 
-        // Set custom session handler
-        session_set_save_handler(
-            [$this, 'open'],
-            [$this, 'close'],
-            [$this, 'read'],
-            [$this, 'write'],
-            [$this, 'destroy'],
-            [$this, 'gc']
-        );
+        // Session lifetime and garbage collection
+        ini_set('session.gc_maxlifetime', (string)($this->config['lifetime'] * 60));
+        ini_set('session.gc_probability', (string)($this->config['gc_probability'] ?? 1));
+        ini_set('session.gc_divisor', (string)($this->config['gc_divisor'] ?? 100));
+
+        // Optional: Set custom save path if specified
+        if (isset($this->config['save_path'])) {
+            $savePath = $this->config['save_path'];
+
+            // Create directory if it doesn't exist
+            if (!is_dir($savePath)) {
+                @mkdir($savePath, 0755, true);
+            }
+
+            if (is_dir($savePath) && is_writable($savePath)) {
+                ini_set('session.save_path', $savePath);
+            }
+        }
     }
 
     /**
-     * Load session data from storage
+     * Handle security checks
      */
-    private function loadSessionData(): void
+    private function handleSecurityChecks(): void
     {
-        $data = $this->driver->read($this->sessionId);
-
-        if ($data && $this->encryptor) {
-            $data = $this->encryptor->decrypt($data);
-        }
-
-        $this->data = $data ? unserialize($data) : [];
-
-        // Security checks
+        // Check IP address
         if ($this->config['check_ip'] ?? false) {
             $currentIp = $_SERVER['REMOTE_ADDR'] ?? '';
-            if (isset($this->data['_ip']) && $this->data['_ip'] !== $currentIp) {
+            if (isset($_SESSION['_ip']) && $_SESSION['_ip'] !== $currentIp) {
                 $this->invalidate();
                 return;
             }
-            $this->data['_ip'] = $currentIp;
+            $_SESSION['_ip'] = $currentIp;
         }
 
+        // Check user agent
         if ($this->config['check_user_agent'] ?? false) {
             $currentAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
-            if (isset($this->data['_user_agent']) && $this->data['_user_agent'] !== $currentAgent) {
+            if (isset($_SESSION['_user_agent']) && $_SESSION['_user_agent'] !== $currentAgent) {
                 $this->invalidate();
                 return;
             }
-            $this->data['_user_agent'] = $currentAgent;
+            $_SESSION['_user_agent'] = $currentAgent;
         }
     }
 
@@ -133,18 +111,18 @@ class SessionManager implements SessionInterface
      */
     private function handleFlashData(): void
     {
-        $this->flashKeys = $this->data['_flash']['new'] ?? [];
+        $flashKeys = $_SESSION['_flash']['new'] ?? [];
 
         // Remove old flash data
-        if (isset($this->data['_flash']['old'])) {
-            foreach ($this->data['_flash']['old'] as $key) {
-                unset($this->data[$key]);
+        if (isset($_SESSION['_flash']['old'])) {
+            foreach ($_SESSION['_flash']['old'] as $key) {
+                unset($_SESSION[$key]);
             }
         }
 
         // Move new flash data to old
-        $this->data['_flash'] = [
-            'old' => $this->flashKeys,
+        $_SESSION['_flash'] = [
+            'old' => $flashKeys,
             'new' => []
         ];
     }
@@ -154,7 +132,8 @@ class SessionManager implements SessionInterface
      */
     public function put(string $key, mixed $value): void
     {
-        $this->data[$key] = $value;
+        $this->ensureStarted();
+        $_SESSION[$key] = $value;
     }
 
     /**
@@ -162,7 +141,8 @@ class SessionManager implements SessionInterface
      */
     public function get(string $key, mixed $default = null): mixed
     {
-        return $this->data[$key] ?? $default;
+        $this->ensureStarted();
+        return $_SESSION[$key] ?? $default;
     }
 
     /**
@@ -170,7 +150,8 @@ class SessionManager implements SessionInterface
      */
     public function has(string $key): bool
     {
-        return array_key_exists($key, $this->data);
+        $this->ensureStarted();
+        return array_key_exists($key, $_SESSION);
     }
 
     /**
@@ -178,19 +159,21 @@ class SessionManager implements SessionInterface
      */
     public function forget(string|array $keys): void
     {
+        $this->ensureStarted();
         $keys = is_array($keys) ? $keys : [$keys];
 
         foreach ($keys as $key) {
-            unset($this->data[$key]);
+            unset($_SESSION[$key]);
         }
     }
 
     /**
-     * Get all session data
+     * Get all session data (excluding internal keys)
      */
     public function all(): array
     {
-        return array_filter($this->data, function ($key) {
+        $this->ensureStarted();
+        return array_filter($_SESSION, function ($key) {
             return !str_starts_with($key, '_');
         }, ARRAY_FILTER_USE_KEY);
     }
@@ -200,8 +183,9 @@ class SessionManager implements SessionInterface
      */
     public function flash(string $key, mixed $value): void
     {
-        $this->put($key, $value);
-        $this->data['_flash']['new'][] = $key;
+        $this->ensureStarted();
+        $_SESSION[$key] = $value;
+        $_SESSION['_flash']['new'][] = $key;
     }
 
     /**
@@ -209,11 +193,27 @@ class SessionManager implements SessionInterface
      */
     public function reflash(): void
     {
-        $this->data['_flash']['new'] = array_merge(
-            $this->data['_flash']['new'] ?? [],
-            $this->data['_flash']['old'] ?? []
+        $this->ensureStarted();
+        $_SESSION['_flash']['new'] = array_merge(
+            $_SESSION['_flash']['new'] ?? [],
+            $_SESSION['_flash']['old'] ?? []
         );
-        $this->data['_flash']['old'] = [];
+        $_SESSION['_flash']['old'] = [];
+    }
+
+    /**
+     * Keep specific flash data for another request
+     */
+    public function keep(string|array $keys): void
+    {
+        $this->ensureStarted();
+        $keys = is_array($keys) ? $keys : [$keys];
+
+        foreach ($keys as $key) {
+            if (in_array($key, $_SESSION['_flash']['old'] ?? [])) {
+                $_SESSION['_flash']['new'][] = $key;
+            }
+        }
     }
 
     /**
@@ -221,7 +221,8 @@ class SessionManager implements SessionInterface
      */
     public function clear(): void
     {
-        $this->data = [];
+        $this->ensureStarted();
+        $_SESSION = [];
     }
 
     /**
@@ -229,8 +230,16 @@ class SessionManager implements SessionInterface
      */
     public function invalidate(): bool
     {
-        $this->clear();
-        return $this->regenerate();
+        $this->ensureStarted();
+        $_SESSION = [];
+
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_destroy();
+            session_start();
+            session_regenerate_id(true);
+        }
+
+        return true;
     }
 
     /**
@@ -238,10 +247,12 @@ class SessionManager implements SessionInterface
      */
     public function regenerate(): bool
     {
+        $this->ensureStarted();
+
         if (session_status() === PHP_SESSION_ACTIVE) {
             session_regenerate_id(true);
-            $this->sessionId = session_id();
         }
+
         return true;
     }
 
@@ -250,11 +261,21 @@ class SessionManager implements SessionInterface
      */
     public function token(): string
     {
-        if (!$this->has('_token')) {
-            $this->put('_token', bin2hex(random_bytes(32)));
+        $this->ensureStarted();
+
+        if (!isset($_SESSION['_token'])) {
+            $_SESSION['_token'] = bin2hex(random_bytes(32));
         }
 
-        return $this->get('_token');
+        return $_SESSION['_token'];
+    }
+
+    /**
+     * Verify CSRF token
+     */
+    public function verifyToken(string $token): bool
+    {
+        return hash_equals($this->token(), $token);
     }
 
     /**
@@ -262,49 +283,116 @@ class SessionManager implements SessionInterface
      */
     public function getId(): ?string
     {
-        return $this->sessionId;
+        return session_status() === PHP_SESSION_ACTIVE ? session_id() : null;
     }
 
-    // Session handler methods
-    public function open($savePath, $sessionName): bool
+    /**
+     * Set the session ID
+     */
+    public function setId(string $id): void
     {
-        return true;
+        if (session_status() === PHP_SESSION_NONE) {
+            session_id($id);
+        }
     }
 
-    public function close(): bool
+    /**
+     * Get session name
+     */
+    public function getName(): string
     {
-        return true;
+        return session_name();
     }
 
-    public function read($sessionId): string
+    /**
+     * Check if session is started
+     */
+    public function isStarted(): bool
     {
-        $data = $this->driver->read($sessionId);
+        return $this->started && session_status() === PHP_SESSION_ACTIVE;
+    }
 
-        if ($data && $this->encryptor) {
-            $data = $this->encryptor->decrypt($data);
+    /**
+     * Pull a value from session and delete it
+     */
+    public function pull(string $key, mixed $default = null): mixed
+    {
+        $value = $this->get($key, $default);
+        $this->forget($key);
+        return $value;
+    }
+
+    /**
+     * Increment a value in the session
+     */
+    public function increment(string $key, int $amount = 1): int
+    {
+        $this->ensureStarted();
+        $value = (int)($_SESSION[$key] ?? 0);
+        $_SESSION[$key] = $value + $amount;
+        return $_SESSION[$key];
+    }
+
+    /**
+     * Decrement a value in the session
+     */
+    public function decrement(string $key, int $amount = 1): int
+    {
+        return $this->increment($key, -$amount);
+    }
+
+    /**
+     * Ensure session is started before operations
+     */
+    private function ensureStarted(): void
+    {
+        if (!$this->started) {
+            $this->start();
+        }
+    }
+
+    /**
+     * Get previous URL from session
+     */
+    public function previousUrl(): ?string
+    {
+        return $this->get('_previous_url');
+    }
+
+    /**
+     * Set previous URL in session
+     */
+    public function setPreviousUrl(string $url): void
+    {
+        $this->put('_previous_url', $url);
+    }
+
+    /**
+     * Destroy the session completely
+     */
+    public function destroy(): bool
+    {
+        $this->ensureStarted();
+
+        $_SESSION = [];
+
+        // Delete session cookie
+        if (ini_get('session.use_cookies')) {
+            $params = session_get_cookie_params();
+            setcookie(
+                session_name(),
+                '',
+                time() - 42000,
+                $params['path'],
+                $params['domain'],
+                $params['secure'],
+                $params['httponly']
+            );
         }
 
-        return $data ?: '';
-    }
+        $result = session_destroy();
+        $this->started = false;
 
-    public function write($sessionId, $sessionData): bool
-    {
-        $data = $sessionData; // already serialized by PHP
-
-        if ($this->encryptor) {
-            $data = $this->encryptor->encrypt($data);
-        }
-
-        return $this->driver->write($sessionId, $data);
-    }
-
-    public function destroy($sessionId): bool
-    {
-        return $this->driver->destroy($sessionId);
-    }
-
-    public function gc($maxLifetime): bool
-    {
-        return $this->driver->gc($maxLifetime);
+        return $result;
     }
 }
