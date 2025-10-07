@@ -44,6 +44,11 @@ class PlugDebugger
         $this->enabled = $enabled;
     }
 
+    public function isEnabled()
+    {
+        return $this->enabled;
+    }
+
     /**
      * Initialize error and warning handling
      */
@@ -474,8 +479,14 @@ class PlugDebugger
             return '';
         }
 
-        $data = $this->getDebugReport();
-        return $this->generateDebugBarHtml($data);
+        try {
+            $data = $this->getDebugReport();
+            return $this->generateDebugBarHtml($data);
+        } catch (\Exception $e) {
+            // Fallback to simple debug bar if JSON encoding fails
+            $data = $this->getDebugReport();
+            return $this->generateSimpleDebugBar($data);
+        }
     }
 
     /**
@@ -483,370 +494,441 @@ class PlugDebugger
      */
     private function generateDebugBarHtml($data)
     {
-        // Properly escape JSON for inline script
-        $jsonData = htmlspecialchars(json_encode($data), ENT_QUOTES, 'UTF-8');
-        
+        // Properly escape JSON for inline script with more robust handling
+        $jsonData = json_encode($data, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_SLASHES);
+
         $html = <<<HTML
-<div id="plugs-debug-bar" style="position: fixed; bottom: 0; left: 0; right: 0; z-index: 999999; font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;">
-    <div id="plugs-debug-tabs" style="background: #1e1e1e; color: #fff; display: flex; align-items: center; padding: 0; border-top: 3px solid #007acc; box-shadow: 0 -2px 10px rgba(0,0,0,0.3);">
-        <div style="padding: 10px 15px; background: #007acc; font-weight: 600; cursor: pointer; user-select: none;" onclick="plugsDebugToggle()">
-            ⚡ Debug Bar
-        </div>
-        <div class="plugs-tab" data-panel="overview" style="padding: 10px 18px; cursor: pointer; border-left: 1px solid #333; transition: background 0.2s;" onclick="plugsDebugShowPanel('overview')">
-            Overview
-        </div>
-        <div class="plugs-tab" data-panel="queries" style="padding: 10px 18px; cursor: pointer; border-left: 1px solid #333; transition: background 0.2s;" onclick="plugsDebugShowPanel('queries')">
-            Queries <span class="plugs-badge" id="plugs-queries-count">0</span>
-        </div>
-        <div class="plugs-tab" data-panel="timeline" style="padding: 10px 18px; cursor: pointer; border-left: 1px solid #333; transition: background 0.2s;" onclick="plugsDebugShowPanel('timeline')">
-            Timeline
-        </div>
-        <div class="plugs-tab" data-panel="request" style="padding: 10px 18px; cursor: pointer; border-left: 1px solid #333; transition: background 0.2s;" onclick="plugsDebugShowPanel('request')">
-            Request
-        </div>
-        <div class="plugs-tab" data-panel="issues" style="padding: 10px 18px; cursor: pointer; border-left: 1px solid #333; transition: background 0.2s;" onclick="plugsDebugShowPanel('issues')">
-            Issues <span class="plugs-badge plugs-badge-warning" id="plugs-issues-count">0</span>
-        </div>
-        <div class="plugs-tab" data-panel="logs" style="padding: 10px 18px; cursor: pointer; border-left: 1px solid #333; transition: background 0.2s;" onclick="plugsDebugShowPanel('logs')">
-            Logs <span class="plugs-badge" id="plugs-logs-count">0</span>
-        </div>
-        <div style="margin-left: auto; padding: 10px 18px; font-size: 12px; color: #888;">
-            <span id="plugs-debug-time">0ms</span> | <span id="plugs-debug-memory">0MB</span>
-        </div>
-    </div>
-    
-    <div id="plugs-debug-content" style="display: none; background: #2d2d2d; color: #d4d4d4; max-height: 500px; overflow-y: auto;">
-        <div id="panel-overview" class="plugs-panel" style="padding: 20px; display: none;"></div>
-        <div id="panel-queries" class="plugs-panel" style="padding: 20px; display: none;"></div>
-        <div id="panel-timeline" class="plugs-panel" style="padding: 20px; display: none;"></div>
-        <div id="panel-request" class="plugs-panel" style="padding: 20px; display: none;"></div>
-        <div id="panel-issues" class="plugs-panel" style="padding: 20px; display: none;"></div>
-        <div id="panel-logs" class="plugs-panel" style="padding: 20px; display: none;"></div>
-    </div>
-</div>
-
-<style>
-.plugs-tab:hover { background: #333 !important; }
-.plugs-tab.active { background: #007acc !important; }
-.plugs-badge {
-    background: #d16969;
-    padding: 2px 7px;
-    border-radius: 10px;
-    font-size: 11px;
-    margin-left: 6px;
-    font-weight: 600;
-}
-.plugs-badge-warning { background: #d7ba7d; color: #1e1e1e; }
-.plugs-stat-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 15px;
-    margin-bottom: 20px;
-}
-.plugs-stat-card {
-    background: #1e1e1e;
-    padding: 18px;
-    border-radius: 6px;
-    border-left: 4px solid #007acc;
-}
-.plugs-stat-label {
-    color: #888;
-    font-size: 12px;
-    margin-bottom: 8px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-.plugs-stat-value {
-    font-size: 28px;
-    font-weight: 600;
-    color: #4ec9b0;
-}
-.plugs-query-item {
-    background: #1e1e1e;
-    padding: 15px;
-    margin-bottom: 10px;
-    border-radius: 6px;
-    border-left: 4px solid #28a745;
-}
-.plugs-query-item.slow { border-left-color: #ffc107; }
-.plugs-query-item.very-slow { border-left-color: #dc3545; }
-.plugs-query-sql {
-    font-family: 'Consolas', 'Monaco', monospace;
-    color: #ce9178;
-    margin-bottom: 10px;
-    font-size: 13px;
-    line-height: 1.6;
-}
-.plugs-query-meta {
-    font-size: 12px;
-    color: #888;
-    display: flex;
-    gap: 15px;
-}
-.plugs-timeline-item {
-    background: #1e1e1e;
-    padding: 12px 15px;
-    margin-bottom: 8px;
-    border-radius: 6px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-.plugs-issue-item {
-    background: #1e1e1e;
-    padding: 15px;
-    margin-bottom: 10px;
-    border-radius: 6px;
-}
-.plugs-issue-critical { border-left: 4px solid #dc3545; }
-.plugs-issue-high { border-left: 4px solid #fd7e14; }
-.plugs-issue-medium { border-left: 4px solid #ffc107; }
-.plugs-issue-low { border-left: 4px solid #17a2b8; }
-.plugs-log-item {
-    padding: 10px 15px;
-    margin-bottom: 6px;
-    border-radius: 4px;
-    font-family: 'Consolas', 'Monaco', monospace;
-    font-size: 13px;
-}
-.plugs-log-error { background: #5a1d1d; border-left: 3px solid #d16969; }
-.plugs-log-warning { background: #5a4e1d; border-left: 3px solid #d7ba7d; }
-.plugs-log-info { background: #1d3a5a; border-left: 3px solid #569cd6; }
-.plugs-log-debug { background: #1e1e1e; border-left: 3px solid #888; }
-</style>
-
-<script>
-(function() {
-    var plugsDebugDataJson = '<?= $jsonData ?>';
-    var plugsDebugData;
-    
-    try {
-        plugsDebugData = JSON.parse(plugsDebugDataJson);
-    } catch(e) {
-        console.error('Failed to parse debug data:', e);
-        return;
-    }
-    
-    var plugsDebugOpen = false;
-    var plugsCurrentPanel = 'overview';
-
-    window.plugsDebugToggle = function() {
-        plugsDebugOpen = !plugsDebugOpen;
-        document.getElementById('plugs-debug-content').style.display = plugsDebugOpen ? 'block' : 'none';
-        if (plugsDebugOpen && plugsCurrentPanel) {
-            window.plugsDebugShowPanel(plugsCurrentPanel);
-        }
-    };
-
-    window.plugsDebugShowPanel = function(panelName) {
-        plugsCurrentPanel = panelName;
-        var panels = document.getElementsByClassName('plugs-panel');
-        for (var i = 0; i < panels.length; i++) {
-            panels[i].style.display = 'none';
-        }
-        
-        var tabs = document.getElementsByClassName('plugs-tab');
-        for (var i = 0; i < tabs.length; i++) {
-            tabs[i].classList.remove('active');
-        }
-        
-        document.getElementById('panel-' + panelName).style.display = 'block';
-        var activeTab = document.querySelector('.plugs-tab[data-panel="' + panelName + '"]');
-        if (activeTab) activeTab.classList.add('active');
-        
-        plugsRenderPanel(panelName);
-    };
-
-    function plugsRenderPanel(panelName) {
-        var panel = document.getElementById('panel-' + panelName);
-        var html = '';
-        
-        switch(panelName) {
-            case 'overview':
-                html = plugsRenderOverview();
-                break;
-            case 'queries':
-                html = plugsRenderQueries();
-                break;
-            case 'timeline':
-                html = plugsRenderTimeline();
-                break;
-            case 'request':
-                html = plugsRenderRequest();
-                break;
-            case 'issues':
-                html = plugsRenderIssues();
-                break;
-            case 'logs':
-                html = plugsRenderLogs();
-                break;
-        }
-        
-        panel.innerHTML = html;
-    }
-
-    function plugsRenderOverview() {
-        var html = '<h3 style="margin-top: 0; color: #fff; font-size: 18px;">Performance Overview</h3>';
-        html += '<div class="plugs-stat-grid">';
-        html += '<div class="plugs-stat-card"><div class="plugs-stat-label">Execution Time</div>';
-        html += '<div class="plugs-stat-value">' + (plugsDebugData.execution_time * 1000).toFixed(2) + 'ms</div></div>';
-        html += '<div class="plugs-stat-card"><div class="plugs-stat-label">Peak Memory</div>';
-        html += '<div class="plugs-stat-value">' + plugsFormatBytes(plugsDebugData.memory_usage.peak) + '</div></div>';
-        html += '<div class="plugs-stat-card"><div class="plugs-stat-label">Database Queries</div>';
-        html += '<div class="plugs-stat-value">' + plugsDebugData.queries.total + '</div></div>';
-        html += '<div class="plugs-stat-card"><div class="plugs-stat-label">Files Loaded</div>';
-        html += '<div class="plugs-stat-value">' + plugsDebugData.files.length + '</div></div>';
-        html += '</div>';
-        
-        if (plugsDebugData.recommendations && plugsDebugData.recommendations.length > 0) {
-            html += '<h4 style="color: #fff; margin-top: 25px;">Recommendations</h4>';
-            plugsDebugData.recommendations.forEach(function(rec) {
-                html += '<div class="plugs-issue-item plugs-issue-medium">';
-                html += '<strong>' + rec.type + ':</strong> ' + rec.message + '<br>';
-                html += '<em style="color: #888;">💡 ' + rec.solution + '</em></div>';
-            });
-        }
-        
-        return html;
-    }
-
-    function plugsRenderQueries() {
-        var html = '<h3 style="margin-top: 0; color: #fff; font-size: 18px;">Database Queries (' + plugsDebugData.queries.total + ')</h3>';
-        
-        if (plugsDebugData.queries.total > 0) {
-            html += '<div style="margin-bottom: 15px; color: #888;">Total execution time: ' + 
-                    (plugsDebugData.queries.total_execution_time * 1000).toFixed(2) + 'ms</div>';
-            
-            plugsDebugData.queries.details.forEach(function(query) {
-                var slowClass = '';
-                if (query.execution_time > 1) slowClass = 'very-slow';
-                else if (query.execution_time > 0.1) slowClass = 'slow';
+            <div id="plugs-debug-bar" style="position: fixed; bottom: 0; left: 0; right: 0; z-index: 999999; font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;">
+                <div id="plugs-debug-tabs" style="background: #1e1e1e; color: #fff; display: flex; align-items: center; padding: 0; border-top: 3px solid #007acc; box-shadow: 0 -2px 10px rgba(0,0,0,0.3);">
+                    <div style="padding: 10px 15px; background: #007acc; font-weight: 600; cursor: pointer; user-select: none;" onclick="plugsDebugToggle()">
+                        ⚡ Debug Bar
+                    </div>
+                    <div class="plugs-tab" data-panel="overview" style="padding: 10px 18px; cursor: pointer; border-left: 1px solid #333; transition: background 0.2s;" onclick="plugsDebugShowPanel('overview')">
+                        Overview
+                    </div>
+                    <div class="plugs-tab" data-panel="queries" style="padding: 10px 18px; cursor: pointer; border-left: 1px solid #333; transition: background 0.2s;" onclick="plugsDebugShowPanel('queries')">
+                        Queries <span class="plugs-badge" id="plugs-queries-count">0</span>
+                    </div>
+                    <div class="plugs-tab" data-panel="timeline" style="padding: 10px 18px; cursor: pointer; border-left: 1px solid #333; transition: background 0.2s;" onclick="plugsDebugShowPanel('timeline')">
+                        Timeline
+                    </div>
+                    <div class="plugs-tab" data-panel="request" style="padding: 10px 18px; cursor: pointer; border-left: 1px solid #333; transition: background 0.2s;" onclick="plugsDebugShowPanel('request')">
+                        Request
+                    </div>
+                    <div class="plugs-tab" data-panel="issues" style="padding: 10px 18px; cursor: pointer; border-left: 1px solid #333; transition: background 0.2s;" onclick="plugsDebugShowPanel('issues')">
+                        Issues <span class="plugs-badge plugs-badge-warning" id="plugs-issues-count">0</span>
+                    </div>
+                    <div class="plugs-tab" data-panel="logs" style="padding: 10px 18px; cursor: pointer; border-left: 1px solid #333; transition: background 0.2s;" onclick="plugsDebugShowPanel('logs')">
+                        Logs <span class="plugs-badge" id="plugs-logs-count">0</span>
+                    </div>
+                    <div style="margin-left: auto; padding: 10px 18px; font-size: 12px; color: #888;">
+                        <span id="plugs-debug-time">0ms</span> | <span id="plugs-debug-memory">0MB</span>
+                    </div>
+                </div>
                 
-                html += '<div class="plugs-query-item ' + slowClass + '">';
-                html += '<div class="plugs-query-sql">' + plugsEscapeHtml(query.formatted_sql) + '</div>';
-                html += '<div class="plugs-query-meta">';
-                html += '<span>⏱ ' + (query.execution_time * 1000).toFixed(2) + 'ms</span>';
-                html += '<span>📍 ' + plugsBasename(query.caller.file) + ':' + query.caller.line + '</span>';
-                if (query.params && query.params.length > 0) {
-                    html += '<span>🔗 ' + query.params.length + ' bindings</span>';
+                <div id="plugs-debug-content" style="display: none; background: #2d2d2d; color: #d4d4d4; max-height: 500px; overflow-y: auto;">
+                    <div id="panel-overview" class="plugs-panel" style="padding: 20px; display: none;"></div>
+                    <div id="panel-queries" class="plugs-panel" style="padding: 20px; display: none;"></div>
+                    <div id="panel-timeline" class="plugs-panel" style="padding: 20px; display: none;"></div>
+                    <div id="panel-request" class="plugs-panel" style="padding: 20px; display: none;"></div>
+                    <div id="panel-issues" class="plugs-panel" style="padding: 20px; display: none;"></div>
+                    <div id="panel-logs" class="plugs-panel" style="padding: 20px; display: none;"></div>
+                </div>
+            </div>
+
+            <style>
+            .plugs-tab:hover { background: #333 !important; }
+            .plugs-tab.active { background: #007acc !important; }
+            .plugs-badge {
+                background: #d16969;
+                padding: 2px 7px;
+                border-radius: 10px;
+                font-size: 11px;
+                margin-left: 6px;
+                font-weight: 600;
+            }
+            .plugs-badge-warning { background: #d7ba7d; color: #1e1e1e; }
+            .plugs-stat-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+                gap: 15px;
+                margin-bottom: 20px;
+            }
+            .plugs-stat-card {
+                background: #1e1e1e;
+                padding: 18px;
+                border-radius: 6px;
+                border-left: 4px solid #007acc;
+            }
+            .plugs-stat-label {
+                color: #888;
+                font-size: 12px;
+                margin-bottom: 8px;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+            .plugs-stat-value {
+                font-size: 28px;
+                font-weight: 600;
+                color: #4ec9b0;
+            }
+            .plugs-query-item {
+                background: #1e1e1e;
+                padding: 15px;
+                margin-bottom: 10px;
+                border-radius: 6px;
+                border-left: 4px solid #28a745;
+            }
+            .plugs-query-item.slow { border-left-color: #ffc107; }
+            .plugs-query-item.very-slow { border-left-color: #dc3545; }
+            .plugs-query-sql {
+                font-family: 'Consolas', 'Monaco', monospace;
+                color: #ce9178;
+                margin-bottom: 10px;
+                font-size: 13px;
+                line-height: 1.6;
+            }
+            .plugs-query-meta {
+                font-size: 12px;
+                color: #888;
+                display: flex;
+                gap: 15px;
+            }
+            .plugs-timeline-item {
+                background: #1e1e1e;
+                padding: 12px 15px;
+                margin-bottom: 8px;
+                border-radius: 6px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+            }
+            .plugs-issue-item {
+                background: #1e1e1e;
+                padding: 15px;
+                margin-bottom: 10px;
+                border-radius: 6px;
+            }
+            .plugs-issue-critical { border-left: 4px solid #dc3545; }
+            .plugs-issue-high { border-left: 4px solid #fd7e14; }
+            .plugs-issue-medium { border-left: 4px solid #ffc107; }
+            .plugs-issue-low { border-left: 4px solid #17a2b8; }
+            .plugs-log-item {
+                padding: 10px 15px;
+                margin-bottom: 6px;
+                border-radius: 4px;
+                font-family: 'Consolas', 'Monaco', monospace;
+                font-size: 13px;
+            }
+            .plugs-log-error { background: #5a1d1d; border-left: 3px solid #d16969; }
+            .plugs-log-warning { background: #5a4e1d; border-left: 3px solid #d7ba7d; }
+            .plugs-log-info { background: #1d3a5a; border-left: 3px solid #569cd6; }
+            .plugs-log-debug { background: #1e1e1e; border-left: 3px solid #888; }
+            </style>
+
+            <script>
+            (function() {
+                var plugsDebugData = $jsonData;
+                
+                var plugsDebugOpen = false;
+                var plugsCurrentPanel = 'overview';
+
+                window.plugsDebugToggle = function() {
+                    plugsDebugOpen = !plugsDebugOpen;
+                    var content = document.getElementById('plugs-debug-content');
+                    if (content) {
+                        content.style.display = plugsDebugOpen ? 'block' : 'none';
+                    }
+                    if (plugsDebugOpen && plugsCurrentPanel) {
+                        window.plugsDebugShowPanel(plugsCurrentPanel);
+                    }
+                };
+
+                window.plugsDebugShowPanel = function(panelName) {
+                    plugsCurrentPanel = panelName;
+                    var panels = document.getElementsByClassName('plugs-panel');
+                    for (var i = 0; i < panels.length; i++) {
+                        panels[i].style.display = 'none';
+                    }
+                    
+                    var tabs = document.getElementsByClassName('plugs-tab');
+                    for (var i = 0; i < tabs.length; i++) {
+                        tabs[i].classList.remove('active');
+                    }
+                    
+                    var panel = document.getElementById('panel-' + panelName);
+                    if (panel) {
+                        panel.style.display = 'block';
+                    }
+                    
+                    var activeTab = document.querySelector('.plugs-tab[data-panel="' + panelName + '"]');
+                    if (activeTab) {
+                        activeTab.classList.add('active');
+                    }
+                    
+                    plugsRenderPanel(panelName);
+                };
+
+                function plugsRenderPanel(panelName) {
+                    var panel = document.getElementById('panel-' + panelName);
+                    if (!panel) return;
+                    
+                    var html = '';
+                    
+                    switch(panelName) {
+                        case 'overview':
+                            html = plugsRenderOverview();
+                            break;
+                        case 'queries':
+                            html = plugsRenderQueries();
+                            break;
+                        case 'timeline':
+                            html = plugsRenderTimeline();
+                            break;
+                        case 'request':
+                            html = plugsRenderRequest();
+                            break;
+                        case 'issues':
+                            html = plugsRenderIssues();
+                            break;
+                        case 'logs':
+                            html = plugsRenderLogs();
+                            break;
+                    }
+                    
+                    panel.innerHTML = html;
                 }
-                html += '</div></div>';
-            });
-        } else {
-            html += '<p style="color: #888;">No queries executed</p>';
-        }
-        
-        return html;
-    }
 
-    function plugsRenderTimeline() {
-        var html = '<h3 style="margin-top: 0; color: #fff; font-size: 18px;">Execution Timeline</h3>';
-        
-        if (plugsDebugData.performance_markers && plugsDebugData.performance_markers.length > 0) {
-            var startTime = plugsDebugData.performance_markers[0].timestamp;
-            plugsDebugData.performance_markers.forEach(function(marker) {
-                var relTime = ((marker.timestamp - startTime) * 1000).toFixed(2);
-                html += '<div class="plugs-timeline-item">';
-                html += '<div>' + plugsEscapeHtml(marker.label) + '</div>';
-                html += '<div style="color: #4ec9b0;">' + relTime + 'ms</div>';
-                html += '</div>';
-            });
-        } else {
-            html += '<p style="color: #888;">No timeline markers recorded</p>';
-        }
-        
-        return html;
-    }
-
-    function plugsRenderRequest() {
-        var html = '<h3 style="margin-top: 0; color: #fff; font-size: 18px;">Request Information</h3>';
-        html += '<div style="display: grid; gap: 15px;">';
-        html += '<div><strong style="color: #569cd6;">Method:</strong> ' + plugsDebugData.request.method + '</div>';
-        html += '<div><strong style="color: #569cd6;">URI:</strong> ' + plugsEscapeHtml(plugsDebugData.request.uri) + '</div>';
-        html += '<div><strong style="color: #569cd6;">IP Address:</strong> ' + plugsDebugData.request.ip + '</div>';
-        html += '<div><strong style="color: #569cd6;">User Agent:</strong> ' + plugsEscapeHtml(plugsDebugData.request.user_agent) + '</div>';
-        html += '</div>';
-        return html;
-    }
-
-    function plugsRenderIssues() {
-        var html = '<h3 style="margin-top: 0; color: #fff; font-size: 18px;">Issues & Warnings</h3>';
-        
-        if (plugsDebugData.issues.total > 0) {
-            var severities = ['critical', 'high', 'medium', 'low'];
-            severities.forEach(function(severity) {
-                if (plugsDebugData.issues.by_severity[severity].length > 0) {
-                    plugsDebugData.issues.by_severity[severity].forEach(function(issue) {
-                        html += '<div class="plugs-issue-item plugs-issue-' + severity + '">';
-                        html += '<strong style="text-transform: uppercase;">' + severity + ': ' + issue.type + '</strong><br>';
-                        html += '<div style="margin: 8px 0;">' + issue.message + '</div>';
-                        html += '<em style="color: #888;">💡 Solution: ' + issue.solution + '</em>';
-                        html += '</div>';
-                    });
+                function plugsRenderOverview() {
+                    if (!plugsDebugData) return '<div>No debug data available</div>';
+                    
+                    var html = '<h3 style="margin-top: 0; color: #fff; font-size: 18px;">Performance Overview</h3>';
+                    html += '<div class="plugs-stat-grid">';
+                    html += '<div class="plugs-stat-card"><div class="plugs-stat-label">Execution Time</div>';
+                    html += '<div class="plugs-stat-value">' + ((plugsDebugData.execution_time || 0) * 1000).toFixed(2) + 'ms</div></div>';
+                    html += '<div class="plugs-stat-card"><div class="plugs-stat-label">Peak Memory</div>';
+                    html += '<div class="plugs-stat-value">' + plugsFormatBytes(plugsDebugData.memory_usage?.peak || 0) + '</div></div>';
+                    html += '<div class="plugs-stat-card"><div class="plugs-stat-label">Database Queries</div>';
+                    html += '<div class="plugs-stat-value">' + (plugsDebugData.queries?.total || 0) + '</div></div>';
+                    html += '<div class="plugs-stat-card"><div class="plugs-stat-label">Files Loaded</div>';
+                    html += '<div class="plugs-stat-value">' + (plugsDebugData.files?.length || 0) + '</div></div>';
+                    html += '</div>';
+                    
+                    if (plugsDebugData.recommendations && plugsDebugData.recommendations.length > 0) {
+                        html += '<h4 style="color: #fff; margin-top: 25px;">Recommendations</h4>';
+                        plugsDebugData.recommendations.forEach(function(rec) {
+                            html += '<div class="plugs-issue-item plugs-issue-medium">';
+                            html += '<strong>' + (rec.type || 'General') + ':</strong> ' + (rec.message || '') + '<br>';
+                            html += '<em style="color: #888;">💡 ' + (rec.solution || '') + '</em></div>';
+                        });
+                    }
+                    
+                    return html;
                 }
-            });
-        } else {
-            html += '<p style="color: #888;">No issues detected</p>';
-        }
-        
-        return html;
-    }
 
-    function plugsRenderLogs() {
-        var html = '<h3 style="margin-top: 0; color: #fff; font-size: 18px;">Application Logs (' + plugsDebugData.logs.total + ')</h3>';
-        
-        if (plugsDebugData.logs.total > 0) {
-            plugsDebugData.logs.details.forEach(function(log) {
-                html += '<div class="plugs-log-item plugs-log-' + log.level + '">';
-                html += '[' + log.level.toUpperCase() + '] ' + plugsEscapeHtml(log.message);
-                html += '</div>';
-            });
-        } else {
-            html += '<p style="color: #888;">No logs recorded</p>';
-        }
-        
-        return html;
-    }
+                function plugsRenderQueries() {
+                    if (!plugsDebugData || !plugsDebugData.queries) {
+                        return '<p style="color: #888;">No query data available</p>';
+                    }
+                    
+                    var html = '<h3 style="margin-top: 0; color: #fff; font-size: 18px;">Database Queries (' + (plugsDebugData.queries.total || 0) + ')</h3>';
+                    
+                    if (plugsDebugData.queries.total > 0) {
+                        html += '<div style="margin-bottom: 15px; color: #888;">Total execution time: ' + 
+                                ((plugsDebugData.queries.total_execution_time || 0) * 1000).toFixed(2) + 'ms</div>';
+                        
+                        (plugsDebugData.queries.details || []).forEach(function(query) {
+                            var slowClass = '';
+                            if (query.execution_time > 1) slowClass = 'very-slow';
+                            else if (query.execution_time > 0.1) slowClass = 'slow';
+                            
+                            html += '<div class="plugs-query-item ' + slowClass + '">';
+                            html += '<div class="plugs-query-sql">' + plugsEscapeHtml(query.formatted_sql || query.sql || '') + '</div>';
+                            html += '<div class="plugs-query-meta">';
+                            html += '<span>⏱ ' + ((query.execution_time || 0) * 1000).toFixed(2) + 'ms</span>';
+                            if (query.caller) {
+                                html += '<span>📍 ' + plugsBasename(query.caller.file || '') + ':' + (query.caller.line || 0) + '</span>';
+                            }
+                            if (query.params && query.params.length > 0) {
+                                html += '<span>🔗 ' + query.params.length + ' bindings</span>';
+                            }
+                            html += '</div></div>';
+                        });
+                    } else {
+                        html += '<p style="color: #888;">No queries executed</p>';
+                    }
+                    
+                    return html;
+                }
 
-    function plugsEscapeHtml(text) {
-        var div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
+                function plugsRenderTimeline() {
+                    if (!plugsDebugData) return '<p style="color: #888;">No timeline data available</p>';
+                    
+                    var html = '<h3 style="margin-top: 0; color: #fff; font-size: 18px;">Execution Timeline</h3>';
+                    
+                    if (plugsDebugData.performance_markers && plugsDebugData.performance_markers.length > 0) {
+                        var startTime = plugsDebugData.performance_markers[0].timestamp;
+                        plugsDebugData.performance_markers.forEach(function(marker) {
+                            var relTime = ((marker.timestamp - startTime) * 1000).toFixed(2);
+                            html += '<div class="plugs-timeline-item">';
+                            html += '<div>' + plugsEscapeHtml(marker.label || '') + '</div>';
+                            html += '<div style="color: #4ec9b0;">' + relTime + 'ms</div>';
+                            html += '</div>';
+                        });
+                    } else {
+                        html += '<p style="color: #888;">No timeline markers recorded</p>';
+                    }
+                    
+                    return html;
+                }
 
-    function plugsFormatBytes(bytes) {
-        var units = ['B', 'KB', 'MB', 'GB'];
-        var i = 0;
-        while (bytes >= 1024 && i < units.length - 1) {
-            bytes /= 1024;
-            i++;
-        }
-        return bytes.toFixed(2) + ' ' + units[i];
-    }
+                function plugsRenderRequest() {
+                    if (!plugsDebugData || !plugsDebugData.request) {
+                        return '<p style="color: #888;">No request data available</p>';
+                    }
+                    
+                    var html = '<h3 style="margin-top: 0; color: #fff; font-size: 18px;">Request Information</h3>';
+                    html += '<div style="display: grid; gap: 15px;">';
+                    html += '<div><strong style="color: #569cd6;">Method:</strong> ' + (plugsDebugData.request.method || '') + '</div>';
+                    html += '<div><strong style="color: #569cd6;">URI:</strong> ' + plugsEscapeHtml(plugsDebugData.request.uri || '') + '</div>';
+                    html += '<div><strong style="color: #569cd6;">IP Address:</strong> ' + (plugsDebugData.request.ip || '') + '</div>';
+                    html += '<div><strong style="color: #569cd6;">User Agent:</strong> ' + plugsEscapeHtml(plugsDebugData.request.user_agent || '') + '</div>';
+                    html += '</div>';
+                    return html;
+                }
 
-    function plugsBasename(path) {
-        return path.split('/').pop().split('\\').pop();
-    }
+                function plugsRenderIssues() {
+                    if (!plugsDebugData || !plugsDebugData.issues) {
+                        return '<p style="color: #888;">No issues data available</p>';
+                    }
+                    
+                    var html = '<h3 style="margin-top: 0; color: #fff; font-size: 18px;">Issues & Warnings</h3>';
+                    
+                    if (plugsDebugData.issues.total > 0) {
+                        var severities = ['critical', 'high', 'medium', 'low'];
+                        severities.forEach(function(severity) {
+                            var issues = plugsDebugData.issues.by_severity?.[severity] || [];
+                            if (issues.length > 0) {
+                                issues.forEach(function(issue) {
+                                    html += '<div class="plugs-issue-item plugs-issue-' + severity + '">';
+                                    html += '<strong style="text-transform: uppercase;">' + severity + ': ' + (issue.type || 'Issue') + '</strong><br>';
+                                    html += '<div style="margin: 8px 0;">' + (issue.message || '') + '</div>';
+                                    html += '<em style="color: #888;">💡 Solution: ' + (issue.solution || '') + '</em>';
+                                    html += '</div>';
+                                });
+                            }
+                        });
+                    } else {
+                        html += '<p style="color: #888;">No issues detected</p>';
+                    }
+                    
+                    return html;
+                }
 
-    function plugsInitDebugBar() {
-        document.getElementById('plugs-debug-time').textContent = (plugsDebugData.execution_time * 1000).toFixed(2) + 'ms';
-        document.getElementById('plugs-debug-memory').textContent = plugsFormatBytes(plugsDebugData.memory_usage.peak);
-        document.getElementById('plugs-queries-count').textContent = plugsDebugData.queries.total;
-        document.getElementById('plugs-issues-count').textContent = plugsDebugData.issues.total;
-        document.getElementById('plugs-logs-count').textContent = plugsDebugData.logs.total;
-    }
+                function plugsRenderLogs() {
+                    if (!plugsDebugData || !plugsDebugData.logs) {
+                        return '<p style="color: #888;">No logs data available</p>';
+                    }
+                    
+                    var html = '<h3 style="margin-top: 0; color: #fff; font-size: 18px;">Application Logs (' + (plugsDebugData.logs.total || 0) + ')</h3>';
+                    
+                    if (plugsDebugData.logs.total > 0) {
+                        (plugsDebugData.logs.details || []).forEach(function(log) {
+                            html += '<div class="plugs-log-item plugs-log-' + (log.level || 'info') + '">';
+                            html += '[' + (log.level?.toUpperCase() || 'INFO') + '] ' + plugsEscapeHtml(log.message || '');
+                            html += '</div>';
+                        });
+                    } else {
+                        html += '<p style="color: #888;">No logs recorded</p>';
+                    }
+                    
+                    return html;
+                }
 
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', plugsInitDebugBar);
-    } else {
-        plugsInitDebugBar();
-    }
-})();
-</script>
-HTML;
+                function plugsEscapeHtml(text) {
+                    if (text === null || text === undefined) return '';
+                    var div = document.createElement('div');
+                    div.textContent = text;
+                    return div.innerHTML;
+                }
+
+                function plugsFormatBytes(bytes) {
+                    if (!bytes) return '0 B';
+                    var units = ['B', 'KB', 'MB', 'GB'];
+                    var i = 0;
+                    while (bytes >= 1024 && i < units.length - 1) {
+                        bytes /= 1024;
+                        i++;
+                    }
+                    return bytes.toFixed(2) + ' ' + units[i];
+                }
+
+                function plugsBasename(path) {
+                    if (!path) return 'unknown';
+                    return path.split('/').pop().split('\\\\').pop();
+                }
+
+                function plugsInitDebugBar() {
+                    if (!plugsDebugData) {
+                        console.error('No debug data available');
+                        return;
+                    }
+                    
+                    var timeEl = document.getElementById('plugs-debug-time');
+                    var memoryEl = document.getElementById('plugs-debug-memory');
+                    var queriesEl = document.getElementById('plugs-queries-count');
+                    var issuesEl = document.getElementById('plugs-issues-count');
+                    var logsEl = document.getElementById('plugs-logs-count');
+                    
+                    if (timeEl) timeEl.textContent = ((plugsDebugData.execution_time || 0) * 1000).toFixed(2) + 'ms';
+                    if (memoryEl) memoryEl.textContent = plugsFormatBytes(plugsDebugData.memory_usage?.peak || 0);
+                    if (queriesEl) queriesEl.textContent = plugsDebugData.queries?.total || 0;
+                    if (issuesEl) issuesEl.textContent = plugsDebugData.issues?.total || 0;
+                    if (logsEl) logsEl.textContent = plugsDebugData.logs?.total || 0;
+                }
+
+                // Initialize when DOM is ready
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', plugsInitDebugBar);
+                } else {
+                    plugsInitDebugBar();
+                }
+            })();
+            </script>
+            HTML;
+
+        // Replace the JSON placeholder with actual data
+        $html = str_replace('$jsonData', $jsonData, $html);
 
         return $html;
     }
+
+    /**
+     * Simple debug bar as fallback
+     */
+    private function generateSimpleDebugBar($data)
+    {
+        $time = ($data['execution_time'] * 1000) . 'ms';
+        $memory = $this->formatBytes($data['memory_usage']['peak']);
+        $queries = $data['queries']['total'];
+        $errors = $data['errors']['total'];
+
+        return <<<HTML
+        <div id="plugs-debug-bar" style="position: fixed; bottom: 0; left: 0; right: 0; background: #1e1e1e; color: #fff; padding: 10px; font-family: monospace; font-size: 12px; z-index: 999999;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <strong>⚡ Debug Bar</strong> | 
+                    Time: {$time} | 
+                    Memory: {$memory} | 
+                    Queries: {$queries} | 
+                    Errors: {$errors}
+                </div>
+                <button onclick="this.parentElement.parentElement.style.display='none'" style="background: #dc3545; color: white; border: none; padding: 2px 8px; cursor: pointer;">×</button>
+            </div>
+        </div>
+        HTML;
+    }
+
 
     /**
      * Inject debug bar into response - works with output buffering
