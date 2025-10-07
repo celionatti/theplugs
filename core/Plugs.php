@@ -721,7 +721,8 @@ class Plugs
             $this->loadDeferredProvider($abstract);
         }
 
-        return $this->container->get($abstract, $parameters);
+        // return $this->container->get($abstract, $parameters);
+        return $this->container->get($abstract);
     }
 
     /**
