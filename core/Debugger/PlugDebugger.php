@@ -495,13 +495,21 @@ class PlugDebugger
     private function generateDebugBarHtml($data)
     {
         // Properly escape JSON for inline script with more robust handling
-        $jsonData = json_encode($data, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_SLASHES);
+        try {
+            $jsonData = json_encode($data, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP | JSON_UNESCAPED_SLASHES);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                throw new \Exception('JSON encode error: ' . json_last_error_msg());
+            }
+        } catch (\Exception $e) {
+            $jsonData = '{}';
+            error_log('Debug bar JSON error: ' . $e->getMessage());
+        }
 
         $html = <<<HTML
             <div id="plugs-debug-bar" style="position: fixed; bottom: 0; left: 0; right: 0; z-index: 999999; font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;">
-                <div id="plugs-debug-tabs" style="background: #1e1e1e; color: #fff; display: flex; align-items: center; padding: 0; border-top: 3px solid #007acc; box-shadow: 0 -2px 10px rgba(0,0,0,0.3);">
-                    <div style="padding: 10px 15px; background: #007acc; font-weight: 600; cursor: pointer; user-select: none;" onclick="plugsDebugToggle()">
-                        ⚡ Debug Bar
+                <div id="plugs-debug-tabs" style="background: #1e1e1e; color: #fff; display: flex; align-items: center; padding: 0; border-top: 3px solid #023f68ff; box-shadow: 0 -2px 10px rgba(0,0,0,0.3);">
+                    <div style="padding: 10px 15px; background: #033d64ff; font-weight: 600; cursor: pointer; user-select: none;" onclick="plugsDebugToggle()">
+                        Plug Debug Bar
                     </div>
                     <div class="plugs-tab" data-panel="overview" style="padding: 10px 18px; cursor: pointer; border-left: 1px solid #333; transition: background 0.2s;" onclick="plugsDebugShowPanel('overview')">
                         Overview
@@ -624,15 +632,16 @@ class PlugDebugger
             .plugs-log-warning { background: #5a4e1d; border-left: 3px solid #d7ba7d; }
             .plugs-log-info { background: #1d3a5a; border-left: 3px solid #569cd6; }
             .plugs-log-debug { background: #1e1e1e; border-left: 3px solid #888; }
+            .plugs-tab[data-panel="overview"] {background: #007acc !important;}
             </style>
 
             <script>
             (function() {
                 var plugsDebugData = $jsonData;
-                
                 var plugsDebugOpen = false;
                 var plugsCurrentPanel = 'overview';
 
+                // Make functions globally accessible
                 window.plugsDebugToggle = function() {
                     plugsDebugOpen = !plugsDebugOpen;
                     var content = document.getElementById('plugs-debug-content');
@@ -646,26 +655,32 @@ class PlugDebugger
 
                 window.plugsDebugShowPanel = function(panelName) {
                     plugsCurrentPanel = panelName;
+                    
+                    // Hide all panels
                     var panels = document.getElementsByClassName('plugs-panel');
                     for (var i = 0; i < panels.length; i++) {
                         panels[i].style.display = 'none';
                     }
                     
+                    // Remove active class from all tabs
                     var tabs = document.getElementsByClassName('plugs-tab');
                     for (var i = 0; i < tabs.length; i++) {
                         tabs[i].classList.remove('active');
                     }
                     
+                    // Show selected panel
                     var panel = document.getElementById('panel-' + panelName);
                     if (panel) {
                         panel.style.display = 'block';
                     }
                     
+                    // Add active class to selected tab
                     var activeTab = document.querySelector('.plugs-tab[data-panel="' + panelName + '"]');
                     if (activeTab) {
                         activeTab.classList.add('active');
                     }
                     
+                    // Render panel content
                     plugsRenderPanel(panelName);
                 };
 
@@ -885,6 +900,12 @@ class PlugDebugger
                     if (queriesEl) queriesEl.textContent = plugsDebugData.queries?.total || 0;
                     if (issuesEl) issuesEl.textContent = plugsDebugData.issues?.total || 0;
                     if (logsEl) logsEl.textContent = plugsDebugData.logs?.total || 0;
+                    
+                    // Initialize the overview panel as active by default
+                    var overviewTab = document.querySelector('.plugs-tab[data-panel="overview"]');
+                    if (overviewTab) {
+                        overviewTab.classList.add('active');
+                    }
                 }
 
                 // Initialize when DOM is ready
