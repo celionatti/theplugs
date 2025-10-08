@@ -1,0 +1,21 @@
+<?php
+
+declare(strict_types=1);
+
+use Plugs\Http\Request\Request;
+
+$plugs = require __DIR__ . '/../bootstrap/app.php';
+
+try {
+    $response = $plugs->handle(Request::capture());
+    $response->send();
+} catch (Throwable $e) {
+    http_response_code(500);
+    header('Content-Type: application/json');
+    echo json_encode([
+        'error'   => 'Application failed to initialize',
+        'message' => $e->getMessage(),
+        'trace'   => ($_ENV['APP_ENV'] ?? 'production') === 'development' ? $e->getTrace() : []
+    ]);
+    exit;
+}

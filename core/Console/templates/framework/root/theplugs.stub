@@ -1,0 +1,14 @@
+#!/usr/bin/env php
+<?php
+declare(strict_types=1);
+
+
+use Plugs\Console\ConsoleKernel;
+use Plugs\Console\ConsolePlugs;
+
+require __DIR__ . '/vendor/autoload.php';
+
+
+$kernel = new ConsoleKernel();
+$app = new ConsolePlugs($kernel);
+exit($app->run($argv));

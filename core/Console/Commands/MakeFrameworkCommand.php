@@ -56,7 +56,9 @@ class MakeFrameworkCommand extends Command
                 'img' => 'Image assets',
                 'fonts' => 'Font files',
             ],
-            'uploads' => 'User uploaded files'
+            'uploads' => 'User uploaded files',
+            'index.php' => 'Front controller file',
+            '.htaccess' => 'Apache configuration file (if using Apache)'
         ],
 
         // Routes
@@ -106,10 +108,16 @@ class MakeFrameworkCommand extends Command
         'resources/views/layouts/default.plug.php' => 'resources/views/layouts/default.php.stub',
         'resources/views/welcome.plug.php' => 'resources/views/welcome.php.stub',
 
+        // Public assets
+        'public/.htaccess' => 'public/.htaccess.stub',
+        'public/index.php' => 'public/index.php.stub',
+        'public/assets/css/global.css' => 'public/assets/css/global.css.stub',
+
         // Project files
         '.env.example' => 'root/.env.example.stub',
         '.gitignore' => 'root/.gitignore.stub',
         'README.md' => 'root/README.md.stub',
+        'theplugs' => 'root/theplugs.stub',
     ];
 
     public function handle(): int
