@@ -1,7 +1,7 @@
 {
     "name": "theplugs/theplugs",
     "description": "ThePlug's Dev's PHP Framework, A very powerful MVC framework, well secure enough to handle any project. with a vast team behind its build.",
-    "type": "project",
+    "type": "library",
     "license": "MIT",
     "autoload": {
         "psr-4": {
@@ -17,7 +17,7 @@
     ],
     "minimum-stability": "stable",
     "require": {
-        "php": ">=7.4",
+        "php": "^7.4|^8.0",
         "ext-pdo": "*",
         "vlucas/phpdotenv": "^5.6"
     },
