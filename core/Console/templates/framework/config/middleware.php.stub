@@ -1,0 +1,24 @@
+<?php
+
+return [
+    /*
+    |--------------------------------------------------------------------------
+    | Global Middleware
+    |--------------------------------------------------------------------------
+    |
+    | These middleware are run during every request to your application.
+    |
+    */
+
+    'global' => [
+        // \Plugs\Http\Middleware\TrustProxies::class,
+        // \Plugs\Http\Middleware\HandleCors::class,
+        \Plugs\Http\Middleware\HandleCsrf::class,
+        \Plugs\Debugger\Middlewares\DebugBarMiddleware::class,
+        // \Plugs\Http\Middleware\PreventRequestsDuringMaintenance::class,
+        // \Plugs\Http\Middleware\ValidatePostSize::class,
+        // \Plugs\Http\Middleware\TrimStrings::class,
+        // \Plugs\Http\Middleware\ConvertEmptyStringsToNull::class,
+        \App\Middlewares\LogRequestMiddleware::class,
+    ]
+];

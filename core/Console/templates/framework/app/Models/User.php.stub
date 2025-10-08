@@ -1,0 +1,35 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Models;
+
+use Plugs\Database\Eloquent\Model;
+
+class User extends Model
+{
+    protected string $table = 'users';
+    protected array $fillable = ['name', 'email', 'password'];
+    protected array $hidden = ['password'];
+    protected array $casts = [
+        'email_verified_at' => 'datetime',
+        'is_active' => 'boolean'
+    ];
+
+    // Relationships
+    public function posts()
+    {
+        return $this->hasMany(Post::class);
+    }
+
+    public function profile()
+    {
+        return $this->hasOne(Profile::class);
+    }
+
+    public function roles()
+    {
+        return $this->belongsToMany(Role::class, 'user_roles', 'user_id', 'role_id')
+                    ->withPivot(['assigned_at', 'assigned_by']);
+    }
+}

@@ -1,0 +1,90 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Controllers;
+
+use Plugs\Http\Request\Request;
+use Plugs\Http\Response\Response;
+use Plugs\Controller\Controller;
+use App\Models\User;
+
+class HomeController extends Controller
+{
+    protected function initialize(): void
+    {
+        // $this->before(function (Request $request) {
+        //     var_dump("Accessing HomeController: " . $request->getMethod() . " " . $request->getUri());
+        // });
+
+        // $this->after(function(Request $request) {
+        //     var_dump("Done Accessing HomeController: " . $request->getMethod() . " " . $request->getUri());
+        // });
+    }
+
+    public function home()
+    {
+        return response(view('home')->with('title', 'Welcome To the Plug Framework')->seo([
+            'title' => 'About Us - Our Story',
+            'description' => 'Learn about our company history, mission, and values.',
+            'keywords' => ['about', 'company', 'team'],
+            'canonical' => 'https://yourdomain.com/about',
+            'og' => [
+                'title' => 'About Our Company',
+                'description' => 'Discover who we are and what we stand for.',
+                'image' => '/images/about-og.jpg',
+                'type' => 'website'
+            ],
+            'twitter' => [
+                'card' => 'summary_large_image',
+                'title' => 'About Our Company',
+                'description' => 'Discover who we are.'
+            ]
+        ]));
+    }
+
+    public function about(): Response
+    {
+        return response(view('about', [
+            'name' => "Celio Natti",
+            'content' => "The About Page Content"
+        ]));
+    }
+    public function contact()
+    {
+        // $userModel = new User();
+        // $users = User::whereIn('id', [1, 2, 3])->get();
+
+        // User::create([
+        //     'name' => 'Smith Doe',
+        //     'email' => 'smithdoe@mail.com',
+        //     'user_id' => 'smith_doe',
+        //     'password' => password_hash('Password', PASSWORD_BCRYPT),
+        // ]);
+
+        // User::create([
+        //     'name' => 'Jane Doe',
+        //     'email' => 'janedoe@mail.com',
+        //     'user_id' => 'jane_doe',
+        //     'password' => password_hash('Password', PASSWORD_BCRYPT),
+        // ]);
+
+        $user = User::find('1');
+        // $user->name = 'Jane Mary';
+        // $user->email = 'maryjane@mail.com';
+        // $user->user_id = 'jane_mary';
+        // $user->save();
+
+        // $user->update(['name' => 'Jane Mary Updated', 'email' => 'maryjane@mailcom']);
+
+        // $user->delete();
+
+        // $users = User::all();
+        dump($user);
+    }
+
+    public function show(int $id)
+    {
+        $user = User::find($id);
+    }
+}

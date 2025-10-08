@@ -1,0 +1,170 @@
+<?php
+
+declare(strict_types=1);
+
+return [
+    /*
+    |--------------------------------------------------------------------------
+    | Application Environment
+    |--------------------------------------------------------------------------
+    |
+    | This value determines the "environment" your application is currently
+    | running in. This may determine how you prefer to configure various
+    | services your application utilizes.
+    |
+    */
+
+    'env' => env('APP_ENV', 'production'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Application Debug Mode
+    |--------------------------------------------------------------------------
+    |
+    | When your application is in debug mode, detailed error messages with
+    | stack traces will be shown on every error that occurs within your
+    | application. If disabled, a simple generic error page is shown.
+    |
+    */
+
+    'debug' => env('APP_DEBUG', false),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Application URL Path
+    |--------------------------------------------------------------------------
+    |
+    | This URL path is used when generating URLs for your application. If your
+    | application is hosted in a subdirectory, you should set this value to
+    | the subdirectory path.
+    |
+    */
+
+    'url_path' => env('APP_URL_PATH', '/'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Application Timezone
+    |--------------------------------------------------------------------------
+    |
+    | Here you may specify the default timezone for your application, which
+    | will be used by the PHP date and date-time functions.
+    |
+    */
+
+    'timezone' => 'UTC',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Application Locale Configuration
+    |--------------------------------------------------------------------------
+    |
+    | The application locale determines the default locale that will be used
+    | by the localization service provider.
+    |
+    */
+
+    'locale' => 'en',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Application Fallback Locale
+    |--------------------------------------------------------------------------
+    |
+    | The fallback locale determines the locale to use when the current one
+    | is not available.
+    |
+    */
+
+    'fallback_locale' => 'en',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Encryption Key
+    |--------------------------------------------------------------------------
+    |
+    | This key is used by the encryption service and should be set to a random,
+    | 32 character string. This key is used to encrypt cookies and other
+    | sensitive data.
+    |
+    */
+
+    'key' => env('APP_KEY', 'your-32-character-secret-key-here'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Application Service Providers
+    |--------------------------------------------------------------------------
+    |
+    | The service providers listed here will be automatically loaded on the
+    | request to your application. Feel free to add your own services to
+    | this array to grant expanded functionality to your applications.
+    |
+    */
+
+    'providers' => [
+        /*
+         * Framework Service Providers...
+         */
+        // Plugs\Services\Providers\AuthServiceProvider::class,
+        // Plugs\Services\Providers\DatabaseServiceProvider::class,
+        // Plugs\Services\Providers\FilesystemServiceProvider::class,
+        // Plugs\Services\Providers\LogServiceProvider::class,
+        // Plugs\Services\Providers\MailServiceProvider::class,
+        // Plugs\Services\Providers\QueueServiceProvider::class,
+        // Plugs\Services\Providers\ValidationServiceProvider::class,
+        // Plugs\Services\Providers\CacheServiceProvider::class,
+        Plugs\Services\Providers\DebugServiceProvider::class,
+        Plugs\Services\Providers\ViewSeoServiceProvider::class,
+
+        /*
+         * Application Service Providers...
+         */
+        // App\Providers\AppServiceProvider::class,
+        // App\Providers\AuthServiceProvider::class,
+        // App\Providers\RouteServiceProvider::class,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Environment Specific Providers
+    |--------------------------------------------------------------------------
+    |
+    | These providers will only be loaded in specific environments.
+    |
+    */
+
+    // 'providers' => [
+    //     'local' => [
+    //         // Plugs\Services\Providers\DebugServiceProvider::class,
+    //     ],
+    //     'testing' => [
+    //         // Plugs\Services\Providers\TestingServiceProvider::class,
+    //     ],
+    // ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Class Aliases
+    |--------------------------------------------------------------------------
+    |
+    | This array of class aliases will be registered when this application
+    | is started. However, feel free to register as many as you wish as
+    | the aliases are "lazy" loaded so they don't hinder performance.
+    |
+    */
+
+    'aliases' => [
+        // 'App' => Plugs\Support\Facades\App::class,
+        // 'Config' => Plugs\Support\Facades\Config::class,
+        // 'DB' => Plugs\Support\Facades\DB::class,
+        // 'Hash' => Plugs\Support\Facades\Hash::class,
+        // 'Log' => Plugs\Support\Facades\Log::class,
+        // 'Mail' => Plugs\Support\Facades\Mail::class,
+        // 'Queue' => Plugs\Support\Facades\Queue::class,
+        // 'Request' => Plugs\Support\Facades\Request::class,
+        // 'Route' => Plugs\Support\Facades\Route::class,
+        // 'Session' => Plugs\Support\Facades\Session::class,
+        // 'View' => Plugs\Support\Facades\View::class,
+    ],
+];

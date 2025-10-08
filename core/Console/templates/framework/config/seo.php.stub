@@ -1,0 +1,288 @@
+<?php
+
+/*
+    |--------------------------------------------------------------------------
+    | SEO Configuration
+    |--------------------------------------------------------------------------
+    |
+    | This file contains all the SEO-related configuration for your application.
+    | You can customize these values to match your website's branding and
+    | SEO requirements.
+    |
+    */
+
+return [
+
+    /*
+    |--------------------------------------------------------------------------
+    | Basic Site Information
+    |--------------------------------------------------------------------------
+    |
+    | Configure your website's basic information that will be used across
+    | all pages for SEO purposes.
+    |
+    */
+
+    'site_name' => env('APP_NAME', 'My Website'),
+    'default_title' => 'Welcome to ' . env('APP_NAME', 'My Website'),
+    'title_separator' => ' | ',
+    'title_format' => '{title}{separator}{site_name}', // Or use: '{site_name}{separator}{title}'
+    'default_description' => 'Your comprehensive description of what your site offers. Like - Discover amazing content, services, and features on our website. Join thousands of satisfied users.',
+    'default_keywords' => [
+        'your',
+        'relevant',
+        'keywords',
+        'quality content',
+        'professional services',
+        'user experience'
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | URLs and Assets
+    |--------------------------------------------------------------------------
+    |
+    | Configure default URLs and asset paths for your SEO implementation.
+    |
+    */
+
+    'canonical_base_url' => env('APP_URL', 'https://yourdomain.com'),
+    'default_image' => '/images/og-default.jpg', // 1200x630 recommended
+    'default_favicon' => '/favicon.ico',
+    'default_image_width' => 1200,
+    'default_image_height' => 630,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Social Media Integration
+    |--------------------------------------------------------------------------
+    |
+    | Configure your social media accounts for proper attribution and
+    | enhanced social sharing features.
+    |
+    */
+
+    'twitter_username' => '@yourhandle',
+    'facebook_app_id' => '',
+    'facebook_page_id' => '',
+    'instagram_username' => 'yourhandle',
+    'linkedin_company' => 'your-company',
+    'youtube_channel' => 'UCyourchannel',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Localization Settings
+    |--------------------------------------------------------------------------
+    |
+    | Configure language and locale settings for international SEO.
+    |
+    */
+
+    'locale' => 'en_US',
+    'language' => 'en',
+    'country' => 'US',
+    'alternate_languages' => [
+        // 'fr' => 'https://yourdomain.com/fr',
+        // 'es' => 'https://yourdomain.com/es',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Organization Information
+    |--------------------------------------------------------------------------
+    |
+    | This information is used for structured data markup and local SEO.
+    | Fill this out completely for better search engine understanding.
+    |
+    */
+
+    'organization' => [
+        '@context' => 'https://schema.org',
+        '@type' => 'Organization', // or 'Corporation', 'LocalBusiness', etc.
+        'name' => env('APP_NAME', 'My Company'),
+        'url' => env('APP_URL', 'https://yourdomain.com'),
+        'logo' => env('APP_URL', 'https://yourdomain.com') . '/images/logo.png',
+        'description' => 'Your company description for structured data',
+        'address' => [
+            '@type' => 'PostalAddress',
+            'streetAddress' => '123 Main Street',
+            'addressLocality' => 'City',
+            'addressRegion' => 'State',
+            'postalCode' => '12345',
+            'addressCountry' => 'US'
+        ],
+        'contactPoint' => [
+            '@type' => 'ContactPoint',
+            'telephone' => '+1-555-555-5555',
+            'contactType' => 'customer service',
+            'email' => 'support@yourdomain.com',
+            'areaServed' => 'US',
+            'availableLanguage' => ['English']
+        ],
+        'sameAs' => [
+            'https://www.facebook.com/yourpage',
+            'https://twitter.com/yourhandle',
+            'https://www.instagram.com/yourhandle',
+            'https://www.linkedin.com/company/yourcompany',
+        ]
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Global Meta Tags
+    |--------------------------------------------------------------------------
+    |
+    | These meta tags will be applied to all pages unless overridden.
+    |
+    */
+
+    'global_meta' => [
+        'viewport' => 'width=device-width, initial-scale=1, shrink-to-fit=no',
+        'robots' => 'index, follow',
+        'author' => env('APP_NAME', 'My Website'),
+        'generator' => 'Plugs Framework',
+        'theme-color' => '#000000',
+        'format-detection' => 'telephone=no',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Open Graph Defaults
+    |--------------------------------------------------------------------------
+    |
+    | Default Open Graph settings that can be overridden per page.
+    |
+    */
+
+    'og_defaults' => [
+        'type' => 'website',
+        'locale' => 'en_US',
+        'site_name' => env('APP_NAME', 'My Website')
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Twitter Card Defaults
+    |--------------------------------------------------------------------------
+    |
+    | Default Twitter Card settings that can be overridden per page.
+    |
+    */
+
+    'twitter_defaults' => [
+        'card' => 'summary_large_image' // or 'summary', 'player', 'app'
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Analytics and Tracking
+    |--------------------------------------------------------------------------
+    |
+    | Configure your analytics and tracking IDs.
+    |
+    */
+
+    'analytics' => [
+        'google_analytics' => env('GOOGLE_ANALYTICS_ID', ''),
+        'google_tag_manager' => env('GOOGLE_TAG_MANAGER_ID', ''),
+        'facebook_pixel' => env('FACEBOOK_PIXEL_ID', ''),
+    ],
+
+    // Site verification codes
+    'google_site_verification' => env('GOOGLE_VERIFICATION', ''),
+    'bing_site_verification' => env('BING_VERIFICATION', ''),
+
+    /*
+    |--------------------------------------------------------------------------
+    | SEO Features
+    |--------------------------------------------------------------------------
+    |
+    | Enable or disable various SEO features.
+    |
+    */
+
+    'auto_canonical' => true,
+    'auto_og_generation' => true,
+    'auto_twitter_generation' => true,
+    'trailing_slash' => false,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Performance Optimization
+    |--------------------------------------------------------------------------
+    |
+    | Configure performance-related SEO settings.
+    |
+    */
+
+    'preload_critical_assets' => [
+        // '/css/app.css',
+        // '/js/app.js',
+        // '/fonts/main.woff2',
+        // ['href' => '/css/critical.css', 'as' => 'style'],
+        // ['href' => '/fonts/main.woff2', 'as' => 'font', 'type' => 'font/woff2', 'crossorigin' => true],
+    ],
+
+    'dns_prefetch_domains' => 'https://fonts.googleapis.com',
+
+    // 'dns_prefetch_domains' => [
+    //     'https://fonts.googleapis.com',
+    //     'https://www.google-analytics.com',
+    // ],
+
+    'preconnect_domains' => [
+        'https://fonts.gstatic.com',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Security Headers
+    |--------------------------------------------------------------------------
+    |
+    | SEO-related security configurations.
+    |
+    */
+
+    'referrer_policy' => 'strict-origin-when-cross-origin',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Robots.txt Configuration
+    |--------------------------------------------------------------------------
+    |
+    | Configure automatic robots.txt generation.
+    |
+    */
+
+    'default_robots' => 'index, follow',
+    'noindex_environments' => ['local', 'development', 'staging'],
+
+    'robots' => [
+        'enabled' => true,
+        'user_agent' => '*',
+        'disallow' => [
+            '/admin',
+            '/private',
+            '/api',
+            '/tmp'
+        ],
+        'allow' => [
+            '/css',
+            '/js',
+            '/images'
+        ],
+        'sitemap_url' => '/sitemap.xml'
+    ],
+
+    // Custom meta tags per route (optional - can also be set in controllers)
+    'routes' => [
+        // 'home' => [
+        //     'title' => 'Home - Special Title',
+        //     'description' => 'Special home page description',
+        // ],
+        // 'about' => [
+        //     'title' => 'About Us',
+        //     'description' => 'Learn more about our company',
+        // ],
+    ],
+];

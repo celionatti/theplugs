@@ -1,0 +1,170 @@
+<?php
+
+declare(strict_types=1);
+
+// config/session.php
+
+return [
+    /*
+    |--------------------------------------------------------------------------
+    | Session Cookie Name
+    |--------------------------------------------------------------------------
+    |
+    | The name of the session cookie. This should be unique to your application.
+    |
+    */
+    'cookie' => env('SESSION_COOKIE', 'plugs_session'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Session Lifetime
+    |--------------------------------------------------------------------------
+    |
+    | The number of minutes before the session expires. This determines how
+    | long a user can be idle before their session expires.
+    |
+    */
+    'lifetime' => (int) env('SESSION_LIFETIME', 120),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Expire On Close
+    |--------------------------------------------------------------------------
+    |
+    | If true, the session cookie expires when the browser closes.
+    | If false, the session persists based on the lifetime setting.
+    |
+    */
+    'expire_on_close' => (bool) env('SESSION_EXPIRE_ON_CLOSE', false),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Session Encryption
+    |--------------------------------------------------------------------------
+    |
+    | If true, all session data will be encrypted. This requires the 'key'
+    | to be set. Generally not needed for sessions as PHP handles security.
+    |
+    */
+    'encrypt' => (bool) env('SESSION_ENCRYPT', false),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Encryption Key
+    |--------------------------------------------------------------------------
+    |
+    | Only required if 'encrypt' is set to true. This should be a secure,
+    | random string. You can generate one using: bin2hex(random_bytes(32))
+    |
+    */
+    'key' => env('SESSION_KEY', env('APP_KEY', '')),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Cookie Path & Domain
+    |--------------------------------------------------------------------------
+    |
+    | The path and domain for the session cookie. Typically '/' for path
+    | and your domain name for domain (or null for current domain).
+    |
+    */
+    'path' => env('SESSION_PATH', '/'),
+    'domain' => env('SESSION_DOMAIN', null),
+
+    /*
+    |--------------------------------------------------------------------------
+    | HTTPS Only Cookie
+    |--------------------------------------------------------------------------
+    |
+    | If true, the session cookie will only be sent over HTTPS connections.
+    | Set this to true in production if you're using HTTPS.
+    |
+    */
+    'secure' => (bool) env('SESSION_SECURE_COOKIE', false),
+
+    /*
+    |--------------------------------------------------------------------------
+    | HTTP Only Cookie
+    |--------------------------------------------------------------------------
+    |
+    | If true, the cookie is accessible only through HTTP protocol, not
+    | JavaScript. This helps prevent XSS attacks. Should always be true.
+    |
+    */
+    'http_only' => true,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Same Site Cookie
+    |--------------------------------------------------------------------------
+    |
+    | Determines how your cookies behave with cross-site requests.
+    | Options: 'lax', 'strict', 'none'
+    |
+    */
+    'same_site' => env('SESSION_SAME_SITE', 'lax'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Garbage Collection Probability
+    |--------------------------------------------------------------------------
+    |
+    | The probability that garbage collection will run on each request.
+    | Formula: gc_probability / gc_divisor
+    | Default: 1/100 = 1% chance per request
+    |
+    | Increase gc_probability for more aggressive cleanup (e.g., 5/100 = 5%)
+    |
+    */
+    'gc_probability' => (int) env('SESSION_GC_PROBABILITY', 1),
+    'gc_divisor' => (int) env('SESSION_GC_DIVISOR', 100),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Security Checks
+    |--------------------------------------------------------------------------
+    |
+    | Enable additional security checks. Note: These can cause issues with
+    | mobile networks or users behind proxies.
+    |
+    | check_ip: Validates the user's IP address hasn't changed
+    | check_user_agent: Validates the user's browser hasn't changed
+    |
+    */
+    'check_ip' => (bool) env('SESSION_CHECK_IP', false),
+    'check_user_agent' => (bool) env('SESSION_CHECK_USER_AGENT', false),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Auto Start Session
+    |--------------------------------------------------------------------------
+    |
+    | If true, the session will automatically start when the application boots.
+    | If false, you need to manually call $session->start() in your code.
+    |
+    */
+    'auto_start' => (bool) env('SESSION_AUTO_START', true),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Custom Save Path (Optional)
+    |--------------------------------------------------------------------------
+    |
+    | By default, PHP uses its default session save path (usually /tmp).
+    | Uncomment and set this if you want sessions saved to a specific directory.
+    |
+    | Note: The directory must exist and be writable by the web server.
+    |
+    */
+    // 'save_path' => storage_path('framework/sessions'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Encryption Cipher (Only if encrypt is true)
+    |--------------------------------------------------------------------------
+    |
+    | The cipher used for encrypting session data. Only used if 'encrypt' is true.
+    |
+    */
+    'cipher' => 'AES-256-CBC',
+];
