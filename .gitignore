@@ -13,3 +13,5 @@
 /app
 /notes
 /bootstrap
+/.package-lock.json
+/package.json
