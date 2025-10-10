@@ -4,59 +4,31 @@ declare(strict_types=1);
 
 namespace Plugs\Debugger;
 
-use PDO;
-use Throwable;
+use Plugs\Http\Response\Response;
 
-class PlugDebugger
+class oldPlugDebugger
 {
-    private static ?self $instance = null;
-    
-    private array $queries = [];
-    private array $errors = [];
-    private array $warnings = [];
-    private array $performance = [];
-    private array $memory = [];
-    private array $issues = [];
-    private array $logs = [];
-    private array $httpRequests = [];
-    private array $cacheHits = [];
-    private array $events = [];
-    private array $routes = [];
-    
-    private float $startTime;
-    private int $startMemory;
-    private bool $enabled = true;
-    private bool $collectStackTraces = true;
-    private int $slowQueryThreshold = 100; // milliseconds
-    private int $maxQueries = 1000;
-    
-    private ?PDO $pdoConnection = null;
-    private mixed $frameworkDb = null;
-    
-    private array $config = [
-        'max_string_length' => 1000,
-        'max_trace_depth' => 10,
-        'highlight_slow_queries' => true,
-        'detect_n_plus_one' => true,
-        'track_duplicate_queries' => true,
-    ];
+    private static $instance = null;
+    private $queries = [];
+    private $errors = [];
+    private $warnings = [];
+    private $performance = [];
+    private $memory = [];
+    private $issues = [];
+    private $logs = [];
+    private $startTime;
+    private $startMemory;
+    private $enabled = true;
 
-    /**
-     * Private constructor to enforce singleton pattern
-     */
     private function __construct()
     {
         $this->startTime = microtime(true);
         $this->startMemory = memory_get_usage(true);
         $this->initializeErrorHandling();
         $this->trackMemoryUsage();
-        $this->registerShutdownHandler();
     }
 
-    /**
-     * Get singleton instance
-     */
-    public static function getInstance(): self
+    public static function getInstance()
     {
         if (self::$instance === null) {
             self::$instance = new self();
@@ -65,135 +37,47 @@ class PlugDebugger
     }
 
     /**
-     * Create new instance for dependency injection
-     */
-    public static function create(array $config = []): self
-    {
-        $instance = new self();
-        $instance->configure($config);
-        return $instance;
-    }
-
-    /**
-     * Configure debugger settings
-     */
-    public function configure(array $config): self
-    {
-        $this->config = array_merge($this->config, $config);
-        return $this;
-    }
-
-    /**
      * Enable or disable debugging
      */
-    public function setEnabled(bool $enabled): self
+    public function setEnabled($enabled)
     {
         $this->enabled = $enabled;
-        return $this;
     }
 
-    public function isEnabled(): bool
+    public function isEnabled()
     {
         return $this->enabled;
     }
 
     /**
-     * Set slow query threshold in milliseconds
-     */
-    public function setSlowQueryThreshold(int $milliseconds): self
-    {
-        $this->slowQueryThreshold = $milliseconds;
-        return $this;
-    }
-
-    /**
-     * Enable/disable stack trace collection
-     */
-    public function setCollectStackTraces(bool $collect): self
-    {
-        $this->collectStackTraces = $collect;
-        return $this;
-    }
-
-    /**
-     * Attach PDO connection for automatic query logging
-     */
-    public function attachPDO(PDO $pdo): self
-    {
-        $this->pdoConnection = $pdo;
-        
-        // Wrap PDO to intercept queries
-        $pdo->setAttribute(PDO::ATTR_STATEMENT_CLASS, [
-            DebugPDOStatement::class,
-            [$this]
-        ]);
-        
-        return $this;
-    }
-
-    /**
-     * Attach framework database instance
-     */
-    public function attachFrameworkDb(mixed $db): self
-    {
-        $this->frameworkDb = $db;
-        return $this;
-    }
-
-    /**
      * Initialize error and warning handling
      */
-    private function initializeErrorHandling(): void
+    private function initializeErrorHandling()
     {
         set_error_handler([$this, 'handleError']);
         set_exception_handler([$this, 'handleException']);
-    }
-
-    /**
-     * Register shutdown handler
-     */
-    private function registerShutdownHandler(): void
-    {
         register_shutdown_function([$this, 'handleShutdown']);
     }
 
     /**
-     * Track database queries with enhanced metadata
+     * Track database queries
      */
-    public function logQuery(
-        string $sql,
-        array $params = [],
-        float $executionTime = 0,
-        string $connection = 'default',
-        ?array $result = null
-    ): void {
-        if (!$this->enabled || count($this->queries) >= $this->maxQueries) {
-            return;
-        }
+    public function logQuery($sql, $params = [], $executionTime = 0, $connection = 'default')
+    {
+        if (!$this->enabled) return;
 
-        $backtrace = $this->collectStackTraces 
-            ? debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, $this->config['max_trace_depth'])
-            : [];
-            
+        $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 10);
         $caller = $this->findQueryCaller($backtrace);
-        $queryType = $this->detectQueryType($sql);
-        $affectedRows = $result['affected_rows'] ?? null;
-        $resultCount = $result['result_count'] ?? null;
 
         $queryData = [
             'sql' => $sql,
-            'params' => $this->sanitizeParams($params),
+            'params' => $params,
             'execution_time' => $executionTime,
             'connection' => $connection,
             'timestamp' => microtime(true),
             'caller' => $caller,
             'memory_usage' => memory_get_usage(true),
-            'formatted_sql' => $this->formatSql($sql, $params),
-            'query_type' => $queryType,
-            'affected_rows' => $affectedRows,
-            'result_count' => $resultCount,
-            'backtrace' => array_slice($backtrace, 0, 5),
-            'query_hash' => $this->hashQuery($sql),
+            'formatted_sql' => $this->formatSql($sql, $params)
         ];
 
         $this->queries[] = $queryData;
@@ -201,146 +85,31 @@ class PlugDebugger
     }
 
     /**
-     * Log custom messages with levels
+     * Log custom messages
      */
-    public function log(string $level, string $message, array $context = []): void
+    public function log($level, $message, $context = [])
     {
-        if (!$this->enabled) {
-            return;
-        }
+        if (!$this->enabled) return;
 
         $this->logs[] = [
-            'level' => strtolower($level),
+            'level' => $level,
             'message' => $message,
-            'context' => $this->sanitizeContext($context),
+            'context' => $context,
             'timestamp' => microtime(true),
-            'memory' => memory_get_usage(true),
-            'backtrace' => $this->collectStackTraces 
-                ? array_slice(debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 3), 0, 3)
-                : null,
-        ];
-    }
-
-    /**
-     * Convenience logging methods
-     */
-    public function debug(string $message, array $context = []): void
-    {
-        $this->log('debug', $message, $context);
-    }
-
-    public function info(string $message, array $context = []): void
-    {
-        $this->log('info', $message, $context);
-    }
-
-    public function warning(string $message, array $context = []): void
-    {
-        $this->log('warning', $message, $context);
-    }
-
-    public function error(string $message, array $context = []): void
-    {
-        $this->log('error', $message, $context);
-    }
-
-    /**
-     * Track HTTP requests (external API calls)
-     */
-    public function logHttpRequest(
-        string $method,
-        string $url,
-        ?array $headers = null,
-        mixed $body = '',
-        ?int $responseCode = null,
-        ?float $duration = null
-    ): void {
-        if (!$this->enabled) {
-            return;
-        }
-
-        $this->httpRequests[] = [
-            'method' => strtoupper($method),
-            'url' => $url,
-            'headers' => $headers,
-            'body' => $this->truncateString($body),
-            'response_code' => $responseCode,
-            'duration' => $duration,
-            'timestamp' => microtime(true),
-        ];
-    }
-
-    /**
-     * Track cache operations
-     */
-    public function logCache(string $operation, string $key, bool $hit = false, ?float $duration = null): void
-    {
-        if (!$this->enabled) {
-            return;
-        }
-
-        $this->cacheHits[] = [
-            'operation' => $operation,
-            'key' => $key,
-            'hit' => $hit,
-            'duration' => $duration,
-            'timestamp' => microtime(true),
-        ];
-    }
-
-    /**
-     * Track application events
-     */
-    public function logEvent(string $name, array $data = []): void
-    {
-        if (!$this->enabled) {
-            return;
-        }
-
-        $this->events[] = [
-            'name' => $name,
-            'data' => $this->sanitizeContext($data),
-            'timestamp' => microtime(true),
-        ];
-    }
-
-    /**
-     * Track route information
-     */
-    public function logRoute(string $method, string $path, string $handler, array $middleware = []): void
-    {
-        if (!$this->enabled) {
-            return;
-        }
-
-        $this->routes[] = [
-            'method' => strtoupper($method),
-            'path' => $path,
-            'handler' => $handler,
-            'middleware' => $middleware,
-            'timestamp' => microtime(true),
+            'memory' => memory_get_usage(true)
         ];
     }
 
     /**
      * Find the actual caller of the query (skip framework internals)
      */
-    private function findQueryCaller(array $backtrace): array
+    private function findQueryCaller($backtrace)
     {
-        $frameworkPaths = [
-            'vendor/', 
-            'framework/', 
-            'database/', 
-            'orm/', 
-            'Plugs/Database',
-            'Plugs/Debugger',
-            'core/Database'
-        ];
+        $frameworkPaths = ['vendor/', 'framework/', 'database/', 'orm/', 'Plugs/Database', 'core/Database'];
 
         foreach ($backtrace as $trace) {
             if (isset($trace['file'])) {
                 $isFrameworkFile = false;
-                
                 foreach ($frameworkPaths as $path) {
                     if (strpos($trace['file'], $path) !== false) {
                         $isFrameworkFile = true;
@@ -353,7 +122,7 @@ class PlugDebugger
                         'file' => $trace['file'],
                         'line' => $trace['line'] ?? 0,
                         'function' => $trace['function'] ?? 'unknown',
-                        'class' => $trace['class'] ?? null,
+                        'class' => $trace['class'] ?? null
                     ];
                 }
             }
@@ -363,176 +132,55 @@ class PlugDebugger
     }
 
     /**
-     * Detect query type (SELECT, INSERT, UPDATE, etc.)
-     */
-    private function detectQueryType(string $sql): string
-    {
-        $sql = trim(strtoupper($sql));
-        
-        if (preg_match('/^(SELECT|INSERT|UPDATE|DELETE|CREATE|DROP|ALTER|TRUNCATE|REPLACE)\b/', $sql, $matches)) {
-            return $matches[1];
-        }
-        
-        return 'UNKNOWN';
-    }
-
-    /**
-     * Generate hash for query deduplication
-     */
-    private function hashQuery(string $sql): string
-    {
-        // Normalize query by removing literals and whitespace
-        $normalized = preg_replace('/\s+/', ' ', $sql);
-        $normalized = preg_replace('/\d+/', '?', $normalized);
-        $normalized = preg_replace('/"[^"]*"/', '?', $normalized);
-        $normalized = preg_replace("/'[^']*'/", '?', $normalized);
-        
-        return md5(strtolower(trim($normalized)));
-    }
-
-    /**
      * Format SQL with parameters
      */
-    private function formatSql(string $sql, array $params): string
+    private function formatSql($sql, $params)
     {
-        if (empty($params)) {
-            return $sql;
-        }
-
         $formatted = $sql;
-        
-        foreach ($params as $key => $value) {
-            $replacement = $this->formatParamValue($value);
-            
-            if (is_numeric($key)) {
-                $formatted = preg_replace('/\?/', $replacement, $formatted, 1);
-            } else {
-                $formatted = str_replace(":$key", $replacement, $formatted);
+        if (!empty($params)) {
+            foreach ($params as $key => $value) {
+                $replacement = is_string($value) ? "'$value'" : (string)$value;
+                if (is_numeric($key)) {
+                    $formatted = preg_replace('/\?/', $replacement, $formatted, 1);
+                } else {
+                    $formatted = str_replace(":$key", $replacement, $formatted);
+                }
             }
         }
-        
         return $formatted;
-    }
-
-    /**
-     * Format parameter value for display
-     */
-    private function formatParamValue(mixed $value): string
-    {
-        if ($value === null) {
-            return 'NULL';
-        }
-        
-        if (is_bool($value)) {
-            return $value ? 'TRUE' : 'FALSE';
-        }
-        
-        if (is_numeric($value)) {
-            return (string)$value;
-        }
-        
-        if (is_string($value)) {
-            return "'" . addslashes($this->truncateString($value, 100)) . "'";
-        }
-        
-        if (is_array($value)) {
-            return "'" . json_encode($value) . "'";
-        }
-        
-        return "'" . (string)$value . "'";
-    }
-
-    /**
-     * Truncate string for display
-     */
-    private function truncateString(mixed $value, int $length = null): string
-    {
-        if (!is_string($value)) {
-            return (string)$value;
-        }
-        
-        $maxLength = $length ?? $this->config['max_string_length'];
-        
-        if (strlen($value) > $maxLength) {
-            return substr($value, 0, $maxLength) . '...';
-        }
-        
-        return $value;
-    }
-
-    /**
-     * Sanitize parameters for logging
-     */
-    private function sanitizeParams(array $params): array
-    {
-        return array_map(function ($param) {
-            if (is_string($param)) {
-                return $this->truncateString($param);
-            }
-            if (is_array($param)) {
-                return $this->sanitizeContext($param);
-            }
-            return $param;
-        }, $params);
-    }
-
-    /**
-     * Sanitize context data for logging
-     */
-    private function sanitizeContext(array $context): array
-    {
-        $sanitized = [];
-        
-        foreach ($context as $key => $value) {
-            if (is_string($value)) {
-                $sanitized[$key] = $this->truncateString($value);
-            } elseif (is_array($value)) {
-                $sanitized[$key] = $this->sanitizeContext($value);
-            } elseif (is_object($value)) {
-                $sanitized[$key] = get_class($value);
-            } else {
-                $sanitized[$key] = $value;
-            }
-        }
-        
-        return $sanitized;
     }
 
     /**
      * Analyze query for potential issues
      */
-    private function analyzeQuery(array $queryData): void
+    private function analyzeQuery($queryData)
     {
         $sql = strtolower($queryData['sql']);
         $issues = [];
 
         // Check for N+1 queries
-        if ($this->config['detect_n_plus_one'] && count($this->queries) > 1) {
+        if (count($this->queries) > 1) {
             $similarQueries = array_filter($this->queries, function ($q) use ($queryData) {
-                return $q['query_hash'] === $queryData['query_hash'];
+                return $this->isSimilarQuery($q['sql'], $queryData['sql']);
             });
 
-            if (count($similarQueries) > 10) {
+            if (count($similarQueries) > 5) {
                 $issues[] = [
                     'type' => 'N+1 Query Problem',
                     'severity' => 'high',
                     'message' => 'Potential N+1 query detected. ' . count($similarQueries) . ' similar queries found.',
-                    'solution' => 'Consider using eager loading, joins, or caching to reduce query count.',
-                    'query_hash' => $queryData['query_hash'],
+                    'solution' => 'Consider using eager loading, joins, or caching to reduce query count.'
                 ];
             }
         }
 
         // Check for slow queries
-        $executionMs = $queryData['execution_time'] * 1000;
-        if ($executionMs > $this->slowQueryThreshold) {
-            $severity = $executionMs > 1000 ? 'critical' : ($executionMs > 500 ? 'high' : 'medium');
-            
+        if ($queryData['execution_time'] > 0.1) {
             $issues[] = [
                 'type' => 'Slow Query',
-                'severity' => $severity,
-                'message' => sprintf('Query took %.2fms to execute', $executionMs),
-                'solution' => 'Add indexes, optimize WHERE clauses, or consider query restructuring.',
+                'severity' => $queryData['execution_time'] > 1 ? 'high' : 'medium',
+                'message' => sprintf('Query took %.4f seconds to execute', $queryData['execution_time']),
+                'solution' => 'Add indexes, optimize WHERE clauses, or consider query restructuring.'
             ];
         }
 
@@ -542,7 +190,7 @@ class PlugDebugger
                 'type' => 'SELECT * Usage',
                 'severity' => 'low',
                 'message' => 'Using SELECT * can impact performance',
-                'solution' => 'Specify only the columns you need in the SELECT clause.',
+                'solution' => 'Specify only the columns you need in the SELECT clause.'
             ];
         }
 
@@ -552,172 +200,109 @@ class PlugDebugger
                 'type' => 'Missing WHERE Clause',
                 'severity' => 'critical',
                 'message' => 'UPDATE/DELETE without WHERE clause detected',
-                'solution' => 'Always use WHERE clause with UPDATE/DELETE to prevent accidental data loss.',
+                'solution' => 'Always use WHERE clause with UPDATE/DELETE to prevent accidental data loss.'
             ];
         }
 
-        // Check for LIKE queries without leading wildcard
-        if (preg_match('/like\s+[\'"]%/i', $sql)) {
-            $issues[] = [
-                'type' => 'Inefficient LIKE Pattern',
-                'severity' => 'medium',
-                'message' => 'LIKE pattern starts with wildcard, preventing index usage',
-                'solution' => 'Avoid leading wildcards in LIKE patterns, or use full-text search.',
-            ];
-        }
-
-        // Check for missing LIMIT in SELECT queries
-        if (preg_match('/^select\s+/i', $sql) && !preg_match('/\s+limit\s+/i', $sql)) {
-            $issues[] = [
-                'type' => 'Missing LIMIT Clause',
-                'severity' => 'low',
-                'message' => 'SELECT query without LIMIT may return excessive rows',
-                'solution' => 'Add LIMIT clause to constrain result set size.',
-            ];
-        }
-
-        // Check for subqueries that could be joins
-        if (preg_match_all('/\(\s*select/i', $sql, $matches) > 1) {
-            $issues[] = [
-                'type' => 'Multiple Subqueries',
-                'severity' => 'medium',
-                'message' => 'Multiple subqueries detected',
-                'solution' => 'Consider refactoring subqueries to JOINs for better performance.',
-            ];
-        }
-
+        // Add issues to the query data
         if (!empty($issues)) {
+            $queryData['issues'] = $issues;
             $this->issues = array_merge($this->issues, $issues);
         }
     }
 
     /**
+     * Check if two queries are similar (for N+1 detection)
+     */
+    private function isSimilarQuery($sql1, $sql2)
+    {
+        $normalized1 = preg_replace('/\d+/', '?', strtolower(trim($sql1)));
+        $normalized2 = preg_replace('/\d+/', '?', strtolower(trim($sql2)));
+        $normalized1 = preg_replace('/\'[^\']*\'/', '?', $normalized1);
+        $normalized2 = preg_replace('/\'[^\']*\'/', '?', $normalized2);
+
+        return $normalized1 === $normalized2;
+    }
+
+    /**
      * Track memory usage at specific points
      */
-    private function trackMemoryUsage(): void
+    private function trackMemoryUsage()
     {
         $this->memory[] = [
             'timestamp' => microtime(true),
             'usage' => memory_get_usage(true),
-            'peak' => memory_get_peak_usage(true),
+            'peak' => memory_get_peak_usage(true)
         ];
     }
 
     /**
      * Log performance markers
      */
-    public function markPerformance(string $label, array $data = []): void
+    public function markPerformance($label, $data = [])
     {
-        if (!$this->enabled) {
-            return;
-        }
+        if (!$this->enabled) return;
 
         $this->performance[] = [
             'label' => $label,
             'timestamp' => microtime(true),
             'memory' => memory_get_usage(true),
-            'data' => $data,
+            'data' => $data
         ];
-        
         $this->trackMemoryUsage();
-    }
-
-    /**
-     * Start a timer
-     */
-    public function startTimer(string $name): void
-    {
-        if (!$this->enabled) {
-            return;
-        }
-
-        $this->performance[$name . '_start'] = microtime(true);
-    }
-
-    /**
-     * Stop a timer and record it
-     */
-    public function stopTimer(string $name): ?float
-    {
-        if (!$this->enabled) {
-            return null;
-        }
-
-        $startKey = $name . '_start';
-        
-        if (!isset($this->performance[$startKey])) {
-            return null;
-        }
-
-        $duration = microtime(true) - $this->performance[$startKey];
-        unset($this->performance[$startKey]);
-
-        $this->markPerformance($name, ['duration' => $duration]);
-
-        return $duration;
     }
 
     /**
      * Handle PHP errors
      */
-    public function handleError(int $errno, string $errstr, string $errfile, int $errline): bool
+    public function handleError($errno, $errstr, $errfile, $errline)
     {
-        if (!$this->enabled || !(error_reporting() & $errno)) {
-            return false;
-        }
+        if (!$this->enabled) return false;
 
         $errorData = [
             'type' => 'PHP Error',
             'level' => $this->getErrorLevelName($errno),
-            'errno' => $errno,
             'message' => $errstr,
             'file' => $errfile,
             'line' => $errline,
-            'timestamp' => microtime(true),
+            'timestamp' => microtime(true)
         ];
 
-        if (in_array($errno, [E_WARNING, E_USER_WARNING, E_DEPRECATED, E_USER_DEPRECATED])) {
+        if ($errno === E_WARNING || $errno === E_USER_WARNING) {
             $this->warnings[] = $errorData;
         } else {
             $this->errors[] = $errorData;
         }
 
-        return false; // Allow default error handler to run
+        return false;
     }
 
     /**
      * Handle uncaught exceptions
      */
-    public function handleException(Throwable $exception): void
+    public function handleException($exception)
     {
-        if (!$this->enabled) {
-            return;
-        }
+        if (!$this->enabled) return;
 
         $this->errors[] = [
             'type' => 'Uncaught Exception',
             'level' => 'Fatal',
-            'class' => get_class($exception),
             'message' => $exception->getMessage(),
-            'code' => $exception->getCode(),
             'file' => $exception->getFile(),
             'line' => $exception->getLine(),
             'trace' => $exception->getTraceAsString(),
-            'timestamp' => microtime(true),
+            'timestamp' => microtime(true)
         ];
     }
 
     /**
      * Handle script shutdown
      */
-    public function handleShutdown(): void
+    public function handleShutdown()
     {
-        if (!$this->enabled) {
-            return;
-        }
+        if (!$this->enabled) return;
 
         $error = error_get_last();
-        
         if ($error && in_array($error['type'], [E_ERROR, E_PARSE, E_CORE_ERROR, E_COMPILE_ERROR])) {
             $this->errors[] = [
                 'type' => 'Fatal Error',
@@ -725,7 +310,7 @@ class PlugDebugger
                 'message' => $error['message'],
                 'file' => $error['file'],
                 'line' => $error['line'],
-                'timestamp' => microtime(true),
+                'timestamp' => microtime(true)
             ];
         }
     }
@@ -733,7 +318,7 @@ class PlugDebugger
     /**
      * Get error level name
      */
-    private function getErrorLevelName(int $errno): string
+    private function getErrorLevelName($errno)
     {
         $levels = [
             E_ERROR => 'Fatal Error',
@@ -750,7 +335,7 @@ class PlugDebugger
             E_STRICT => 'Strict Notice',
             E_RECOVERABLE_ERROR => 'Recoverable Error',
             E_DEPRECATED => 'Deprecated',
-            E_USER_DEPRECATED => 'User Deprecated',
+            E_USER_DEPRECATED => 'User Deprecated'
         ];
 
         return $levels[$errno] ?? 'Unknown Error';
@@ -759,7 +344,7 @@ class PlugDebugger
     /**
      * Get comprehensive debug report
      */
-    public function getDebugReport(): array
+    public function getDebugReport()
     {
         if (!$this->enabled) {
             return ['message' => 'Debugging is disabled'];
@@ -768,206 +353,62 @@ class PlugDebugger
         $endTime = microtime(true);
         $endMemory = memory_get_usage(true);
 
-        return [
+        $report = [
             'execution_time' => $endTime - $this->startTime,
             'memory_usage' => [
                 'start' => $this->startMemory,
                 'end' => $endMemory,
                 'peak' => memory_get_peak_usage(true),
-                'difference' => $endMemory - $this->startMemory,
+                'difference' => $endMemory - $this->startMemory
             ],
             'queries' => [
                 'total' => count($this->queries),
                 'details' => $this->queries,
-                'total_execution_time' => array_sum(array_column($this->queries, 'execution_time')),
-                'by_type' => $this->groupQueriesByType(),
-                'duplicates' => $this->findDuplicateQueries(),
-            ],
-            'http_requests' => [
-                'total' => count($this->httpRequests),
-                'details' => $this->httpRequests,
-            ],
-            'cache' => [
-                'total' => count($this->cacheHits),
-                'details' => $this->cacheHits,
-                'hit_rate' => $this->calculateCacheHitRate(),
-            ],
-            'events' => [
-                'total' => count($this->events),
-                'details' => $this->events,
-            ],
-            'routes' => [
-                'total' => count($this->routes),
-                'details' => $this->routes,
+                'total_execution_time' => array_sum(array_column($this->queries, 'execution_time'))
             ],
             'errors' => [
                 'total' => count($this->errors),
-                'details' => $this->errors,
+                'details' => $this->errors
             ],
             'warnings' => [
                 'total' => count($this->warnings),
-                'details' => $this->warnings,
+                'details' => $this->warnings
             ],
             'logs' => [
                 'total' => count($this->logs),
-                'details' => $this->logs,
-                'by_level' => $this->groupLogsByLevel(),
+                'details' => $this->logs
             ],
             'issues' => [
                 'total' => count($this->issues),
                 'details' => $this->issues,
-                'by_severity' => $this->groupIssuesBySeverity(),
+                'by_severity' => $this->groupIssuesBySeverity()
             ],
             'performance_markers' => $this->performance,
             'request' => $this->getRequestInfo(),
-            'server' => $this->getServerInfo(),
-            'files' => [
-                'total' => count(get_included_files()),
-                'list' => get_included_files(),
-            ],
-            'recommendations' => $this->generateRecommendations(),
-            'php_info' => [
-                'version' => PHP_VERSION,
-                'sapi' => PHP_SAPI,
-                'extensions' => get_loaded_extensions(),
-            ],
+            'files' => get_included_files(),
+            'recommendations' => $this->generateRecommendations()
         ];
-    }
 
-    /**
-     * Group queries by type
-     */
-    private function groupQueriesByType(): array
-    {
-        $grouped = [];
-        
-        foreach ($this->queries as $query) {
-            $type = $query['query_type'] ?? 'UNKNOWN';
-            
-            if (!isset($grouped[$type])) {
-                $grouped[$type] = [
-                    'count' => 0,
-                    'total_time' => 0,
-                ];
-            }
-            
-            $grouped[$type]['count']++;
-            $grouped[$type]['total_time'] += $query['execution_time'];
-        }
-        
-        return $grouped;
-    }
-
-    /**
-     * Find duplicate queries
-     */
-    private function findDuplicateQueries(): array
-    {
-        if (!$this->config['track_duplicate_queries']) {
-            return [];
-        }
-
-        $hashes = [];
-        $duplicates = [];
-        
-        foreach ($this->queries as $query) {
-            $hash = $query['query_hash'];
-            
-            if (!isset($hashes[$hash])) {
-                $hashes[$hash] = [];
-            }
-            
-            $hashes[$hash][] = $query;
-        }
-        
-        foreach ($hashes as $hash => $queries) {
-            if (count($queries) > 1) {
-                $duplicates[] = [
-                    'query_hash' => $hash,
-                    'count' => count($queries),
-                    'sql' => $queries[0]['sql'],
-                    'total_time' => array_sum(array_column($queries, 'execution_time')),
-                ];
-            }
-        }
-        
-        usort($duplicates, fn($a, $b) => $b['count'] <=> $a['count']);
-        
-        return $duplicates;
-    }
-
-    /**
-     * Calculate cache hit rate
-     */
-    private function calculateCacheHitRate(): float
-    {
-        if (empty($this->cacheHits)) {
-            return 0.0;
-        }
-
-        $hits = count(array_filter($this->cacheHits, fn($c) => $c['hit']));
-        
-        return ($hits / count($this->cacheHits)) * 100;
-    }
-
-    /**
-     * Group logs by level
-     */
-    private function groupLogsByLevel(): array
-    {
-        $grouped = [];
-        
-        foreach ($this->logs as $log) {
-            $level = $log['level'] ?? 'unknown';
-            
-            if (!isset($grouped[$level])) {
-                $grouped[$level] = 0;
-            }
-            
-            $grouped[$level]++;
-        }
-        
-        return $grouped;
+        return $report;
     }
 
     /**
      * Get request information
      */
-    private function getRequestInfo(): array
+    private function getRequestInfo()
     {
         return [
             'method' => $_SERVER['REQUEST_METHOD'] ?? 'CLI',
             'uri' => $_SERVER['REQUEST_URI'] ?? '/',
-            'query_string' => $_SERVER['QUERY_STRING'] ?? '',
             'ip' => $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1',
-            'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown',
-            'referer' => $_SERVER['HTTP_REFERER'] ?? null,
-            'protocol' => $_SERVER['SERVER_PROTOCOL'] ?? 'HTTP/1.1',
-            'is_ajax' => !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && 
-                        strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest',
-        ];
-    }
-
-    /**
-     * Get server information
-     */
-    private function getServerInfo(): array
-    {
-        return [
-            'software' => $_SERVER['SERVER_SOFTWARE'] ?? 'Unknown',
-            'php_version' => PHP_VERSION,
-            'os' => PHP_OS,
-            'max_execution_time' => ini_get('max_execution_time'),
-            'memory_limit' => ini_get('memory_limit'),
-            'upload_max_filesize' => ini_get('upload_max_filesize'),
-            'post_max_size' => ini_get('post_max_size'),
+            'user_agent' => $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown'
         ];
     }
 
     /**
      * Group issues by severity
      */
-    private function groupIssuesBySeverity(): array
+    private function groupIssuesBySeverity()
     {
         $grouped = ['critical' => [], 'high' => [], 'medium' => [], 'low' => []];
 
@@ -982,64 +423,34 @@ class PlugDebugger
     /**
      * Generate performance recommendations
      */
-    private function generateRecommendations(): array
+    private function generateRecommendations()
     {
         $recommendations = [];
 
-        // High query count
         if (count($this->queries) > 50) {
             $recommendations[] = [
                 'type' => 'Database',
-                'priority' => 'high',
                 'message' => 'High query count detected (' . count($this->queries) . ' queries)',
-                'solution' => 'Consider implementing caching, eager loading, or query optimization',
+                'solution' => 'Consider implementing caching, eager loading, or query optimization'
             ];
         }
 
-        // High memory usage
         $memoryUsed = memory_get_peak_usage(true) - $this->startMemory;
         if ($memoryUsed > 50 * 1024 * 1024) {
             $recommendations[] = [
                 'type' => 'Memory',
-                'priority' => 'high',
                 'message' => 'High memory usage: ' . $this->formatBytes($memoryUsed),
-                'solution' => 'Check for memory leaks, optimize data structures, or implement pagination',
+                'solution' => 'Check for memory leaks, optimize data structures, or implement pagination'
             ];
         }
 
-        // Slow execution time
         $executionTime = microtime(true) - $this->startTime;
         if ($executionTime > 5) {
             $recommendations[] = [
                 'type' => 'Performance',
-                'priority' => 'critical',
                 'message' => sprintf('Slow execution time: %.2f seconds', $executionTime),
-                'solution' => 'Profile bottlenecks, optimize queries, implement caching, or use async processing',
+                'solution' => 'Profile bottlenecks, optimize queries, implement caching, or use async processing'
             ];
-        }
-
-        // Many included files
-        if (count(get_included_files()) > 100) {
-            $recommendations[] = [
-                'type' => 'Optimization',
-                'priority' => 'medium',
-                'message' => 'Large number of included files (' . count(get_included_files()) . ')',
-                'solution' => 'Consider using autoloading more efficiently or removing unused includes',
-            ];
-        }
-
-        // Many duplicate queries
-        $duplicates = $this->findDuplicateQueries();
-        if (!empty($duplicates)) {
-            $topDuplicate = $duplicates[0];
-            if ($topDuplicate['count'] > 5) {
-                $recommendations[] = [
-                    'type' => 'Database',
-                    'priority' => 'medium',
-                    'message' => 'Duplicate query executed ' . $topDuplicate['count'] . ' times',
-                    'solution' => 'Consider implementing query caching or refactoring to avoid repeated queries',
-                ];
-            }
         }
 
         return $recommendations;
@@ -1048,7 +459,7 @@ class PlugDebugger
     /**
      * Format bytes to human readable format
      */
-    private function formatBytes(int $size, int $precision = 2): string
+    private function formatBytes($size, $precision = 2)
     {
         $units = ['B', 'KB', 'MB', 'GB', 'TB'];
 
@@ -1060,9 +471,9 @@ class PlugDebugger
     }
 
     /**
-     * Render the debug bar HTML
+     * Render the debug bar HTML - safe to inject after output buffering
      */
-    public function render(): string
+    public function render()
     {
         if (!$this->enabled) {
             return '';
@@ -1073,14 +484,15 @@ class PlugDebugger
             return $this->generateDebugBarHtml($data);
         } catch (\Exception $e) {
             // Fallback to simple debug bar if JSON encoding fails
-            return $this->generateSimpleDebugBar($this->getDebugReport());
+            $data = $this->getDebugReport();
+            return $this->generateSimpleDebugBar($data);
         }
     }
 
     /**
      * Generate modern debug bar HTML
      */
-    private function generateDebugBarHtml(array $data): string
+    private function generateDebugBarHtml($data)
     {
         // Properly escape JSON for inline script with more robust handling
         try {
@@ -1093,8 +505,6 @@ class PlugDebugger
             error_log('Debug bar JSON error: ' . $e->getMessage());
         }
 
-        // Use the same HTML structure as your original implementation
-        // This is a shortened version - you can expand it with your full HTML
         $html = <<<HTML
             <div id="plugs-debug-bar" style="position: fixed; bottom: 0; left: 0; right: 0; z-index: 999999; font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;">
                 <div id="plugs-debug-tabs" style="background: #1e1e1e; color: #fff; display: flex; align-items: center; padding: 0; border-top: 3px solid #023f68ff; box-shadow: 0 -2px 10px rgba(0,0,0,0.3);">
@@ -1508,13 +918,16 @@ class PlugDebugger
             </script>
             HTML;
 
+        // Replace the JSON placeholder with actual data
+        $html = str_replace('$jsonData', $jsonData, $html);
+
         return $html;
     }
 
     /**
      * Simple debug bar as fallback
      */
-    private function generateSimpleDebugBar(array $data): string
+    private function generateSimpleDebugBar($data)
     {
         $time = ($data['execution_time'] * 1000) . 'ms';
         $memory = $this->formatBytes($data['memory_usage']['peak']);
@@ -1537,17 +950,18 @@ class PlugDebugger
         HTML;
     }
 
+
     /**
-     * Inject debug bar into response
+     * Inject debug bar into response - works with output buffering
      */
-    public function injectIntoResponse(string &$content): void
+    public function injectIntoResponse(&$content)
     {
         if (!$this->enabled) {
             return;
         }
 
         // Only inject into HTML responses
-        if (stripos($content, '</body>') === false) {
+        if (!is_string($content) || stripos($content, '</body>') === false) {
             return;
         }
 
@@ -1556,9 +970,9 @@ class PlugDebugger
     }
 
     /**
-     * Display debug panel (for backwards compatibility)
+     * Display debug panel (old method for backwards compatibility)
      */
-    public function displayDebugPanel(): void
+    public function displayDebugPanel()
     {
         if (!$this->enabled) {
             return;
@@ -1570,10 +984,10 @@ class PlugDebugger
     /**
      * Export debug report as JSON
      */
-    public function exportReport(?string $filename = null): string
+    public function exportReport($filename = null)
     {
         if (!$this->enabled) {
-            return '';
+            return false;
         }
 
         $filename = $filename ?: 'debug_report_' . date('Y-m-d_H-i-s') . '.json';
@@ -1587,7 +1001,7 @@ class PlugDebugger
     /**
      * Clear all debug data
      */
-    public function clear(): void
+    public function clear()
     {
         $this->queries = [];
         $this->errors = [];
@@ -1596,10 +1010,6 @@ class PlugDebugger
         $this->memory = [];
         $this->issues = [];
         $this->logs = [];
-        $this->httpRequests = [];
-        $this->cacheHits = [];
-        $this->events = [];
-        $this->routes = [];
         $this->startTime = microtime(true);
         $this->startMemory = memory_get_usage(true);
     }
@@ -1607,7 +1017,7 @@ class PlugDebugger
     /**
      * Get query count
      */
-    public function getQueryCount(): int
+    public function getQueryCount()
     {
         return count($this->queries);
     }
@@ -1615,7 +1025,7 @@ class PlugDebugger
     /**
      * Get error count
      */
-    public function getErrorCount(): int
+    public function getErrorCount()
     {
         return count($this->errors);
     }
@@ -1623,32 +1033,8 @@ class PlugDebugger
     /**
      * Get issue count
      */
-    public function getIssueCount(): int
+    public function getIssueCount()
     {
         return count($this->issues);
-    }
-
-    /**
-     * Get all queries
-     */
-    public function getQueries(): array
-    {
-        return $this->queries;
-    }
-
-    /**
-     * Get all errors
-     */
-    public function getErrors(): array
-    {
-        return $this->errors;
-    }
-
-    /**
-     * Get all logs
-     */
-    public function getLogs(): array
-    {
-        return $this->logs;
     }
 }
