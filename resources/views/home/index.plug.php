@@ -4,126 +4,443 @@
 
 @push('styles')
 <style>
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    html,
+    body {
+        overflow-x: hidden;
+        width: 100%;
+    }
+
+    body {
+        background: #f8f9fa;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .main-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 60px 40px;
+    }
+
+    .content-wrapper {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 80px;
+        align-items: center;
+    }
+
+    .left-section {
+        padding-right: 40px;
+    }
+
+    .version-badge {
+        display: inline-block;
+        background: #e9ecef;
+        color: #495057;
+        padding: 6px 16px;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        font-weight: 600;
+        margin-bottom: 30px;
+    }
+
+    .main-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #212529;
+        margin-bottom: 30px;
+        line-height: 1.2;
+    }
+
+    .subtitle {
+        font-size: 1.125rem;
+        color: #6c757d;
+        line-height: 1.7;
+        margin-bottom: 40px;
+    }
+
+    .action-list {
+        list-style: none;
+        margin-bottom: 40px;
+    }
+
+    .action-item {
+        display: flex;
+        align-items: center;
+        margin-bottom: 24px;
+        font-size: 1.125rem;
+    }
+
+    .action-item .circle {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #dee2e6;
+        margin-right: 20px;
+        flex-shrink: 0;
+    }
+
+    .action-link {
+        color: #dc143c;
+        text-decoration: none;
+        font-weight: 500;
+        border-bottom: 2px solid transparent;
+        transition: border-color 0.2s ease;
+    }
+
+    .action-link:hover {
+        border-bottom-color: #dc143c;
+    }
+
+    .action-link::after {
+        content: " ↗";
+        font-size: 0.9em;
+    }
+
+    .btn-deploy {
+        background: #212529;
+        color: white;
+        padding: 14px 32px;
+        border-radius: 6px;
+        border: none;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-block;
+        text-decoration: none;
+    }
+
+    .btn-deploy:hover {
+        background: #000;
+        transform: translateY(-1px);
+        color: white;
+    }
+
+    .right-section {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 500px;
+        overflow: hidden;
+    }
+
+    .logo-text {
+        font-size: 8rem;
+        font-weight: 800;
+        color: #dc143c;
+        letter-spacing: -0.02em;
+        line-height: 1.1;
+        position: relative;
+        z-index: 10;
+        user-select: none;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 20px;
+    }
+
+    .version-number {
+        font-size: 10rem;
+        font-weight: 900;
+        color: #14b8a6;
+        line-height: 1;
+        text-shadow: 0 4px 20px rgba(20, 184, 166, 0.3);
+    }
+
+    .geometric-shape {
+        position: absolute;
+        opacity: 0.15;
+        z-index: 1;
+        pointer-events: none;
+    }
+
+    .shape-1 {
+        width: 200px;
+        height: 200px;
+        background: linear-gradient(135deg, #ffc0cb 0%, #ffb6c1 100%);
+        clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+        top: 20px;
+        right: 20px;
+        animation: float 6s ease-in-out infinite;
+    }
+
+    .shape-2 {
+        width: 180px;
+        height: 180px;
+        background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+        clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
+        bottom: 20px;
+        left: 20px;
+        animation: float 8s ease-in-out infinite reverse;
+    }
+
+    .shape-3 {
+        width: 150px;
+        height: 150px;
+        background: linear-gradient(135deg, #14b8a6 0%, #5eead4 100%);
+        border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+        top: 50%;
+        left: 10px;
+        transform: translateY(-50%);
+        animation: morph 10s ease-in-out infinite;
+    }
+
+    @keyframes float {
+
+        0%,
+        100% {
+            transform: translateY(0px) rotate(0deg);
         }
 
-        to {
-            opacity: 1;
-            transform: translateY(0);
+        50% {
+            transform: translateY(-15px) rotate(5deg);
         }
     }
 
-    .fade-in {
-        animation: fadeIn 0.6s ease-out forwards;
+    @keyframes morph {
+
+        0%,
+        100% {
+            border-radius: 30% 70% 70% 30% / 30% 30% 70% 70%;
+            transform: translateY(0px);
+        }
+
+        50% {
+            border-radius: 70% 30% 30% 70% / 70% 70% 30% 30%;
+            transform: translateY(-10px);
+        }
     }
 
-    .geometric-bg {
-        background-image:
-            linear-gradient(135deg, rgba(6, 182, 212, 0.05) 0%, rgba(220, 38, 38, 0.05) 100%);
+    /* Tablet and smaller desktops */
+    @media (max-width: 1200px) {
+        .content-wrapper {
+            gap: 60px;
+        }
+
+        .logo-text {
+            font-size: 6rem;
+        }
+
+        .version-number {
+            font-size: 9rem;
+        }
+
+        .shape-1 {
+            width: 160px;
+            height: 160px;
+        }
+
+        .shape-2 {
+            width: 140px;
+            height: 140px;
+        }
+
+        .shape-3 {
+            width: 120px;
+            height: 120px;
+        }
+    }
+
+    /* Tablets */
+    @media (max-width: 992px) {
+        .content-wrapper {
+            grid-template-columns: 1fr;
+            gap: 60px;
+        }
+
+        .left-section {
+            padding-right: 0;
+            text-align: center;
+        }
+
+        .right-section {
+            min-height: 350px;
+        }
+
+        .logo-text {
+            font-size: 5rem;
+        }
+
+        .version-number {
+            font-size: 6rem;
+        }
+
+        .main-title {
+            font-size: 2rem;
+        }
+
+        .action-list {
+            display: inline-block;
+            text-align: left;
+        }
+
+        .shape-1 {
+            width: 140px;
+            height: 140px;
+            top: 10px;
+            right: 10px;
+        }
+
+        .shape-2 {
+            width: 120px;
+            height: 120px;
+            bottom: 10px;
+            left: 10px;
+        }
+
+        .shape-3 {
+            width: 100px;
+            height: 100px;
+            left: -30px;
+        }
+    }
+
+    /* Mobile devices */
+    @media (max-width: 768px) {
+        .main-container {
+            padding: 40px 20px;
+        }
+
+        .logo-text {
+            font-size: 4rem;
+        }
+
+        .version-number {
+            font-size: 6rem;
+        }
+
+        .main-title {
+            font-size: 1.75rem;
+        }
+
+        .subtitle {
+            font-size: 1rem;
+        }
+
+        .action-item {
+            font-size: 1rem;
+        }
+
+        .right-section {
+            min-height: 250px;
+        }
+    }
+
+    /* Small mobile devices */
+    @media (max-width: 576px) {
+        .main-container {
+            padding: 30px 16px;
+        }
+
+        .content-wrapper {
+            gap: 40px;
+        }
+
+        .logo-text {
+            font-size: 3rem;
+        }
+
+        .version-number {
+            font-size: 4.5rem;
+        }
+
+        .main-title {
+            font-size: 1.5rem;
+        }
+
+        .subtitle {
+            font-size: 0.95rem;
+            margin-bottom: 30px;
+        }
+
+        .action-item {
+            font-size: 0.95rem;
+            margin-bottom: 20px;
+        }
+
+        .action-item .circle {
+            width: 10px;
+            height: 10px;
+            margin-right: 16px;
+        }
+
+        .btn-deploy {
+            padding: 12px 28px;
+            font-size: 0.95rem;
+        }
+
+        .right-section {
+            min-height: 200px;
+        }
+
+        .shape-1 {
+            width: 100px;
+            height: 100px;
+            top: 20px;
+            right: -10px;
+        }
+
+        .shape-2 {
+            width: 90px;
+            height: 90px;
+            bottom: 20px;
+            left: -10px;
+        }
+
+        .shape-3 {
+            width: 70px;
+            height: 70px;
+            left: -20px;
+        }
     }
 </style>
 @endpush
 
 @section('content')
-<Hero />
+<div class="content-wrapper">
+    <!-- Left Section -->
+    <div class="left-section">
+        <div class="version-badge">Version 1.0</div>
 
-<!-- Features Section -->
-<section class="py-24 px-6 lg:px-8 bg-gray-50">
-    <div class="max-w-7xl mx-auto">
-        <div class="text-center mb-16">
-            <h2 class="text-4xl font-bold text-gray-900 mb-4">Why developers choose ThePlugs</h2>
-            <p class="text-lg text-gray-600 max-w-2xl mx-auto">A framework designed to help you build applications faster with elegant syntax and powerful features.</p>
-        </div>
+        <h1 class="main-title">Let's get started</h1>
 
-        <div class="grid md:grid-cols-3 gap-8">
-            <div class="bg-white p-8 rounded-lg border border-gray-200">
-                <div class="text-3xl mb-4">⚡</div>
-                <h3 class="text-xl font-semibold text-gray-900 mb-3">Lightning Fast</h3>
-                <p class="text-gray-600">Optimized for speed with efficient routing and minimal overhead. Build high-performance applications that scale.</p>
-            </div>
+        <p class="subtitle">
+            ThePlugs has an incredibly rich ecosystem. We suggest starting with the following.
+        </p>
 
-            <div class="bg-white p-8 rounded-lg border border-gray-200">
-                <div class="text-3xl mb-4">🎨</div>
-                <h3 class="text-xl font-semibold text-gray-900 mb-3">Elegant Syntax</h3>
-                <p class="text-gray-600">Write clean, expressive code that's easy to understand and maintain. Coding should be a joy, not a chore.</p>
-            </div>
+        <ul class="action-list">
+            <li class="action-item">
+                <span class="circle"></span>
+                <span>Read the <a href="#" class="action-link">Documentation</a></span>
+            </li>
+            <li class="action-item">
+                <span class="circle"></span>
+                <span>Watch video tutorials at <a href="#" class="action-link">PlugCasts</a></span>
+            </li>
+        </ul>
 
-            <div class="bg-white p-8 rounded-lg border border-gray-200">
-                <div class="text-3xl mb-4">🔒</div>
-                <h3 class="text-xl font-semibold text-gray-900 mb-3">Secure</h3>
-                <p class="text-gray-600">Built-in security features protect your application from common vulnerabilities right out of the box.</p>
-            </div>
-
-            <div class="bg-white p-8 rounded-lg border border-gray-200">
-                <div class="text-3xl mb-4">📦</div>
-                <h3 class="text-xl font-semibold text-gray-900 mb-3">Rich Ecosystem</h3>
-                <p class="text-gray-600">Access thousands of packages and extensions to add functionality to your applications effortlessly.</p>
-            </div>
-
-            <div class="bg-white p-8 rounded-lg border border-gray-200">
-                <div class="text-3xl mb-4">🧪</div>
-                <h3 class="text-xl font-semibold text-gray-900 mb-3">Testing Made Easy</h3>
-                <p class="text-gray-600">Built-in testing support helps you write reliable applications with confidence and ease.</p>
-            </div>
-
-            <div class="bg-white p-8 rounded-lg border border-gray-200">
-                <div class="text-3xl mb-4">👥</div>
-                <h3 class="text-xl font-semibold text-gray-900 mb-3">Active Community</h3>
-                <p class="text-gray-600">Join thousands of developers who are building amazing applications and helping each other succeed.</p>
-            </div>
-        </div>
+        <a href="#" class="btn-deploy">Deploy now</a>
     </div>
-</section>
 
-<!-- Code Example Section -->
-<section class="py-24 px-6 lg:px-8">
-    <div class="max-w-5xl mx-auto">
-        <div class="text-center mb-12">
-            <h2 class="text-4xl font-bold text-gray-900 mb-4">Simple, powerful syntax</h2>
-            <p class="text-lg text-gray-600">Write less code to accomplish more</p>
-        </div>
-
-        <div class="bg-gray-900 rounded-xl p-8 shadow-2xl">
-            <div class="flex items-center gap-2 mb-6">
-                <div class="w-3 h-3 rounded-full bg-red-500"></div>
-                <div class="w-3 h-3 rounded-full bg-yellow-500"></div>
-                <div class="w-3 h-3 rounded-full bg-green-500"></div>
-            </div>
-            <pre class="text-sm text-gray-300 overflow-x-auto"><code><span class="text-purple-400">use</span> <span class="text-gray-300">Plugs\Facades\Route;</span>
-<span class="text-purple-400">use</span> <span class="text-gray-300">Plugs\Http\ResponseFactory;</span>
-
-<span class="text-gray-300">Route::</span><span class="text-cyan-400">get</span><span class="text-gray-300">(</span><span class="text-green-400">'/api/users'</span><span class="text-gray-300">,</span> <span class="text-purple-400">function</span><span class="text-gray-300">() {</span>
-    <span class="text-purple-400">return</span> <span class="text-gray-300">ResponseFactory::</span><span class="text-red-400">json</span><span class="text-gray-300">([</span>
-        <span class="text-green-400">'users'</span> <span class="text-gray-300">=> User::</span><span class="text-cyan-400">all</span><span class="text-gray-300">()</span>
-    <span class="text-gray-300">],</span> <span class="text-orange-400">200</span><span class="text-gray-300">);</span>
-<span class="text-gray-300">});</span></code></pre>
-        </div>
+    <!-- Right Section -->
+    <div class="right-section">
+        <div class="geometric-shape shape-1"></div>
+        <div class="geometric-shape shape-2"></div>
+        <div class="geometric-shape shape-3"></div>
+        <div class="logo-text">ThePlugs</div>
     </div>
-</section>
-
-<!-- CTA Section -->
-<section class="py-24 px-6 lg:px-8 bg-gray-900 text-white">
-    <div class="max-w-4xl mx-auto text-center">
-        <h2 class="text-4xl font-bold mb-6">Start building amazing applications</h2>
-        <p class="text-xl text-gray-300 mb-10">Get up and running in minutes with ThePlugs Framework</p>
-
-        <div class="bg-gray-800 rounded-lg p-6 mb-10 inline-block">
-            <code class="text-cyan-400 text-lg">composer create-project theplugs/theplugs</code>
-        </div>
-
-        <div class="flex flex-col sm:flex-row gap-4 justify-center">
-            <button class="px-8 py-4 bg-white text-gray-900 rounded-md hover:bg-gray-100 transition font-medium text-lg">
-                Read Documentation
-            </button>
-            <button class="px-8 py-4 bg-red-600 text-white rounded-md hover:bg-red-700 transition font-medium text-lg">
-                Watch Video Tutorials
-            </button>
-        </div>
-    </div>
-</section>
+</div>
 @endsection
 
 @push('scripts')

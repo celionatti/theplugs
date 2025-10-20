@@ -8,9 +8,9 @@
         <div class="grid lg:grid-cols-2 gap-16 items-center">
             <!-- Left Content -->
             <div class="fade-in">
-                <h1 class="text-6xl lg:text-7xl font-bold text-gray-900 mb-8 leading-tight">
-                    ThePlugs
-                </h1>
+                <h5 class="text-3xl lg:text-4xl font-bold text-gray-900 mb-8 leading-tight">
+                    Let's Get Started
+                </h5>
                 <p class="text-xl text-gray-600 mb-12 leading-relaxed max-w-lg">
                     The PHP Framework for building modern web applications with elegant syntax, powerful features, and a vibrant ecosystem.
                 </p>
@@ -24,14 +24,14 @@
                             <p class="text-gray-900 font-medium">Read the <a href="#" class="text-red-600 hover:text-red-700 underline">Documentation</a></p>
                         </div>
                     </div>
-                    <div class="flex items-start space-x-4">
+                    <!-- <div class="flex items-start space-x-4">
                         <div class="flex-shrink-0 w-6 h-6 rounded-full border-2 border-red-500 flex items-center justify-center mt-1">
                             <div class="w-2 h-2 rounded-full bg-red-500"></div>
                         </div>
                         <div>
                             <p class="text-gray-900 font-medium">Watch video tutorials at <a href="#" class="text-red-600 hover:text-red-700 underline">Plugcasts</a></p>
                         </div>
-                    </div>
+                    </div> -->
                 </div>
 
                 <button class="px-8 py-4 bg-gray-900 text-white rounded-md hover:bg-gray-800 transition font-medium text-lg">
