@@ -178,8 +178,28 @@ $container->singleton('router', function () use ($router) {
     return $router;
 });
 
+// Also register Router class binding
+$container->singleton(\Plugs\Router\Router::class, function () use ($router) {
+    return $router;
+});
+
 // Also set directly in facade for immediate use (optional but faster)
 \Plugs\Facades\Route::setFacadeInstance('router', $router);
+
+/*
+ |----------------------------------------------------------------------
+ | Create and Register Request in Container
+ |----------------------------------------------------------------------
+ |
+ | Create the PSR-7 ServerRequest from PHP globals and register it in
+ | the container so routing helpers can access it.
+ */
+$request = \Plugs\Http\Message\ServerRequest::fromGlobals();
+
+// Register request as singleton in container
+$container->singleton(\Psr\Http\Message\ServerRequestInterface::class, function () use ($request) {
+    return $request;
+});
 
 /*
  |----------------------------------------------------------------------
