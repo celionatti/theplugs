@@ -72,6 +72,15 @@ $app = new Plugs\Plugs();
 $container = \Plugs\Container\Container::getInstance();
 
 /*
+ | ------------------------------------------------------------------
+ | Create Required Files
+ |-------------------------------------------------------------------
+ |
+ */
+$requiredFiles = config('app.required_files');
+loadFunctions($requiredFiles);
+
+/*
  |----------------------------------------------------------------------
  | Load Service Providers
  |----------------------------------------------------------------------

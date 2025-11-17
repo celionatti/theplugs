@@ -26,4 +26,7 @@ return [
         'logs' => BASE_PATH . 'storage/logs',
         'storage' => BASE_PATH . 'storage',
     ],
+    'required_files' => [
+        'function' => BASE_PATH . 'utils/function.php'
+    ],
 ];
