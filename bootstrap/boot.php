@@ -232,6 +232,12 @@ require BASE_PATH . 'routes/default.php';
 require BASE_PATH . 'routes/api.php';
 require BASE_PATH . 'routes/web.php';
 
+$router->enablePagesRouting(base_path('resources/pages'), [
+    'namespace' => 'App\\Pages',
+    // 'cache' => true, // Enable in production
+]);
+$router->loadPagesRoutes();
+
 // Add routing middleware
 $app->pipe(new RoutingMiddleware($router, $container));
 
