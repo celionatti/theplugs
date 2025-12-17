@@ -13,15 +13,6 @@ use Plugs\Http\ResponseFactory;
 | This file contains security-related settings for the application,
 | including CSRF protection, security headers, content security policy,
 | rate limiting, CORS, and session security.
-
-| You can customize these settings to enhance the security posture of your
-  application.
-| Adjust the configurations as needed to fit the requirements of your
-| 
-| @author The Plugs
-| @license MIT License
-| @package config/security.php
-|--------------------------------------------------------------------------
 */
 
 return [
@@ -152,5 +143,8 @@ return [
             'challenge_high' => 0.70,   // Require MFA if risk score exceeds this
             'challenge_low' => 0.50,    // Require CAPTCHA if risk score exceeds this
         ],
+    ],
+    'profiler' => [
+        'enabled' => true,
     ],
 ];

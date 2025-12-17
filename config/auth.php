@@ -11,6 +11,14 @@ declare(strict_types=1);
 */
 
 return [
+    'user_model' => null, // Your custom user model if any
+    'table' => 'users',
+    'primary_key' => 'id',
+    'email_column' => 'email',
+    'password_column' => 'password',
+    'remember_token_column' => null,
+    'last_login_column' => 'last_login_at',
+
     /*
     |--------------------------------------------------------------------------
     | Password Hashing
@@ -61,5 +69,18 @@ return [
             'client_secret' => env('DISCORD_CLIENT_SECRET', ''),
             // Get credentials from: https://discord.com/developers/applications
         ],
+    ],
+
+    'oauth_table' => 'oauth_accounts',
+    'remember_tokens_table' => 'remember_tokens',
+
+    'use_timestamps' => true,
+    'created_at_column' => 'created_at',
+    'updated_at_column' => 'updated_at',
+    'email_verification' => [
+        'enabled' => false,
+        'token_length' => 6,
+        'expiry_hours' => 24,
+        'send_welcome_email' => true,
     ],
 ];

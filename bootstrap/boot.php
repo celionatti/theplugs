@@ -12,6 +12,7 @@ declare(strict_types=1);
 */
 
 use Plugs\Base\Model\PlugModel;
+use Plugs\Http\Middleware\ProfilerMiddleware;
 use Plugs\Http\ResponseFactory;
 use Plugs\Http\Middleware\CorsMiddleware;
 use Plugs\Http\Middleware\CsrfMiddleware;
@@ -19,6 +20,7 @@ use Plugs\Http\Middleware\RoutingMiddleware;
 use Plugs\Http\Middleware\RateLimitMiddleware;
 use Plugs\Http\Middleware\SecurityHeadersMiddleware;
 use Plugs\Middlewares\SecurityShieldMiddleware;
+use Plugs\Http\Message\ServerRequest;
 
 /*
  |----------------------------------------------------------------------
@@ -70,15 +72,6 @@ $app = new Plugs\Plugs();
  | Here we bind interfaces to their implementations in the service container.
  */
 $container = \Plugs\Container\Container::getInstance();
-
-/*
- | ------------------------------------------------------------------
- | Create Required Files
- |-------------------------------------------------------------------
- |
- */
-$requiredFiles = config('app.required_files');
-loadFunctions($requiredFiles);
 
 /*
  |----------------------------------------------------------------------
@@ -172,6 +165,11 @@ if ($securityConfig['csrf']['enabled'] ?? false) {
     $app->pipe(new CsrfMiddleware($securityConfig['csrf']));
 }
 
+// Add Profiler Middleware
+if ($securityConfig['profiler']['enabled'] ?? false) {
+    $app->pipe(new ProfilerMiddleware());
+}
+
 /*
  |----------------------------------------------------------------------
  | Register Router in Container & Set Up Route Facade
@@ -203,7 +201,20 @@ $container->singleton(\Plugs\Router\Router::class, function () use ($router) {
  | Create the PSR-7 ServerRequest from PHP globals and register it in
  | the container so routing helpers can access it.
  */
-$request = \Plugs\Http\Message\ServerRequest::fromGlobals();
+$request = ServerRequest::fromGlobals();
+
+// Configure trusted proxies (if behind load balancer/CDN)
+ServerRequest::setTrustedProxies([
+    '10.0.0.1',           // Load balancer
+    '172.16.0.0/12',      // Private network (if you support CIDR)
+]);
+
+// Configure trusted hosts
+ServerRequest::setTrustedHosts([
+    'yourdomain.com',
+    'www.yourdomain.com',
+    '.yourdomain.com',    // Wildcard for subdomains
+]);
 
 // Register request as singleton in container
 $container->singleton(\Psr\Http\Message\ServerRequestInterface::class, function () use ($request) {
@@ -217,6 +228,8 @@ $container->singleton(\Psr\Http\Message\ServerRequestInterface::class, function 
  |
  | Load the application routes. You can now use Route::get() statically!
  */
+require BASE_PATH . 'routes/default.php';
+require BASE_PATH . 'routes/api.php';
 require BASE_PATH . 'routes/web.php';
 
 // Add routing middleware

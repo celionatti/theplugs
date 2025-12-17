@@ -1,0 +1,23 @@
+{
+    "id": "prof_6941fcdc17e194.01771186",
+    "timestamp": 1765932252,
+    "datetime": "2025-12-17 01:44:12",
+    "duration": 262.24,
+    "memory_peak": 4194304,
+    "memory_peak_formatted": "4 MB",
+    "request": {
+        "method": "GET",
+        "uri": "\/home",
+        "path": "\/home",
+        "params": [],
+        "ip": "127.0.0.1",
+        "status_code": 200
+    },
+    "database": {
+        "total_queries": 0,
+        "unique_queries": 0,
+        "slow_queries": [],
+        "n_plus_one_suspects": [],
+        "most_frequent": []
+    }
+}
