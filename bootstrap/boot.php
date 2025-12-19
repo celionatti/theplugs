@@ -232,6 +232,8 @@ require BASE_PATH . 'routes/default.php';
 require BASE_PATH . 'routes/api.php';
 require BASE_PATH . 'routes/web.php';
 
+// Enable and load page-based routing
+
 $router->enablePagesRouting(base_path('resources/pages'), [
     'namespace' => 'App\\Pages',
     // 'cache' => true, // Enable in production
