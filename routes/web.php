@@ -16,8 +16,13 @@ declare(strict_types=1);
 
 use Plugs\Facades\Route;
 use App\Controllers\HomeController;
+use App\Controllers\AdminController;
 
 
 Route::get('/home', [HomeController::class, 'index']);
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
+
+Route::group(['prefix' => 'admin'], function () {
+    Route::get('/', [AdminController::class, 'dashboard'])->name('admin.dashboard');
+});
