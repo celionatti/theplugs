@@ -11,10 +11,13 @@
 
 <body>
     <div class="particles" id="particles"></div>
-    @yield('content')
+    <div id="app-content">
+        @yield('content')
+    </div>
 
     <script src="{{ asset('assets/js/global.js') }}"></script>
     @stack('scripts')
+    <script src="{{ asset('assets/js/plugs-spa.js') }}"></script>
 </body>
 
 </html>
