@@ -72,7 +72,7 @@ return [
 
     // Rate Limiting
     'rate_limit' => [
-        'enabled' => true,
+        'enabled' => false, // Disabled in favor of Security Shield
         'max_requests' => 60,
         'per_minutes' => 1,
     ],
@@ -96,7 +96,13 @@ return [
 
     // Security Shield - Advanced Protection
     'security_shield' => [
-        'enabled' => false, // Enable or disable Security Shield
+        'enabled' => true, // Enable or disable Security Shield
+        'whitelisted_ips' => ['127.0.0.1', '::1'],
+        'risk_thresholds' => [
+            'deny' => 0.85,
+            'challenge_high' => 0.70,
+            'challenge_low' => 0.50,
+        ],
 
         // Configuration options
         'config' => [

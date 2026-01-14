@@ -12,8 +12,8 @@ declare(strict_types=1);
 */
 
 return [
-    'default' => $_ENV['DB_CONNECTION'] ?? 'mysql',
-    
+    'default' => env('DB_CONNECTION', 'mysql'),
+
     'connections' => [
         'mysql' => [
             'driver' => 'mysql',
@@ -34,7 +34,7 @@ return [
             'persistent' => false,
             'max_idle_time' => 3600, // 1 hour
         ],
-        
+
         'pgsql' => [
             'driver' => 'pgsql',
             'host' => $_ENV['DB_HOST'] ?? 'localhost',
@@ -43,7 +43,7 @@ return [
             'username' => $_ENV['DB_USERNAME'] ?? 'postgres',
             'password' => $_ENV['DB_PASSWORD'] ?? '',
         ],
-        
+
         'sqlite' => [
             'driver' => 'sqlite',
             'database' => $_ENV['DB_DATABASE'] ?? BASE_PATH . 'storage/database.sqlite',

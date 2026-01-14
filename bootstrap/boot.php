@@ -106,6 +106,9 @@ $sessionLoader->start();
  */
 $securityConfig = config('security');
 
+// Add SPA detection middleware
+$app->pipe(new \Plugs\Http\Middleware\SPAMiddleware());
+
 // Add security headers middleware
 if (!empty($securityConfig['headers'])) {
     $app->pipe(new SecurityHeadersMiddleware($securityConfig['headers']));
@@ -228,11 +231,7 @@ $container->singleton(\Psr\Http\Message\ServerRequestInterface::class, function 
  |
  | Load the application routes. You can now use Route::get() statically!
  */
-require BASE_PATH . 'routes/default.php';
-require BASE_PATH . 'routes/api.php';
 require BASE_PATH . 'routes/web.php';
-
-// Enable and load page-based routing
 
 $router->enablePagesRouting(base_path('resources/pages'), [
     'namespace' => 'App\\Pages',
@@ -258,54 +257,174 @@ $app->setFallback(function ($request) {
 
     // Return HTML for browser requests
     return ResponseFactory::html(
-        '<html>
+        '<!DOCTYPE html>
+        <html lang="en">
         <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>404 - Not Found</title>
+            <link rel="preconnect" href="https://fonts.googleapis.com">
+            <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
             <style>
+                @import url("https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=JetBrains+Mono:wght@700&family=Dancing+Script:wght@700&display=swap");
+                
+                :root {
+                    --bg-body: #080b12;
+                    --bg-card: rgba(30, 41, 59, 0.5);
+                    --border-color: rgba(255, 255, 255, 0.08);
+                    --text-primary: #f8fafc;
+                    --text-secondary: #94a3b8;
+                    --accent-primary: #8b5cf6;
+                    --accent-secondary: #3b82f6;
+                }
+
+                * { margin: 0; padding: 0; box-sizing: border-box; }
+                
                 body {
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
+                    font-family: "Outfit", sans-serif;
+                    background-color: var(--bg-body);
+                    background-image: 
+                        radial-gradient(circle at 10% 10%, rgba(139, 92, 246, 0.05) 0%, transparent 40%),
+                        radial-gradient(circle at 90% 90%, rgba(59, 130, 246, 0.05) 0%, transparent 40%);
+                    color: var(--text-primary);
                     min-height: 100vh;
-                    margin: 0;
-                    font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
-                    background-color: #000000;
-                    color: #6b7280;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    flex-direction: column;
+                    padding: 20px;
+                    overflow: hidden;
                 }
-                .container {
+
+                .brand-container {
+                    position: absolute;
+                    top: 40px;
                     text-align: center;
-                    max-width: 400px;
-                    padding: 2rem;
                 }
-                .message {
-                    font-size: 1.125rem;
-                    line-height: 1.6;
-                    margin: 1.5rem 0;
-                }
-                .btn {
-                    color: #ffffff;
+
+                .brand {
+                    font-family: "Dancing Script", cursive;
+                    font-size: 2.5rem;
+                    font-weight: 700;
+                    color: var(--text-primary);
                     text-decoration: none;
-                    background: #dc143c;
-                    padding: 6px 10px;
-                    border-radius: 8px;
-                    font-weight: 600;
+                    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+                    -webkit-background-clip: text;
+                    -webkit-text-fill-color: transparent;
+                    background-clip: text;
                 }
-                .btn:hover {
-                    background: #aa0728ff;
-                    box-shadow: 0px 0px 10px 0px #f5d1d8ff;
+
+                .error-card {
+                    background: var(--bg-card);
+                    backdrop-filter: blur(20px);
+                    border: 1px solid var(--border-color);
+                    border-radius: 24px;
+                    padding: 60px 40px;
+                    max-width: 500px;
+                    width: 100%;
+                    text-align: center;
+                    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+                }
+
+                .error-icon {
+                    font-size: 4rem;
+                    margin-bottom: 24px;
+                    display: block;
+                }
+
+                .error-code {
+                    font-family: "JetBrains Mono", monospace;
+                    font-size: 6rem;
+                    line-height: 1;
+                    font-weight: 700;
+                    margin-bottom: 16px;
+                    opacity: 0.2;
+                    letter-spacing: -2px;
+                }
+
+                h1 {
+                    font-size: 2rem;
+                    font-weight: 700;
+                    margin-bottom: 16px;
+                }
+
+                .message {
+                    color: var(--text-secondary);
+                    font-size: 1.1rem;
+                    line-height: 1.6;
+                    margin-bottom: 40px;
+                }
+
+                .actions {
+                    display: flex;
+                    gap: 16px;
+                    justify-content: center;
+                }
+
+                .btn {
+                    padding: 12px 28px;
+                    border-radius: 12px;
+                    text-decoration: none;
+                    font-weight: 600;
+                    font-size: 0.95rem;
+                    transition: all 0.3s ease;
+                    display: inline-flex;
+                    align-items: center;
+                    gap: 8px;
+                    cursor: pointer;
+                }
+
+                .btn-primary {
+                    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+                    color: white;
+                    box-shadow: 0 10px 15px -3px rgba(139, 92, 246, 0.3);
+                }
+
+                .btn-primary:hover {
+                    transform: translateY(-2px);
+                    box-shadow: 0 20px 25px -5px rgba(139, 92, 246, 0.4);
+                }
+
+                .btn-secondary {
+                    background: rgba(255, 255, 255, 0.05);
+                    border: 1px solid var(--border-color);
+                    color: var(--text-primary);
+                }
+
+                .btn-secondary:hover {
+                    background: rgba(255, 255, 255, 0.1);
+                    transform: translateY(-2px);
+                }
+
+                @media (max-width: 640px) {
+                    .error-card { padding: 40px 20px; }
+                    .error-code { font-size: 4.5rem; }
+                    .actions { flex-direction: column; }
+                    .btn { width: 100%; justify-content: center; }
                 }
             </style>
         </head>
         <body>
-            <div class="container">
-                <h1>404 | Not Found</h1>
-                <div class="message">
-                    The page you are looking for might have been removed, 
-                    had its name changed, or is temporarily unavailable.
+            <div class="brand-container">
+                <a href="/" class="brand">Plugs</a>
+            </div>
+
+            <div class="error-card">
+                <span class="error-icon">🌌</span>
+                <div class="error-code">404</div>
+                <h1>Page Not Found</h1>
+                <p class="message">The requested page has vanished into the deep space of our server. It might have been moved or deleted.</p>
+                <div class="actions">
+                    <a href="/" class="btn btn-primary">
+                        <span>🏠</span> Return Home
+                    </a>
+                    <button onclick="window.location.reload()" class="btn btn-secondary">
+                        <span>🔄</span> Try Again
+                    </button>
                 </div>
-                <a href="/" class="btn">Go to Homepage</a>
             </div>
         </body>
-    </html>',
+        </html>',
         404
     );
 });
