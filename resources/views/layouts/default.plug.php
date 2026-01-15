@@ -17,7 +17,7 @@
 
     <script src="{{ asset('assets/js/global.js') }}"></script>
     @stack('scripts')
-    <script src="{{ asset('assets/js/plugs-spa.js') }}"></script>
+    <script src="{{ asset('assets/plugs/plugs-spa.js') }}"></script>
 </body>
 
 </html>
