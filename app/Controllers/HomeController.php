@@ -24,4 +24,14 @@ class HomeController extends Controller
             'username' => 'JohnDoe',
         ]);
     }
+
+    /**
+     * Display About Page
+     */
+    public function about(): ResponseInterface
+    {
+        return $this->view('home.about', [
+            'title' => 'About ThePlugs Framework',
+        ]);
+    }
 }

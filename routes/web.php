@@ -23,6 +23,8 @@ Route::get('/home', [HomeController::class, 'index']);
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
+Route::get('/about', [HomeController::class, 'about'])->name('about');
+
 Route::group(['prefix' => 'admin'], function () {
     Route::get('/', [AdminController::class, 'dashboard'])->name('admin.dashboard');
 });

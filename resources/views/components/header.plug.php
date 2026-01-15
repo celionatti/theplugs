@@ -10,6 +10,6 @@
         <li><a href="#features">Features</a></li>
         <li><a href="#docs">Docs</a></li>
         <li><a href="#community">Community</a></li>
-        <li><a href="https://github.com" target="_blank">GitHub</a></li>
+        <li><a href="https://github.com/celionatti/theplugs" target="_blank">GitHub</a></li>
     </ul>
 </nav>
