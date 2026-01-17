@@ -15,16 +15,17 @@ declare(strict_types=1);
 */
 
 use Plugs\Facades\Route;
-use App\Controllers\HomeController;
-use App\Controllers\AdminController;
-
+use App\Http\Controllers\HomeController;
+use App\Http\Controllers\PlugsController;
 
 Route::get('/home', [HomeController::class, 'index']);
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
-Route::get('/about', [HomeController::class, 'about'])->name('about');
+Route::get('/docs', [PlugsController::class, 'docs'])->name('docs');
 
-Route::group(['prefix' => 'admin'], function () {
-    Route::get('/', [AdminController::class, 'dashboard'])->name('admin.dashboard');
-});
+Route::get('/examples', [PlugsController::class, 'examples'])->name('examples');
+
+// Route::group(['prefix' => 'admin'], function () {
+//     Route::get('/', [AdminController::class, 'dashboard'])->name('admin.dashboard');
+// });

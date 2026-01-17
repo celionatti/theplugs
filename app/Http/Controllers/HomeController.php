@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Controllers;
+namespace App\Http\Controllers;
 
 use Plugs\Base\Controller\Controller;
 use Psr\Http\Message\ResponseInterface;
@@ -21,17 +21,6 @@ class HomeController extends Controller
         return $this->view('home.index', [
             'title' => 'Welcome to Trees Framework',
             'message' => 'A secure, scalable PHP MVC framework',
-            'username' => 'JohnDoe',
-        ]);
-    }
-
-    /**
-     * Display About Page
-     */
-    public function about(): ResponseInterface
-    {
-        return $this->view('home.about', [
-            'title' => 'About ThePlugs Framework',
         ]);
     }
 }

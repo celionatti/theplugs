@@ -1,94 +1,99 @@
-const particlesContainer = document.getElementById("particles");
-const particleCount = 40;
+// Initialize AOS
+AOS.init({
+  once: true,
+  duration: 800,
+  offset: 100,
+});
 
-for (let i = 0; i < particleCount; i++) {
-  const particle = document.createElement("div");
-  particle.className = "particle";
+// Dark Mode Toggle
+const toggleBtn = document.getElementById("themeToggle");
+const html = document.documentElement;
 
-  const startX = Math.random() * 100;
-  const drift = (Math.random() - 0.5) * 100;
-  const duration = Math.random() * 15 + 20;
-  const delay = Math.random() * 10;
-
-  particle.style.left = `${startX}%`;
-  particle.style.setProperty("--drift", `${drift}px`);
-  particle.style.animationDuration = `${duration}s`;
-  particle.style.animationDelay = `${delay}s`;
-
-  particlesContainer.appendChild(particle);
+// Set RGB values for CSS variables
+function updateCSSVariables() {
+  const theme = html.getAttribute("data-theme");
+  if (theme === "dark") {
+    document.documentElement.style.setProperty("--bg-rgb", "15, 23, 42");
+  } else {
+    document.documentElement.style.setProperty("--bg-rgb", "249, 250, 251");
+  }
+  document.documentElement.style.setProperty("--primary-rgb", "16, 185, 129");
 }
 
-const menuToggle = document.getElementById("menuToggle");
-const navLinks = document.getElementById("navLinks");
-
-menuToggle.addEventListener("click", () => {
-  menuToggle.classList.toggle("active");
-  navLinks.classList.toggle("active");
+toggleBtn.addEventListener("click", () => {
+  const theme = html.getAttribute("data-theme") === "dark" ? "light" : "dark";
+  html.setAttribute("data-theme", theme);
+  localStorage.setItem("theme", theme);
+  toggleBtn.innerHTML =
+    theme === "dark"
+      ? '<i class="fas fa-sun"></i>'
+      : '<i class="fas fa-moon"></i>';
+  updateCSSVariables();
 });
 
-document.querySelectorAll(".nav-links a").forEach((link) => {
-  link.addEventListener("click", () => {
-    menuToggle.classList.remove("active");
-    navLinks.classList.remove("active");
-  });
-});
-
-const cubeWrapper = document.getElementById("cube");
-let mouseX = 0;
-let mouseY = 0;
-let currentX = 0;
-let currentY = 0;
-
-document.addEventListener("mousemove", (e) => {
-  const rect = cubeWrapper.getBoundingClientRect();
-  const centerX = rect.left + rect.width / 2;
-  const centerY = rect.top + rect.height / 2;
-
-  mouseX = (e.clientX - centerX) / 20;
-  mouseY = (e.clientY - centerY) / 20;
-});
-
-function animateCube() {
-  currentX += (mouseX - currentX) * 0.1;
-  currentY += (mouseY - currentY) * 0.1;
-
-  cubeWrapper.style.transform = `rotateX(${currentY}deg) rotateY(${currentX}deg)`;
-
-  requestAnimationFrame(animateCube);
+// Load saved theme
+const savedTheme = localStorage.getItem("theme");
+if (savedTheme) {
+  html.setAttribute("data-theme", savedTheme);
+  toggleBtn.innerHTML =
+    savedTheme === "dark"
+      ? '<i class="fas fa-sun"></i>'
+      : '<i class="fas fa-moon"></i>';
 }
 
-animateCube();
+// Initial CSS variable setup
+updateCSSVariables();
 
+// Navbar scroll effect
+const nav = document.getElementById("mainNav");
+
+window.addEventListener("scroll", () => {
+  if (window.scrollY > 50) {
+    nav.classList.add("scrolled");
+  } else {
+    nav.classList.remove("scrolled");
+  }
+});
+
+// Smooth scrolling for anchor links
 document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
   anchor.addEventListener("click", function (e) {
     e.preventDefault();
-    const target = document.querySelector(this.getAttribute("href"));
-    if (target) {
-      target.scrollIntoView({
+    const targetId = this.getAttribute("href");
+    if (targetId === "#") return;
+
+    const targetElement = document.querySelector(targetId);
+    if (targetElement) {
+      window.scrollTo({
+        top: targetElement.offsetTop - 80,
         behavior: "smooth",
-        block: "start",
       });
+
+      // Update URL without page reload
+      history.pushState(null, null, targetId);
     }
   });
 });
 
-const observerOptions = {
-  threshold: 0.1,
-  rootMargin: "0px 0px -100px 0px",
-};
+// Update version badge text dynamically (example)
+// In practice, you might load this from an API or config file
+function updateVersionInfo() {
+  const version = "3.0";
+  const releaseDate = "October 2023";
 
-const observer = new IntersectionObserver((entries) => {
-  entries.forEach((entry) => {
-    if (entry.isIntersecting) {
-      entry.target.style.opacity = "1";
-      entry.target.style.transform = "translateY(0)";
-    }
+  // Update all version badges
+  document.querySelectorAll(".version-badge").forEach((badge) => {
+    const icon =
+      badge.querySelector("i")?.outerHTML || '<i class="fas fa-tag me-2"></i>';
+    badge.innerHTML = `${icon}Version ${version}`;
   });
-}, observerOptions);
 
-document.querySelectorAll(".feature-card, .stat-item").forEach((el) => {
-  el.style.opacity = "0";
-  el.style.transform = "translateY(30px)";
-  el.style.transition = "all 0.6s ease";
-  observer.observe(el);
-});
+  // Update release date in hero
+  const dateElement = document.querySelector(".hero p .fa-clock").parentElement;
+  if (dateElement) {
+    dateElement.innerHTML = `<i class="fas fa-clock me-1"></i> Latest release: ${releaseDate}`;
+  }
+}
+
+// Call on load
+updateVersionInfo();

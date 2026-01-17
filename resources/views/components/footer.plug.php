@@ -1,46 +1,24 @@
-<footer>
-    <div class="footer-content">
-        <div class="footer-about">
-            <h3>Theplugs</h3>
-            <p>A modern PHP framework built for speed, security, and simplicity. Open source and community-driven.
-            </p>
-            <div class="social-links">
-                <a href="#" title="GitHub">⚡</a>
-                <a href="#" title="Twitter">🐦</a>
-                <a href="#" title="Discord">💬</a>
-                <a href="#" title="YouTube">▶</a>
-            </div>
+<footer class="text-center py-4">
+    <div class="container">
+        <h3 class="brand-font mb-3">The Plugs</h3>
+        <p class="mb-4" style="opacity: 0.8;">
+            <span class="version-badge" style="font-size: 1rem; padding: 0.3rem 1rem;">v3.0</span>
+            <span class="mx-2">•</span>
+            Built with ❤️ for the PHP community
+        </p>
+
+        <div class="footer-links d-flex justify-content-center flex-wrap gap-3 mb-3">
+            <a href="#"><i class="fab fa-github me-1"></i>GitHub</a>
+            <!-- <a href="#"><i class="fab fa-twitter me-1"></i>Twitter</a> -->
+            <!-- <a href="#"><i class="fab fa-discord me-1"></i>Discord</a> -->
+            <a href="#"><i class="fas fa-book me-1"></i>Documentation</a>
+            <a href="#"><i class="fas fa-history me-1"></i>Changelog</a>
+            <a href="#"><i class="fas fa-question-circle me-1"></i>Support</a>
         </div>
-        <div class="footer-links">
-            <h4>Product</h4>
-            <ul>
-                <li><a href="#features">Features</a></li>
-                <li><a href="#docs">Documentation</a></li>
-                <li><a href="#">Pricing</a></li>
-                <li><a href="#">Releases</a></li>
-            </ul>
-        </div>
-        <div class="footer-links">
-            <h4>Resources</h4>
-            <ul>
-                <li><a href="#">Blog</a></li>
-                <li><a href="#">Tutorials</a></li>
-                <li><a href="#">API Reference</a></li>
-                <li><a href="#">Examples</a></li>
-            </ul>
-        </div>
-        <div class="footer-links">
-            <h4>Community</h4>
-            <ul>
-                <li><a href="#">Discord</a></li>
-                <li><a href="#">GitHub</a></li>
-                <li><a href="#">Forum</a></li>
-                <li><a href="#">Contributors</a></li>
-            </ul>
-        </div>
-    </div>
-    <div class="footer-bottom">
-        <p>&copy; 2025 Theplugs Framework. All rights reserved. | <a href="#">Privacy Policy</a> | <a href="#">Terms
-                of Service</a></p>
+
+        <p class="mb-0" style="opacity: 0.6; font-size: 0.9rem;">
+            © {{ date('Y') }} The Plugs Framework • v3.0 Latest Release •
+            <a href="#" class="text-white" style="opacity: 0.7;">View previous versions</a>
+        </p>
     </div>
 </footer>
