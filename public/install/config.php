@@ -122,6 +122,7 @@ return [
         'public/assets/plugs/global/form-helper.js' => 'public/assets/plugs/global/form-helper.js.template',
         'public/assets/plugs/global/notification.js' => 'public/assets/plugs/global/notification.js.template',
         'public/assets/plugs/global/string-helper.js' => 'public/assets/plugs/global/string-helper.js.template',
+        'resources/views/errors/503.plug.php' => 'views/errors/503.plug.php.template',
     ],
 
     // Database types supported

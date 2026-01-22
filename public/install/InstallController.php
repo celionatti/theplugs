@@ -405,7 +405,7 @@ class InstallController
         $replacements = [
             // App settings
             '{{APP_NAME}}' => $installData['app']['name'] ?? 'Plugs Framework',
-            '{{APP_FRAMEWORK_NAME}}' => strtolower($installData['app']['name']) ?? 'plugs',
+            '{{APP_FRAMEWORK_NAME}}' => str_replace(" ", "_", strtolower($installData['app']['name'])) ?? 'plugs',
             '{{APP_URL}}' => $installData['app']['url'] ?? 'http://localhost',
             '{{APP_ENV}}' => $installData['app']['env'] ?? 'local',
             '{{APP_TIMEZONE}}' => $installData['app']['timezone'] ?? 'UTC',
