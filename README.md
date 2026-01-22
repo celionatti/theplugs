@@ -1,7 +1,5 @@
 # ThePlugs PHP Framework
 
-![Project Logo](/public/logo.png)
-
 [![Latest Version](https://img.shields.io/packagist/v/theplugs/theplugs.svg?style=flat-square)](https://packagist.org/packages/theplugs/theplugs)
 [![Total Downloads](https://img.shields.io/packagist/dt/theplugs/theplugs.svg?style=flat-square)](https://packagist.org/packages/theplugs/theplugs)
 [![License](https://img.shields.io/packagist/l/theplugs/theplugs.svg?style=flat-square)](https://packagist.org/packages/theplugs/theplugs)
