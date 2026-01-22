@@ -4,12 +4,67 @@ declare(strict_types=1);
 
 /*
 |--------------------------------------------------------------------------
-| Public Index File
+| Public Index File (For Distribution)
 |--------------------------------------------------------------------------
 |
-| This is the entry point to your application. You can use this file
-| to initialize and run your application.
+| This is the entry point to your application. This file detects whether
+| the application has been installed and redirects to the installer if needed.
 */
+
+/*
+ |----------------------------------------------------------------------
+ | Check Installation Status
+ |----------------------------------------------------------------------
+ |
+ | If the plugs.lock marker file doesn't exist and the install directory
+ | exists, redirect to the installation wizard.
+ */
+/*
+ |----------------------------------------------------------------------
+ | Check Installation Status
+ |----------------------------------------------------------------------
+ |
+ | If the plugs.lock marker file doesn't exist and the install directory
+ | exists, redirect to the installation wizard.
+ */
+if (!file_exists(__DIR__ . '/../plugs.lock') && is_dir(__DIR__ . '/install')) {
+    $requestUri = $_SERVER['REQUEST_URI'] ?? '';
+    
+    // If we are not already trying to access the installer
+    if (strpos($requestUri, '/install') === false) {
+        header('Location: install/');
+        exit;
+    }
+    
+    // If we are here, the user is visiting /install but the web server 
+    // is routing it to public/index.php (Loop detected / Directory not accessible)
+    http_response_code(503);
+    echo '<!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Setup Required - Plugs Framework</title>
+        <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+        <style>
+            body { font-family: "Outfit", sans-serif; background: #080b12; color: #fff; display: flex; height: 100vh; align-items: center; justify-content: center; margin: 0; }
+            .container { text-align: center; max-width: 500px; padding: 2rem; background: rgba(30,41,59,0.5); border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); }
+            h1 { color: #8b5cf6; margin-bottom: 1rem; }
+            p { color: #94a3b8; line-height: 1.6; margin-bottom: 2rem; }
+            .btn { display: inline-block; padding: 0.75rem 1.5rem; background: #8b5cf6; color: white; text-decoration: none; border-radius: 8px; font-weight: 600; transition: all 0.2s; }
+            .btn:hover { background: #7c3aed; transform: translateY(-2px); }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>Setup Required</h1>
+            <p>The application is not installed. Please access the installer to set up your framework.</p>
+            <a href="install/" class="btn">Launch Installer</a>
+        </div>
+    </body>
+    </html>';
+    exit;
+}
 
 /*
  |----------------------------------------------------------------------
@@ -18,7 +73,7 @@ declare(strict_types=1);
  |
  | Here we are loading the bootstrap file to set up the application.
  */
-require __DIR__ . '/../bootstrap/boot.php';
+$app = require __DIR__ . '/../bootstrap/boot.php';
 
 /*
  |----------------------------------------------------------------------

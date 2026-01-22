@@ -23,13 +23,13 @@ return [
         'fileinfo' => 'File Information',
         'tokenizer' => 'Tokenizer',
         'xml' => 'XML Parser',
+        'gd' => 'GD Image Library',
     ],
 
     // Optional but recommended extensions
     'optional_extensions' => [
         'pdo_pgsql' => 'PDO PostgreSQL Driver',
         'pdo_sqlite' => 'PDO SQLite Driver',
-        'gd' => 'GD Image Library',
         'imagick' => 'ImageMagick',
         'zip' => 'ZIP Archive',
         'redis' => 'Redis',
