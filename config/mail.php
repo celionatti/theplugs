@@ -19,6 +19,6 @@ return [
     'encryption' => $_ENV['MAIL_ENCRYPTION'] ?? 'tls', // tls or ssl
     'from' => [
         'address' => $_ENV['MAIL_FROM_ADDRESS'] ?? 'noreply@example.com',
-        'name' => $_ENV['MAIL_FROM_NAME'] ?? 'My App'
+        'name' => $_ENV['MAIL_FROM_NAME'] ?? 'My Plugs App'
     ]
 ];

@@ -4,18 +4,19 @@ declare(strict_types=1);
 
 /*
 |--------------------------------------------------------------------------
-| Routes File - Api Routes
+| Routes File - API Routes
 |--------------------------------------------------------------------------
 |
-| This file is where you can define all of the routes that are handled
-| by your application. Just tell the router the URIs it should respond
-| to and give it the controller to call when that URI is requested.
-| Also - 
-| Using the Route facade for clean, static route definitions.
+| This file is where you can define all of the API routes that are handled
+| by your application. These routes are typically stateless and are usually
+| prefixed with /api.
 */
 
 use Plugs\Facades\Route;
-use App\Controllers\HomeController;
 
-
-Route::get('/users', [HomeController::class, 'index']);
+// API routes are loaded with the 'api' prefix
+// Route::get('/users', [UserController::class, 'index']);
+// Route::get('/users/{id}', [UserController::class, 'show']);
+// Route::post('/users', [UserController::class, 'store']);
+// Route::put('/users/{id}', [UserController::class, 'update']);
+// Route::delete('/users/{id}', [UserController::class, 'destroy']);

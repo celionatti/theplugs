@@ -16,15 +16,28 @@ declare(strict_types=1);
 
 use Plugs\Facades\Route;
 use App\Http\Controllers\HomeController;
-use App\Http\Controllers\PlugsController;
-
-Route::get('/home', [HomeController::class, 'index']);
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/home', [HomeController::class, 'index']);
 
-Route::get('/docs', [PlugsController::class, 'docs'])->name('docs');
+// Documentation Routes
+Route::get('/docs', function () {
+    return view("docs.index", ['title' => "Documentation"]);
+});
 
-Route::get('/examples', [PlugsController::class, 'examples'])->name('examples');
+Route::get('/docs/{page?}', function($page = 'index') {
+    $titles = [
+        'index' => 'Introduction',
+        'examples' => 'Examples',
+        'reactive' => 'Reactive Components',
+        'spa' => 'SPA Bridge'
+    ];
+    return view("docs.$page", ['title' => $titles[$page] ?? 'Documentation']);
+});
+
+// Add your routes here
+// Route::get('/about', [HomeController::class, 'about'])->name('about');
+// Route::get('/contact', [HomeController::class, 'contact'])->name('contact');
 
 // Route::group(['prefix' => 'admin'], function () {
 //     Route::get('/', [AdminController::class, 'dashboard'])->name('admin.dashboard');

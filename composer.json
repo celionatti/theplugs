@@ -1,6 +1,6 @@
 {
-    "name": "theplugs/theplugs",
-    "description": "ThePlugs Framework is a modern, lightweight PHP framework by Amisu Usman (Celio Natti) - built for developers who crave speed, structure, and freedom. Its modular design and intuitive syntax make web development faster, cleaner, and more connected - your power source for smart PHP projects. ??",
+    "name": "theplugs/framework",
+    "description": "ThePlugs Framework is a modern, lightweight PHP framework by Amisu Usman (Celio Natti) - built for developers who crave speed, structure, and freedom. Its modular design and intuitive syntax make web development faster, cleaner, and more connected - your power source for smart PHP projects. ⚡",
     "type": "project",
     "license": "Apache-2.0",
     "autoload": {
@@ -8,10 +8,18 @@
             "App\\": "app/"
         }
     },
+    "keywords": [
+        "framework",
+        "php",
+        "plugs",
+        "mvc",
+        "fast"
+    ],
     "authors": [
         {
-            "name": "celionatti",
-            "email": "celionatti@gmail.com"
+            "name": "Celio Natti",
+            "email": "celionatti@gmail.com",
+            "role": "Developer"
         }
     ],
     "minimum-stability": "stable",

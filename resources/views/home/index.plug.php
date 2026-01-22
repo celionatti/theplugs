@@ -1,25 +1,89 @@
 @extends('layouts.default')
 
-@section('title', 'ThePlugs Framework')
+@section('title', 'Welcome')
 
 @section('content')
-<Header />
-
-<Hero />
-
-<New />
-
-<Features />
-
-<Code />
-
-<Docs />
-
-<Footer />
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8 text-center">
+            <h1 class="display-4 mb-4">
+                <span style="font-family: 'Dancing Script', cursive; background: linear-gradient(135deg, #8b5cf6, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
+                    Plugs
+                </span>
+            </h1>
+            <h2 class="mb-4 text-white">Welcome to {{ $title ?? 'My Plugs App' }}</h2>
+            <p class="lead text-white-50 mb-5">{{ $message ?? 'Your application is ready to go!' }}</p>
+            
+            <div class="card bg-dark text-light border-0 shadow-lg">
+                <div class="card-body p-5">
+                    <h4 class="mb-4">🚀 You're all set!</h4>
+                    <p class="mb-4">Your Plugs Framework installation was successful. Here's what you can do next:</p>
+                    
+                    <div class="row text-start g-4">
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-start">
+                                <span class="me-3 fs-4">📚</span>
+                                <div>
+                                    <h6>Read the Docs</h6>
+                                    <p class="small text-warning mb-2">Learn about routing, controllers, views, and more.</p>
+                                    <a href="/docs" class="btn btn-outline-warning btn-sm px-3">Explore Documentation</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-start">
+                                <span class="me-3 fs-4">🛠️</span>
+                                <div>
+                                    <h6>Build Your App</h6>
+                                    <p class="small text-warning mb-0">Create controllers, models, and views.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-start">
+                                <span class="me-3 fs-4">🎨</span>
+                                <div>
+                                    <h6>Customize</h6>
+                                    <p class="small text-warning mb-0">Update this page in <code>resources/views/home/index.plug.php</code></p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-start">
+                                <span class="me-3 fs-4">⚙️</span>
+                                <div>
+                                    <h6>Configure</h6>
+                                    <p class="small text-warning mb-0">Update settings in your <code>.env</code> file and <code>config/</code> directory.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <p class="mt-5 text-white-50">
+                <small>Powered by Plugs Framework &bull; Created by <a href="https://github.com/celionatti" class="text-decoration-none text-light">Celio Natti</a></small>
+            </p>
+        </div>
+    </div>
+</div>
 @endsection
 
-@push('scripts')
-<script>
-    console.log('Home page loaded');
-</script>
+@push('styles')
+<style>
+    body {
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        min-height: 100vh;
+    }
+    .card {
+        background: rgba(30, 41, 59, 0.8) !important;
+        backdrop-filter: blur(10px);
+    }
+    code {
+        background: rgba(139, 92, 246, 0.2);
+        padding: 2px 6px;
+        border-radius: 4px;
+        color: #a78bfa;
+    }
+</style>
 @endpush

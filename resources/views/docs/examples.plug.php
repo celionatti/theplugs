@@ -1,0 +1,60 @@
+@extends('layouts.docs')
+
+@section('content')
+<div data-aos="fade-up">
+    <h1>Interactive Examples</h1>
+    <p class="lead text-muted">
+        See the power of Plugs in action with these live, reactive demonstrations.
+    </p>
+
+    <hr class="my-5">
+
+    <div class="row align-items-center mb-5">
+        <div class="col-lg-6">
+            <h3>1. The Classic Counter</h3>
+            <p>
+                This simple component demonstrates state persistence and instant updates.
+                The count is managed by a PHP class and updated via AJAX increment/decrement calls.
+            </p>
+            <div class="alert alert-light border small">
+                <strong>Source:</strong> <code>App\Components\Counter.php</code>
+            </div>
+        </div>
+        <div class="col-lg-6 d-flex justify-content-center">
+            <div class="p-4 bg-white rounded shadow-sm border" style="min-width: 250px;">
+                <Counter :count="10" />
+            </div>
+        </div>
+    </div>
+
+    <hr class="my-4">
+
+    <div class="row align-items-center mb-5">
+        <div class="col-lg-6 order-lg-2">
+            <h3>2. SPA Navigation</h3>
+            <p>
+                Experience the SPA bridge by navigating between these links.
+                Notice how the URL updates and content changes without the page "flickering".
+            </p>
+        </div>
+        <div class="col-lg-6 order-lg-1">
+            <div class="p-4 bg-white rounded shadow-sm border text-center">
+                <div class="d-grid gap-2">
+                    <a href="/docs" class="btn btn-primary" data-spa="true">Intro Page</a>
+                    <a href="/docs/spa" class="btn btn-outline-primary" data-spa="true">SPA Bridge Guide</a>
+                    <a href="/docs/reactive" class="btn btn-outline-success" data-spa="true">Reactive Guide</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="p-5 bg-dark text-white rounded-4 shadow-lg text-center mt-5">
+        <h2 class="text-white mb-4">Start Building Now</h2>
+        <p class="mb-4 opacity-75">
+            Download the Plugs CLI today and create your first reactive application in seconds.
+        </p>
+        <code class="d-block bg-black p-3 rounded mb-4 text-primary">npx @theplugs/cli create my-app</code>
+        <a href="https://github.com/celionatti/plugs" class="btn btn-primary btn-lg px-5">View on GitHub</a>
+    </div>
+</div>
+@endsection

@@ -12,11 +12,11 @@ declare(strict_types=1);
 */
 
 return [
-    'name' => $_ENV['APP_NAME'] ?? 'Plugs Framework',
-    'env' => $_ENV['APP_ENV'] ?? 'production',
-    'debug' => $_ENV['APP_DEBUG'] ?? false,
-    'url' => $_ENV['APP_URL'] ?? 'http://localhost',
-    'timezone' => $_ENV['APP_TIMEZONE'] ?? 'UTC',
+    'name' => $_ENV['APP_NAME'] ?? 'My Plugs App',
+    'env' => $_ENV['APP_ENV'] ?? 'local',
+    'debug' => $_ENV['APP_DEBUG'] ?? true,
+    'url' => $_ENV['APP_URL'] ?? 'http://theplugs.local',
+    'timezone' => $_ENV['APP_TIMEZONE'] ?? 'Africa/Lagos',
     
     'key' => $_ENV['APP_KEY'] ?? null,
     

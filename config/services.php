@@ -33,7 +33,7 @@ return function (Container $container) {
         return new ViewEngine(
             $viewPath,
             $cachePath,
-            !config('app.debug', false)
+            true // Temporarily force true for debugging
         );
     });
 
