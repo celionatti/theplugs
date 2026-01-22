@@ -75,9 +75,13 @@ $container = \Plugs\Container\Container::getInstance();
 
 /*
  |----------------------------------------------------------------------
- | Load Database Configuration
+ | Load Service Providers
  |----------------------------------------------------------------------
+ |
+ | Load and register service providers defined in the configuration.
  */
+// $serviceLoader = config('services');
+// $serviceLoader($container);
 
 $databaseConfig = config('database');
 PlugModel::setConnection($databaseConfig['connections'][$databaseConfig['default']]);
