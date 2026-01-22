@@ -267,7 +267,7 @@ class InstallController
         $_SESSION['install_data']['admin'] = [
             'name' => $name,
             'email' => $email,
-            'password' => password_hash($password, PASSWORD_ARGON2ID),
+            'password' => password_hash($password, PASSWORD_DEFAULT),
         ];
 
         return ['success' => true];
@@ -405,6 +405,7 @@ class InstallController
         $replacements = [
             // App settings
             '{{APP_NAME}}' => $installData['app']['name'] ?? 'Plugs Framework',
+            '{{APP_FRAMEWORK_NAME}}' => strtolower($installData['app']['name']) ?? 'plugs',
             '{{APP_URL}}' => $installData['app']['url'] ?? 'http://localhost',
             '{{APP_ENV}}' => $installData['app']['env'] ?? 'local',
             '{{APP_TIMEZONE}}' => $installData['app']['timezone'] ?? 'UTC',
