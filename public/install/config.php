@@ -23,13 +23,13 @@ return [
         'fileinfo' => 'File Information',
         'tokenizer' => 'Tokenizer',
         'xml' => 'XML Parser',
+        'gd' => 'GD Image Library',
     ],
 
     // Optional but recommended extensions
     'optional_extensions' => [
         'pdo_pgsql' => 'PDO PostgreSQL Driver',
         'pdo_sqlite' => 'PDO SQLite Driver',
-        'gd' => 'GD Image Library',
         'imagick' => 'ImageMagick',
         'zip' => 'ZIP Archive',
         'redis' => 'Redis',
@@ -60,6 +60,9 @@ return [
         'storage/framework/profiler',
         'storage/logs',
         'storage/views',
+        'storage/cache',
+        'storage/app',
+        'storage/app/public',
     ],
 
     // Directories that need write permissions
@@ -68,6 +71,8 @@ return [
         'storage/framework',
         'storage/logs',
         'storage/views',
+        'storage/cache',
+        'storage/app',
         'public/assets/cache',
     ],
 
@@ -83,6 +88,10 @@ return [
         'config/middleware.php' => 'config/middleware.php.template',
         'config/security.php' => 'config/security.php.template',
         'config/services.php' => 'config/services.php.template',
+        'config/cache.php' => 'config/cache.php.template',
+        'config/queue.php' => 'config/queue.php.template',
+        'config/filesystems.php' => 'config/filesystems.php.template',
+        'config/logging.php' => 'config/logging.php.template',
         'routes/web.php' => 'routes/web.php.template',
         'routes/api.php' => 'routes/api.php.template',
         'routes/default.php' => 'routes/default.php.template',

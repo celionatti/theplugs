@@ -458,6 +458,9 @@ class InstallController
             // Create migrations table
             $this->createMigrationsTable($pdo, $db['driver']);
 
+            // Create jobs table
+            $this->createJobsTable($pdo, $db['driver']);
+
         } catch (PDOException $e) {
             throw new Exception('Database setup failed: ' . $e->getMessage());
         }
@@ -573,6 +576,46 @@ class InstallController
                 id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
                 migration VARCHAR(255) NOT NULL,
                 batch INT NOT NULL
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
+        }
+
+        $pdo->exec($sql);
+    }
+
+    /**
+     * Create jobs table
+     */
+    private function createJobsTable(PDO $pdo, string $driver): void
+    {
+        if ($driver === 'sqlite') {
+            $sql = "CREATE TABLE IF NOT EXISTS jobs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                queue TEXT NOT NULL,
+                payload TEXT NOT NULL,
+                attempts INTEGER DEFAULT 0,
+                reserved_at INTEGER NULL,
+                available_at INTEGER NOT NULL,
+                created_at INTEGER NOT NULL
+            )";
+        } elseif ($driver === 'pgsql') {
+            $sql = "CREATE TABLE IF NOT EXISTS jobs (
+                id SERIAL PRIMARY KEY,
+                queue VARCHAR(255) NOT NULL,
+                payload TEXT NOT NULL,
+                attempts SMALLINT DEFAULT 0,
+                reserved_at INTEGER NULL,
+                available_at INTEGER NOT NULL,
+                created_at INTEGER NOT NULL
+            )";
+        } else {
+            $sql = "CREATE TABLE IF NOT EXISTS jobs (
+                id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+                queue VARCHAR(255) NOT NULL,
+                payload LONGTEXT NOT NULL,
+                attempts TINYINT UNSIGNED DEFAULT 0,
+                reserved_at INT UNSIGNED NULL,
+                available_at INT UNSIGNED NOT NULL,
+                created_at INT UNSIGNED NOT NULL
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
         }
 

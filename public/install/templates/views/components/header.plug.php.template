@@ -1,7 +1,7 @@
 <nav id="mainNav" class="navbar navbar-expand-lg fixed-top navbar-glass">
     <div class="container">
         <a class="navbar-brand fw-bold" href="{{ url('/') }}">
-            <span class="brand-font">Plugs</span>
+            <span class="brand-font">The Plugs</span>
         </a>
 
         <!-- Right controls -->

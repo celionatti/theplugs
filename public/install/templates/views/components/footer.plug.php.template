@@ -1,6 +1,6 @@
 <footer class="text-center py-4">
     <div class="container">
-        <h3 class="brand-font mb-3">Plugs</h3>
+        <h3 class="brand-font mb-3">The Plugs</h3>
         <p class="mb-4" style="opacity: 0.8;">
             <span class="version-badge" style="font-size: 1rem; padding: 0.3rem 1rem;">v3.0</span>
             <span class="mx-2">•</span>
@@ -17,7 +17,7 @@
         </div>
 
         <p class="mb-0" style="opacity: 0.6; font-size: 0.9rem;">
-            © {{ date('Y') }} Plugs Framework • v3.0 Latest Release •
+            © {{ date('Y') }} The Plugs Framework • v3.0 Latest Release •
             <a href="#" class="text-white" style="opacity: 0.7;">View previous versions</a>
         </p>
     </div>
