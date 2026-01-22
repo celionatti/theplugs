@@ -48,17 +48,18 @@ $appUrl = $stepData['session_data']['app']['url'] ?? '';
         </div>
     </div>
 
-    <div class="btn-group" style="justify-content: center; flex-wrap: wrap; gap: 10px;">
+    <div class="btn-group" style="justify-content: center; flex-wrap: wrap; gap: 15px; margin-top: 2rem;">
+        <button type="button" class="btn btn-primary" id="btn-cleanup"
+            style="padding: 0.8rem 2.5rem; font-size: 1.1rem; box-shadow: 0 4px 15px rgba(var(--accent-primary-rgb), 0.3);">
+            🚀 Launch Application & Cleanup
+        </button>
         <button type="button" class="btn btn-secondary" id="btn-composer"
             style="background: var(--bg-card); border: 1px solid var(--border-color);">
-            📦 Run Composer Install
+            📦 Install Dependencies
         </button>
-        <button type="button" class="btn btn-danger" id="btn-cleanup"
-            style="background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid rgba(239, 68, 68, 0.3);">
-            🗑️ Delete Installer & Open App
-        </button>
-        <a href="<?= htmlspecialchars($appUrl) ?>/" class="btn btn-primary" id="btn-home">
-            🏠 Open App (Manual)
+        <a href="<?= htmlspecialchars($appUrl) ?>/" class="btn btn-secondary" id="btn-home"
+            style="opacity: 0.7; font-size: 0.9rem;">
+            🏠 Skip Cleanup
         </a>
     </div>
 
@@ -107,25 +108,29 @@ $appUrl = $stepData['session_data']['app']['url'] ?? '';
     });
 
     document.getElementById('btn-cleanup').addEventListener('click', async function () {
-        if (!confirm('This will try to delete the installation folder and redirect you to the homepage. Continue?')) return;
-
         const btn = this;
+        const originalText = btn.innerHTML;
+
         btn.disabled = true;
-        btn.innerHTML = '⏳ Deleting...';
+        btn.innerHTML = '⏳ Cleaning up and launching...';
 
         try {
             const response = await fetch('?action=cleanup', { method: 'POST' });
             const data = await response.json();
 
             if (data.success) {
-                window.location.href = '<?= htmlspecialchars($appUrl) ?>/';
+                // Check for a redirect URL (used for external cleanup scripts)
+                if (data.redirect) {
+                    window.location.href = data.redirect;
+                } else {
+                    window.location.href = '<?= htmlspecialchars($appUrl) ?>/';
+                }
             } else {
                 alert(data.error || 'Cleanup failed. Please delete the "install" folder manually.');
                 window.location.href = '<?= htmlspecialchars($appUrl) ?>/';
             }
         } catch (e) {
-            // If the file was deleted, the response might fail or be empty. Assume success if we can't reach it?
-            // Actually, if we deleted self, fetch might fail.
+            // Fallback in case of networking error (or if self-deletion caused the request to hang/fail)
             window.location.href = '<?= htmlspecialchars($appUrl) ?>/';
         }
     });

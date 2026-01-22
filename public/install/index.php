@@ -9,8 +9,8 @@ declare(strict_types=1);
  * After installation, this folder should be deleted for security.
  */
 
-// Prevent direct access if already installed
-if (file_exists(__DIR__ . '/../../plugs.lock')) {
+// Prevent direct access if already installed, except for the final success step
+if (file_exists(__DIR__ . '/../../plugs.lock') && ($_GET['step'] ?? 1) != 5) {
     header('Location: /');
     exit;
 }

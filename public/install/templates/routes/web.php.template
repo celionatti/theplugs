@@ -20,6 +20,21 @@ use App\Http\Controllers\HomeController;
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/home', [HomeController::class, 'index']);
 
+// Documentation Routes
+Route::get('/docs', function () {
+    return view("docs.index", ['title' => "Documentation"]);
+});
+
+Route::get('/docs/{page?}', function($page = 'index') {
+    $titles = [
+        'index' => 'Introduction',
+        'examples' => 'Examples',
+        'reactive' => 'Reactive Components',
+        'spa' => 'SPA Bridge'
+    ];
+    return view("docs.$page", ['title' => $titles[$page] ?? 'Documentation']);
+});
+
 // Add your routes here
 // Route::get('/about', [HomeController::class, 'about'])->name('about');
 // Route::get('/contact', [HomeController::class, 'contact'])->name('contact');

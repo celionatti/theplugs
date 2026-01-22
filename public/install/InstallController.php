@@ -279,19 +279,29 @@ class InstallController
     private function runInstallation(): array
     {
         $installData = $_SESSION['install_data'] ?? [];
+        error_log("Starting installation process...");
+
+        if (empty($installData)) {
+            error_log("Installation failed: Session data is empty.");
+            return ['success' => false, 'error' => 'Installation data missing from session. Please restart.'];
+        }
 
         try {
             // 1. Create directories
             $this->createDirectories();
+            error_log("Step 1: Directories created.");
 
             // 2. Generate files from templates
             $this->generateFiles($installData);
+            error_log("Step 2: Files generated.");
 
             // 3. Create database tables
             $this->createDatabaseTables($installData);
+            error_log("Step 3: Database tables created.");
 
             // 4. Create admin user
             $this->createAdminUser($installData);
+            error_log("Step 4: Admin user created.");
 
             // 5. Create plugs.lock marker file
             $lockContent = json_encode([
@@ -307,13 +317,18 @@ class InstallController
                 'checksum' => hash('sha256', serialize($installData) . time()),
             ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
 
-            file_put_contents(ROOT_PATH . 'plugs.lock', $lockContent);
+            if (file_put_contents(ROOT_PATH . 'plugs.lock', $lockContent) === false) {
+                error_log("Step 5: Failed to create plugs.lock at " . ROOT_PATH . 'plugs.lock');
+                throw new Exception("Failed to create plugs.lock file. Check permissions.");
+            }
+            error_log("Step 5: plugs.lock created.");
 
-            // 6. Clear session
-            unset($_SESSION['install_data']);
+            // 6. Installation technical steps done
+            error_log("Installation technical steps completed successfully.");
 
             return ['success' => true];
         } catch (Exception $e) {
+            error_log("Installation Exception: " . $e->getMessage());
             return ['success' => false, 'error' => $e->getMessage()];
         }
     }
@@ -352,6 +367,7 @@ class InstallController
             $targetPath = ROOT_PATH . $targetFile;
 
             if (!file_exists($templatePath)) {
+                error_log("Template not found: {$templateFile}");
                 throw new Exception("Template not found: {$templateFile}");
             }
 
@@ -361,11 +377,22 @@ class InstallController
             // Create parent directory if needed
             $parentDir = dirname($targetPath);
             if (!is_dir($parentDir)) {
-                mkdir($parentDir, 0755, true);
+                if (!mkdir($parentDir, 0755, true)) {
+                    error_log("Failed to create parent directory for: {$targetFile}");
+                    throw new Exception("Failed to create directory: " . dirname($targetFile));
+                }
             }
 
             if (file_put_contents($targetPath, $content) === false) {
-                throw new Exception("Failed to create file: {$targetFile}");
+                error_log("Failed to write to file: {$targetFile} (Path: $targetPath)");
+                throw new Exception("Failed to create file: {$targetFile}. Please check permissions.");
+            }
+
+            error_log("Generated file: {$targetFile} at path: $targetPath");
+
+            // Set executable permission for theplugs CLI
+            if ($targetFile === 'theplugs') {
+                @chmod($targetPath, 0755);
             }
         }
     }
@@ -671,34 +698,54 @@ class InstallController
 // Wait a moment for the installer process to finish
 sleep(1);
 
-$installDir = __DIR__ . '/public/install';
+$publicDir = __DIR__;
+$installDir = $publicDir . '/install';
+$rootDir = dirname($publicDir);
 
 function recursiveDelete($dir) {
     if (!is_dir($dir)) return;
     $files = array_diff(scandir($dir), ['.', '..']);
     foreach ($files as $file) {
-        $path = $dir . '/' . $file;
-        (is_dir($path)) ? recursiveDelete($path) : @unlink($path);
+        $path = $dir . DIRECTORY_SEPARATOR . $file;
+        if (is_dir($path)) {
+            recursiveDelete($path);
+        } else {
+            @chmod($path, 0666);
+            @unlink($path);
+        }
     }
     @rmdir($dir);
 }
 
+// Log start
+file_put_contents($rootDir . '/cleanup.log', "Cleanup started at " . date('Y-m-d H:i:s') . "\n", FILE_APPEND);
+
 if (is_dir($installDir)) {
     recursiveDelete($installDir);
+    file_put_contents($rootDir . '/cleanup.log', "Deleted $installDir\n", FILE_APPEND);
+} else {
+    file_put_contents($rootDir . '/cleanup.log', "Install dir not found: $installDir\n", FILE_APPEND);
 }
 
 // Delete this script
 @unlink(__FILE__);
+file_put_contents($rootDir . '/cleanup.log', "Cleanup script deleted itself. Finished.\n", FILE_APPEND);
+
 
 // Redirect to home
 header("Location: /");
 exit;
 PHP;
 
-        $scriptPath = ROOT_PATH . 'cleanup_installer.php';
+        $scriptPath = ROOT_PATH . 'public/cleanup_installer.php';
+        $appUrl = $_SESSION['install_data']['app']['url'] ?? '';
+
+        // Ensure redirect URL points to the cleanup script in public folder
+        $redirectUrl = !empty($appUrl) ? rtrim($appUrl, '/') . '/cleanup_installer.php' : '/cleanup_installer.php';
+
 
         if (file_put_contents($scriptPath, $cleanupScript) !== false) {
-            return ['success' => true, 'redirect' => '/cleanup_installer.php'];
+            return ['success' => true, 'redirect' => $redirectUrl];
         }
 
         // Fallback to internal delete attempt (likely fails on Windows)

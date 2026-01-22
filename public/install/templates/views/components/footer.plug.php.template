@@ -1,0 +1,24 @@
+<footer class="text-center py-4">
+    <div class="container">
+        <h3 class="brand-font mb-3">The Plugs</h3>
+        <p class="mb-4" style="opacity: 0.8;">
+            <span class="version-badge" style="font-size: 1rem; padding: 0.3rem 1rem;">v3.0</span>
+            <span class="mx-2">•</span>
+            Built with ❤️ for the PHP community
+        </p>
+
+        <div class="footer-links d-flex justify-content-center flex-wrap gap-3 mb-3">
+            <a href="#"><i class="fab fa-github me-1"></i>GitHub</a>
+            <!-- <a href="#"><i class="fab fa-twitter me-1"></i>Twitter</a> -->
+            <!-- <a href="#"><i class="fab fa-discord me-1"></i>Discord</a> -->
+            <a href="#"><i class="fas fa-book me-1"></i>Documentation</a>
+            <a href="#"><i class="fas fa-history me-1"></i>Changelog</a>
+            <a href="#"><i class="fas fa-question-circle me-1"></i>Support</a>
+        </div>
+
+        <p class="mb-0" style="opacity: 0.6; font-size: 0.9rem;">
+            © {{ date('Y') }} The Plugs Framework • v3.0 Latest Release •
+            <a href="#" class="text-white" style="opacity: 0.7;">View previous versions</a>
+        </p>
+    </div>
+</footer>
