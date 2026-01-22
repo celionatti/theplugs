@@ -9,6 +9,7 @@
 .idea/
 .vscode/
 composer.lock
+composer.json
 package-lock.json
 /sample/
 
@@ -19,10 +20,7 @@ package-lock.json
 /storage/
 /resources/
 /theplugs
-/test.php
 /routes
 /bootstrap/
 /database/*
-settings.json
-/verify_form.php
 plugs.lock
