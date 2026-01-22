@@ -56,8 +56,83 @@ class PlugsSPA {
             }
         });
 
+        // Initialize Reactive Components
+        this.initializeComponents();
+
         window.plugsSPAInitialized = true;
         console.log('Plugs SPA Bridge initialized (Production Mode).');
+    }
+
+    initializeComponents(container = document) {
+        let components = Array.from(container.querySelectorAll('[data-plug-component]'));
+
+        // If container is a component itself, add it to the list
+        if (container.hasAttribute && container.hasAttribute('data-plug-component')) {
+            components.unshift(container);
+            // Force re-initialization for updated components
+            container._plugInitialized = false;
+        }
+
+        components.forEach(el => {
+            if (el._plugInitialized) return;
+
+            // Find all elements with p-click within this component
+            const actions = el.querySelectorAll('[p-click], [p-change], [p-submit]');
+            actions.forEach(actionEl => {
+                if (actionEl.hasAttribute('p-click')) {
+                    actionEl.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        this.callComponentAction(el, 'click', actionEl.getAttribute('p-click'));
+                    });
+                }
+                // Add more event types as needed
+            });
+
+            el._plugInitialized = true;
+        });
+    }
+
+    async callComponentAction(componentEl, eventType, action) {
+        const name = componentEl.dataset.plugComponent;
+        const state = componentEl.dataset.plugState;
+        const id = componentEl.id;
+
+        // Visual feedback
+        componentEl.style.opacity = '0.7';
+
+        try {
+            const response = await fetch('/plugs/component/action', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+                },
+                body: JSON.stringify({
+                    component: name,
+                    action: action,
+                    state: state,
+                    id: id,
+                    params: []
+                })
+            });
+
+            if (!response.ok) throw new Error('Action failed');
+
+            const result = await response.json();
+
+            // Update HTML
+            componentEl.innerHTML = result.html;
+            componentEl.dataset.plugState = result.state;
+
+            // Re-initialize children if they are components
+            this.initializeComponents(componentEl);
+
+        } catch (err) {
+            console.error('Plugs Component Error:', err);
+        } finally {
+            componentEl.style.opacity = '1';
+        }
     }
 
     handleLinkClick(e) {
@@ -67,8 +142,13 @@ class PlugsSPA {
             return;
         }
 
-        // Skip if link has data-spa="false" or target="_blank"
-        if (link.dataset.spa === 'false' || link.target === '_blank' || link.hasAttribute('data-spa-ignore')) {
+        // Only intercept if data-spa="true" is set
+        if (link.dataset.spa !== 'true') {
+            return;
+        }
+
+        // Skip if link has target="_blank" (as a safety measure)
+        if (link.target === '_blank') {
             return;
         }
 
@@ -80,7 +160,8 @@ class PlugsSPA {
 
     handleFormSubmit(e) {
         const form = e.target;
-        if (form.getAttribute('data-spa') === 'false' || form.target === '_blank' || form.hasAttribute('data-spa-ignore')) return;
+        // Only intercept if data-spa="true" is set
+        if (form.dataset.spa !== 'true') return;
 
         // Ensure form action is internal
         const action = form.getAttribute('action') || window.location.href;
@@ -129,7 +210,7 @@ class PlugsSPA {
 
     handleLinkHover(e) {
         const link = e.target.closest('a');
-        if (!link || !this.isInternalLink(link) || link.dataset.spa === 'false' || link.hasAttribute('data-spa-ignore')) return;
+        if (!link || !this.isInternalLink(link) || link.dataset.spa !== 'true') return;
 
         const url = link.href;
         if (this.cache.has(url)) return;
@@ -226,6 +307,17 @@ class PlugsSPA {
                 document.title = titleMatch[1];
             }
 
+            // Layout Detection
+            const layoutMatch = html.match(/<meta name="plugs-layout" content="(.*?)">/i);
+            const currentLayoutMeta = document.querySelector('meta[name="plugs-layout"]');
+            const currentLayout = currentLayoutMeta ? currentLayoutMeta.content : null;
+
+            if (layoutMatch && layoutMatch[1] && currentLayout && layoutMatch[1] !== currentLayout) {
+                console.log(`SPA: Layout mismatch detected (${currentLayout} -> ${layoutMatch[1]}). Performing full reload.`);
+                window.location.href = url;
+                return true;
+            }
+
             // Update target content
             contentArea.innerHTML = html;
 
@@ -247,6 +339,9 @@ class PlugsSPA {
             if (targetSelector === this.options.contentSelector) {
                 window.scrollTo(0, 0);
             }
+
+            // Sync Reactive Components
+            this.initializeComponents();
 
             this.options.onComplete(url);
             return true;
