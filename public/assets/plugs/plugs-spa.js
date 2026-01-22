@@ -262,6 +262,12 @@ class PlugsSPA {
         // Visual feedback
         contentArea.style.opacity = '0.5';
 
+        // Skeleton Support
+        const skeletonType = contentArea.getAttribute('data-spa-skeleton');
+        if (skeletonType) {
+            contentArea.innerHTML = this.getSkeletonPlaceholder(skeletonType);
+        }
+
         try {
             const headers = {
                 'X-Plugs-SPA': 'true',
@@ -356,6 +362,55 @@ class PlugsSPA {
             this.hideProgress();
             // Reset styles
             contentArea.style.opacity = '1';
+        }
+    }
+
+    /**
+     * Generate skeleton HTML for client-side placeholders
+     * @param {string} type 
+     */
+    getSkeletonPlaceholder(type) {
+        const shimmer = '<div class="plugs-skeleton" style="width: 100%; height: 20px; border-radius: 4px; margin-bottom: 10px;"></div>';
+
+        switch (type) {
+            case 'card':
+                return `
+                    <div class="plugs-skeleton-card" style="border: 1px solid #e2e8f0; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                        <div class="plugs-skeleton" style="width: 100%; height: 150px; border-radius: 4px; margin-bottom: 1rem;"></div>
+                        <div class="plugs-skeleton" style="width: 60%; height: 16px; border-radius: 4px; margin-bottom: 0.5rem;"></div>
+                        <div class="plugs-skeleton" style="width: 90%; height: 12px; border-radius: 4px; margin-bottom: 0.5rem;"></div>
+                        <div class="plugs-skeleton" style="width: 40%; height: 12px; border-radius: 4px;"></div>
+                    </div>
+                `;
+            case 'list':
+                return `
+                    <div class="plugs-skeleton-list">
+                        ${[1, 2, 3].map(() => `
+                            <div style="display: flex; align-items: center; margin-bottom: 1rem;">
+                                <div class="plugs-skeleton" style="width: 40px; height: 40px; border-radius: 50%; margin-right: 1rem;"></div>
+                                <div style="flex: 1;">
+                                    <div class="plugs-skeleton" style="width: 50%; height: 16px; border-radius: 4px; margin-bottom: 0.5rem;"></div>
+                                    <div class="plugs-skeleton" style="width: 80%; height: 12px; border-radius: 4px;"></div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            case 'table':
+                return `
+                    <div class="plugs-skeleton-table-wrapper" style="overflow-x: auto;">
+                        <table class="table">
+                            <thead><tr>${[1, 2, 3, 4].map(() => `<th><div class="plugs-skeleton" style="width: 80%; height: 20px; border-radius: 4px;"></div></th>`).join('')}</tr></thead>
+                            <tbody>
+                                ${[1, 2, 3, 4, 5].map(() => `
+                                    <tr>${[1, 2, 3, 4].map(() => `<td><div class="plugs-skeleton" style="width: 100%; height: 15px; border-radius: 4px;"></div></td>`).join('')}</tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            default:
+                return shimmer.repeat(3);
         }
     }
 }

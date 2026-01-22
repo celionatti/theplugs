@@ -20,7 +20,7 @@
         <!-- Header -->
         <header class="installer-header">
             <div class="brand">
-                <span class="brand-icon"></span>
+                <span class="brand-icon">⚡</span>
                 <span class="brand-text">Plugs</span>
             </div>
             <div class="header-subtitle">Framework Installation</div>

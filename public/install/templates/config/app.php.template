@@ -21,12 +21,16 @@ return [
     'key' => $_ENV['APP_KEY'] ?? null,
     
     'paths' => [
-        'views' => BASE_PATH . 'views',
+        'views' => BASE_PATH . 'resources/views',
         'cache' => BASE_PATH . 'storage/cache',
         'logs' => BASE_PATH . 'storage/logs',
         'storage' => BASE_PATH . 'storage',
     ],
     'required_files' => [
         'function' => BASE_PATH . 'utils/function.php'
+    ],
+
+    'providers' => [
+        App\Providers\AppServiceProvider::class,
     ],
 ];
