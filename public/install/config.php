@@ -23,13 +23,13 @@ return [
         'fileinfo' => 'File Information',
         'tokenizer' => 'Tokenizer',
         'xml' => 'XML Parser',
-        'gd' => 'GD Image Library',
     ],
 
     // Optional but recommended extensions
     'optional_extensions' => [
         'pdo_pgsql' => 'PDO PostgreSQL Driver',
         'pdo_sqlite' => 'PDO SQLite Driver',
+        'gd' => 'GD Image Library',
         'imagick' => 'ImageMagick',
         'zip' => 'ZIP Archive',
         'redis' => 'Redis',
@@ -102,6 +102,13 @@ return [
         'composer.json' => 'composer.json.template',
         'public/index.php' => 'public/index.php.template',
         'public/.htaccess' => 'public/.htaccess.template',
+        'public/assets/css/global.css' => 'public/assets/css/global.css.template',
+        'public/assets/js/global.js' => 'public/assets/js/global.js.template',
+        'public/assets/plugs/plugs-spa.js' => 'public/assets/plugs/plugs-spa.js.template',
+        'public/assets/plugs/global/api-helper.js' => 'public/assets/plugs/global/api-helper.js.template',
+        'public/assets/plugs/global/form-helper.js' => 'public/assets/plugs/global/form-helper.js.template',
+        'public/assets/plugs/global/notification.js' => 'public/assets/plugs/global/notification.js.template',
+        'public/assets/plugs/global/string-helper.js' => 'public/assets/plugs/global/string-helper.js.template',
     ],
 
     // Database types supported
