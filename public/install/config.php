@@ -64,9 +64,6 @@ return [
         'storage/cache',
         'storage/app',
         'storage/app/public',
-        'tests',
-        'tests/Unit',
-        'tests/Feature',
     ],
 
     // Directories that need write permissions
@@ -126,10 +123,6 @@ return [
         'public/assets/plugs/global/notification.js' => 'public/assets/plugs/global/notification.js.template',
         'public/assets/plugs/global/string-helper.js' => 'public/assets/plugs/global/string-helper.js.template',
         'resources/views/errors/503.plug.php' => 'views/errors/503.plug.php.template',
-        'phpunit.xml' => 'phpunit.xml.template',
-        'tests/TestCase.php' => 'tests/TestCase.php.template',
-        'tests/Unit/ExampleTest.php' => 'tests/Unit/ExampleTest.php.template',
-        'tests/Feature/ExampleTest.php' => 'tests/Feature/ExampleTest.php.template',
     ],
 
     // Database types supported
