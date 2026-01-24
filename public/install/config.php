@@ -40,6 +40,7 @@ return [
     'directories' => [
         'app',
         'app/Components',
+        'app/Console',
         'app/Http',
         'app/Http/Controllers',
         'app/Middlewares',
@@ -98,6 +99,7 @@ return [
         'routes/default.php' => 'routes/default.php.template',
         'app/Http/Controllers/HomeController.php' => 'controllers/HomeController.php.template',
         'app/Providers/AppServiceProvider.php' => 'app/Providers/AppServiceProvider.php.template',
+        'app/Console/Kernel.php' => 'app/Console/Kernel.php.template',
         'resources/views/layouts/default.plug.php' => 'views/layouts/default.plug.php.template',
         'resources/views/home/index.plug.php' => 'views/home/index.plug.php.template',
         'resources/views/layouts/docs.plug.php' => 'views/layouts/docs.plug.php.template',

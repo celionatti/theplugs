@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 /**
  * Test Database Connection
- * 
+ *
  * AJAX endpoint for testing database connection.
  */
 
@@ -58,11 +58,11 @@ try {
 } catch (PDOException $e) {
     echo json_encode([
         'success' => false,
-        'error' => $e->getMessage()
+        'error' => $e->getMessage(),
     ]);
 } catch (Exception $e) {
     echo json_encode([
         'success' => false,
-        'error' => $e->getMessage()
+        'error' => $e->getMessage(),
     ]);
 }

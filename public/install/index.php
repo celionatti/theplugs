@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 /**
  * Plugs Framework Installer
- * 
+ *
  * This is the entry point for the installation wizard.
  * After installation, this folder should be deleted for security.
  */

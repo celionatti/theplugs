@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 /**
  * Plugs Framework Installation Controller
- * 
+ *
  * Handles all installation logic including:
  * - Server requirements checking
  * - Directory creation
@@ -128,6 +128,7 @@ class InstallController
         }
 
         $_SESSION['install_data']['requirements_accepted'] = true;
+
         return ['success' => true];
     }
 
@@ -283,6 +284,7 @@ class InstallController
 
         if (empty($installData)) {
             error_log("Installation failed: Session data is empty.");
+
             return ['success' => false, 'error' => 'Installation data missing from session. Please restart.'];
         }
 
@@ -319,6 +321,7 @@ class InstallController
 
             if (file_put_contents(ROOT_PATH . 'plugs.lock', $lockContent) === false) {
                 error_log("Step 5: Failed to create plugs.lock at " . ROOT_PATH . 'plugs.lock');
+
                 throw new Exception("Failed to create plugs.lock file. Check permissions.");
             }
             error_log("Step 5: plugs.lock created.");
@@ -329,6 +332,7 @@ class InstallController
             return ['success' => true];
         } catch (Exception $e) {
             error_log("Installation Exception: " . $e->getMessage());
+
             return ['success' => false, 'error' => $e->getMessage()];
         }
     }
@@ -368,6 +372,7 @@ class InstallController
 
             if (!file_exists($templatePath)) {
                 error_log("Template not found: {$templateFile}");
+
                 throw new Exception("Template not found: {$templateFile}");
             }
 
@@ -379,12 +384,14 @@ class InstallController
             if (!is_dir($parentDir)) {
                 if (!mkdir($parentDir, 0755, true)) {
                     error_log("Failed to create parent directory for: {$targetFile}");
+
                     throw new Exception("Failed to create directory: " . dirname($targetFile));
                 }
             }
 
             if (file_put_contents($targetPath, $content) === false) {
                 error_log("Failed to write to file: {$targetFile} (Path: $targetPath)");
+
                 throw new Exception("Failed to create file: {$targetFile}. Please check permissions.");
             }
 
@@ -700,7 +707,7 @@ class InstallController
             return [
                 'success' => false,
                 'error' => 'Composer install failed.',
-                'details' => implode("\n", $output)
+                'details' => implode("\n", $output),
             ];
         }
 
@@ -715,10 +722,12 @@ class InstallController
         if (strtoupper(substr(PHP_OS, 0, 3)) === 'WIN') {
             $output = [];
             exec('where composer', $output);
+
             return !empty($output) ? 'composer' : null;
         } else {
             $output = [];
             exec('which composer', $output);
+
             return !empty($output) ? 'composer' : null;
         }
     }
@@ -795,6 +804,7 @@ PHP;
         // Fallback to internal delete attempt (likely fails on Windows)
         try {
             $this->recursiveDelete(INSTALL_PATH);
+
             return ['success' => true];
         } catch (Exception $e) {
             return ['success' => false, 'error' => 'Could not delete files automatically. Please delete the "install" folder manually.'];
