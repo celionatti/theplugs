@@ -29,13 +29,13 @@ declare(strict_types=1);
  */
 if (!file_exists(__DIR__ . '/../plugs.lock') && is_dir(__DIR__ . '/install')) {
     $requestUri = $_SERVER['REQUEST_URI'] ?? '';
-    
+
     // If we are not already trying to access the installer
     if (strpos($requestUri, '/install') === false) {
         header('Location: install/');
         exit;
     }
-    
+
     // If we are here, the user is visiting /install but the web server 
     // is routing it to public/index.php (Loop detected / Directory not accessible)
     http_response_code(503);
@@ -86,165 +86,123 @@ $app = require __DIR__ . '/../bootstrap/boot.php';
 
 try {
     $app->run();
-} catch (Exception $e) {
+} catch (\Throwable $e) {
+    // 1. Determine Environment & Debug State
     $isLocal = ($_ENV['APP_ENV'] ?? 'production') === 'local';
-    $isDebug = (bool) ($_ENV['APP_DEBUG'] ?? false);
+    $isDebug = filter_var($_ENV['APP_DEBUG'] ?? false, FILTER_VALIDATE_BOOLEAN);
 
+    // 2. Ensure display_errors matches debug state (Security)
+    ini_set('display_errors', $isDebug ? '1' : '0');
+
+    // 3. Try to Render Debug Page
     if ($isLocal && $isDebug && function_exists('renderDebugErrorPage')) {
         renderDebugErrorPage($e);
         exit;
     }
 
+    // 4. Try to Render Production Page
     if (function_exists('renderProductionErrorPage')) {
         renderProductionErrorPage($e, 500);
         exit;
     }
 
-    // Emergency Fallback Design (Standalone)
+    // 5. Emergency Fallback (If framework functions fail)
     http_response_code(500);
-    echo '<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>500 - Server Error</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <style>
-        @import url("https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=JetBrains+Mono:wght@700&family=Dancing+Script:wght@700&display=swap");
-        
-        :root {
-            --bg-body: #080b12;
-            --bg-card: rgba(30, 41, 59, 0.5);
-            --border-color: rgba(255, 255, 255, 0.08);
-            --text-primary: #f8fafc;
-            --text-secondary: #94a3b8;
-            --accent-primary: #8b5cf6;
-            --accent-secondary: #3b82f6;
-        }
+    ?>
+    <!DOCTYPE html>
+    <html lang="en">
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        body {
-            font-family: "Outfit", sans-serif;
-            background-color: var(--bg-body);
-            background-image: 
-                radial-gradient(circle at 10% 10%, rgba(239, 68, 68, 0.05) 0%, transparent 40%),
-                radial-gradient(circle at 90% 90%, rgba(139, 92, 246, 0.05) 0%, transparent 40%);
-            color: var(--text-primary);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-direction: column;
-            padding: 20px;
-            overflow: hidden;
-        }
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Server Error</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <style>
+            @import url("https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=Dancing+Script:wght@700&display=swap");
 
-        .brand-container {
-            position: absolute;
-            top: 40px;
-            text-align: center;
-        }
+            :root {
+                --bg-body: #080b12;
+                --bg-card: rgba(30, 41, 59, 0.5);
+                --text-primary: #f8fafc;
+                --text-secondary: #94a3b8;
+                --accent-primary: #8b5cf6;
+                --accent-secondary: #3b82f6;
+            }
 
-        .brand {
-            font-family: "Dancing Script", cursive;
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: var(--text-primary);
-            text-decoration: none;
-            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
+            body {
+                font-family: "Outfit", sans-serif;
+                background-color: var(--bg-body);
+                background-image:
+                    radial-gradient(circle at 15% 15%, rgba(139, 92, 246, 0.05) 0%, transparent 40%),
+                    radial-gradient(circle at 85% 85%, rgba(59, 130, 246, 0.05) 0%, transparent 40%);
+                color: var(--text-primary);
+                height: 100vh;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                margin: 0;
+            }
 
-        .error-card {
-            background: var(--bg-card);
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--border-color);
-            border-radius: 24px;
-            padding: 60px 40px;
-            max-width: 500px;
-            width: 100%;
-            text-align: center;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-        }
+            .brand {
+                font-family: "Dancing Script", cursive;
+                font-size: 2.5rem;
+                background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                margin-bottom: 2rem;
+            }
 
-        .error-icon {
-            font-size: 4rem;
-            margin-bottom: 24px;
-            display: block;
-        }
+            .error-card {
+                background: var(--bg-card);
+                backdrop-filter: blur(10px);
+                border: 1px solid rgba(255, 255, 255, 0.05);
+                border-radius: 20px;
+                padding: 3rem;
+                text-align: center;
+                max-width: 480px;
+                box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            }
 
-        .error-code {
-            font-family: "JetBrains Mono", monospace;
-            font-size: 6rem;
-            line-height: 1;
-            font-weight: 700;
-            margin-bottom: 16px;
-            opacity: 0.2;
-            letter-spacing: -2px;
-        }
+            h1 {
+                font-size: 1.5rem;
+                font-weight: 600;
+                margin-bottom: 1rem;
+            }
 
-        h1 {
-            font-size: 2rem;
-            font-weight: 700;
-            margin-bottom: 16px;
-        }
+            p {
+                color: var(--text-secondary);
+                line-height: 1.6;
+                margin-bottom: 2rem;
+            }
 
-        .message {
-            color: var(--text-secondary);
-            font-size: 1.1rem;
-            line-height: 1.6;
-            margin-bottom: 40px;
-        }
+            .btn {
+                background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+                color: white;
+                padding: 0.75rem 1.5rem;
+                border-radius: 8px;
+                text-decoration: none;
+                font-weight: 600;
+                transition: transform 0.2s;
+                display: inline-block;
+            }
 
-        .btn {
-            padding: 12px 28px;
-            border-radius: 12px;
-            text-decoration: none;
-            font-weight: 600;
-            font-size: 0.95rem;
-            transition: all 0.3s ease;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            cursor: pointer;
-            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-            color: white;
-            box-shadow: 0 10px 15px -3px rgba(139, 92, 246, 0.3);
-            border: none;
-        }
+            .btn:hover {
+                transform: translateY(-2px);
+            }
+        </style>
+    </head>
 
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 20px 25px -5px rgba(139, 92, 246, 0.4);
-        }
-
-        @media (max-width: 640px) {
-            .error-card { padding: 40px 20px; }
-            .error-code { font-size: 4.5rem; }
-            .btn { width: 100%; justify-content: center; }
-        }
-    </style>
-</head>
-<body>
-    <div class="brand-container">
-        <a href="/" class="brand">Plugs</a>
-    </div>
-
-    <div class="error-card">
-        <span class="error-icon">🚧</span>
-        <div class="error-code">500</div>
-        <h1>Server Error</h1>
-        <p class="message">Something went wrong on our end. We are working to fix it. Please try again later.</p>
-        <div class="actions">
-            <a href="/" class="btn">
-                <span>🏠</span> Return Home
-            </a>
+    <body>
+        <div class="brand">Plugs</div>
+        <div class="error-card">
+            <h1>Critical System Failure</h1>
+            <p>The application encountered a critical error and the error handler could not be loaded.</p>
+            <a href="/" class="btn">Reload Application</a>
         </div>
-    </div>
-</body>
-</html>';
+    </body>
+
+    </html>
+    <?php
 }
