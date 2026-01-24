@@ -108,6 +108,7 @@ return [
         'resources/views/components/header.plug.php' => 'views/components/header.plug.php.template',
         'resources/views/components/footer.plug.php' => 'views/components/footer.plug.php.template',
         'resources/views/components/sidebar.plug.php' => 'views/components/sidebar.plug.php.template',
+        'resources/views/components/link.plug.php' => 'views/components/link.plug.php.template',
         'resources/views/components/code.plug.php' => 'views/components/code.plug.php.template',
         'resources/views/components/counter.plug.php' => 'views/components/counter.plug.php.template',
         'app/Components/Counter.php' => 'components/Counter.php.template',

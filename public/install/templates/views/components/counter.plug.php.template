@@ -1,0 +1,6 @@
+<div class="p-4 border rounded shadow-sm bg-gray-50 flex items-center gap-4">
+    <button p-click="decrement" class="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition">-</button>
+    <span class="text-2xl font-bold">{{ $count }}</span>
+    <button p-click="increment"
+        class="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 transition">+</button>
+</div>

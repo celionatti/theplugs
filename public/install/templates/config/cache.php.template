@@ -1,0 +1,11 @@
+<?php
+
+return [
+    'default' => env('CACHE_DRIVER', 'file'),
+
+    'drivers' => [
+        'file' => [
+            'path' => storage_path('cache'),
+        ],
+    ],
+];
