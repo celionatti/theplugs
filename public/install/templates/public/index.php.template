@@ -36,7 +36,7 @@ if (!file_exists(__DIR__ . '/../plugs.lock') && is_dir(__DIR__ . '/install')) {
         exit;
     }
 
-    // If we are here, the user is visiting /install but the web server 
+    // If we are here, the user is visiting /install but the web server
     // is routing it to public/index.php (Loop detected / Directory not accessible)
     http_response_code(503);
     echo '<!DOCTYPE html>

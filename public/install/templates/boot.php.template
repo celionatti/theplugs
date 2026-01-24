@@ -12,15 +12,15 @@ declare(strict_types=1);
 */
 
 use Plugs\Base\Model\PlugModel;
-use Plugs\Http\Middleware\ProfilerMiddleware;
-use Plugs\Http\ResponseFactory;
+use Plugs\Http\Message\ServerRequest;
 use Plugs\Http\Middleware\CorsMiddleware;
 use Plugs\Http\Middleware\CsrfMiddleware;
-use Plugs\Http\Middleware\RoutingMiddleware;
+use Plugs\Http\Middleware\ProfilerMiddleware;
 use Plugs\Http\Middleware\RateLimitMiddleware;
+use Plugs\Http\Middleware\RoutingMiddleware;
 use Plugs\Http\Middleware\SecurityHeadersMiddleware;
+use Plugs\Http\ResponseFactory;
 use Plugs\Middlewares\SecurityShieldMiddleware;
-use Plugs\Http\Message\ServerRequest;
 
 /*
  |----------------------------------------------------------------------
@@ -236,7 +236,7 @@ require BASE_PATH . 'routes/web.php';
 // Load API Routes with Prefix and JSON Middleware
 $router->group([
     'prefix' => 'api',
-    'middleware' => [\Plugs\Http\Middleware\ForceJsonMiddleware::class]
+    'middleware' => [\Plugs\Http\Middleware\ForceJsonMiddleware::class],
 ], function () {
     require BASE_PATH . 'routes/api.php';
 });

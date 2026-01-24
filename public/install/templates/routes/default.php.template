@@ -13,8 +13,6 @@ declare(strict_types=1);
 
 use Plugs\Facades\Route;
 
-
-
 /*
 |--------------------------------------------------------------------------
 | Profiler Dashboard Routes (Development Only)
