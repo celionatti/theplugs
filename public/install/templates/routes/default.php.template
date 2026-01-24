@@ -12,14 +12,23 @@ declare(strict_types=1);
 */
 
 use Plugs\Facades\Route;
-use Plugs\Http\Controllers\Debug\PerformanceController;
 
 
-Route::group(['prefix' => 'debug'], function ($router) {
-    $router->get('/performance', [PerformanceController::class, 'index']);
-    $router->get('/performance/latest', [PerformanceController::class, 'latest']);
-    $router->get('/performance/{id}', [PerformanceController::class, 'show']);
-});
+
+/*
+|--------------------------------------------------------------------------
+| Profiler Dashboard Routes (Development Only)
+|--------------------------------------------------------------------------
+*/
+if (config('security.profiler.enabled', false)) {
+    Route::group(['prefix' => 'plugs/profiler'], function () {
+        Route::get('/', [\Plugs\Debug\ProfilerController::class, 'index'])->name('profiler.index');
+        Route::get('/latest', [\Plugs\Debug\ProfilerController::class, 'latest'])->name('profiler.latest');
+        Route::post('/clear', [\Plugs\Debug\ProfilerController::class, 'clear'])->name('profiler.clear');
+        Route::get('/{id}', [\Plugs\Debug\ProfilerController::class, 'show'])->name('profiler.show');
+        Route::delete('/{id}', [\Plugs\Debug\ProfilerController::class, 'destroy'])->name('profiler.destroy');
+    });
+}
 
 Route::post('/plugs/component/action', [\Plugs\View\ReactiveController::class, 'handle']);
 
