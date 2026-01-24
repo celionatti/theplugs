@@ -231,7 +231,15 @@ $container->singleton(\Psr\Http\Message\ServerRequestInterface::class, function 
  |
  | Load the application routes. You can now use Route::get() statically!
  */
+require BASE_PATH . 'routes/default.php';
 require BASE_PATH . 'routes/web.php';
+// Load API Routes with Prefix and JSON Middleware
+$router->group([
+    'prefix' => 'api',
+    'middleware' => [\Plugs\Http\Middleware\ForceJsonMiddleware::class]
+], function () {
+    require BASE_PATH . 'routes/api.php';
+});
 
 $router->enablePagesRouting(base_path('resources/pages'), [
     'namespace' => 'App\\Pages',
