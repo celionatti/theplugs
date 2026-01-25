@@ -46,13 +46,15 @@ require VENDOR_PATH . 'autoload.php';
 
 /*
  |----------------------------------------------------------------------
- | Load Environment Variables
+ | Load Configuration & Environment
  |----------------------------------------------------------------------
  |
- | Load environment variables from the .env file if it exists.
+ | Check for configuration cache before loading from environment files.
  */
-$dotenv = Dotenv\Dotenv::createImmutable(BASE_PATH);
-$dotenv->load();
+if (!\Plugs\Config::loadFromCache()) {
+    $dotenv = Dotenv\Dotenv::createImmutable(BASE_PATH);
+    $dotenv->load();
+}
 
 /*
  |----------------------------------------------------------------------
@@ -108,6 +110,9 @@ $securityConfig = config('security');
 
 // Add SPA detection middleware
 $app->pipe(new \Plugs\Http\Middleware\SPAMiddleware());
+
+// Add flash message lifecycle management
+$app->pipe(new \Plugs\Http\Middleware\FlashMiddleware());
 
 // Add security headers middleware
 if (!empty($securityConfig['headers'])) {
@@ -229,17 +234,23 @@ $container->singleton(\Psr\Http\Message\ServerRequestInterface::class, function 
  | Load Routes
  |----------------------------------------------------------------------
  |
- | Load the application routes. You can now use Route::get() statically!
+ | Check for cached routes in production. Falling back to fresh registration
+ | if cache is missing or explicitly disabled.
  */
-require BASE_PATH . 'routes/default.php';
-require BASE_PATH . 'routes/web.php';
-// Load API Routes with Prefix and JSON Middleware
-$router->group([
-    'prefix' => 'api',
-    'middleware' => [\Plugs\Http\Middleware\ForceJsonMiddleware::class],
-], function () {
-    require BASE_PATH . 'routes/api.php';
-});
+if (\Plugs\Plugs::isProduction() && $router->loadFromPersistentCache()) {
+    // Routes loaded from cache!
+} else {
+    require BASE_PATH . 'routes/default.php';
+    require BASE_PATH . 'routes/web.php';
+
+    // Load API Routes with Prefix and JSON Middleware
+    $router->group([
+        'prefix' => 'api',
+        'middleware' => [\Plugs\Http\Middleware\ForceJsonMiddleware::class],
+    ], function () {
+        require BASE_PATH . 'routes/api.php';
+    });
+}
 
 $router->enablePagesRouting(base_path('resources/pages'), [
     'namespace' => 'App\\Pages',
@@ -248,7 +259,7 @@ $router->enablePagesRouting(base_path('resources/pages'), [
 $router->loadPagesRoutes();
 
 // Add routing middleware
-$app->pipe(new RoutingMiddleware($router, $container));
+$app->pipe(new RoutingMiddleware($router));
 
 // Set fallback handler for 404 errors
 $app->setFallback(function ($request) {

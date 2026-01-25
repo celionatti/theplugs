@@ -24,6 +24,7 @@ return [
             '#^/api/#',
             '#^/webhook/#',
             '#^/public/upload$#',
+            '#^/plugs/component/action$#',
         ],
 
         // Add token to request attributes
@@ -35,18 +36,16 @@ return [
         // Log failures for security monitoring
         'log_failures' => true,
 
-        // Custom error handler
-        'error_handler' => function ($request) {
-            return ResponseFactory::json([
-                'error' => 'Invalid security token',
-            ], 419);
-        },
+        // Custom error handler (Set to a class or null for high-performance caching)
+        'error_handler' => null,
 
         // CSRF class configuration
         'csrf_config' => [
             'token_lifetime' => 3600,
             'use_per_request_tokens' => true,
             'strict_mode' => true,
+            'use_masking' => true,
+            'context_bound' => true,
         ],
     ],
 

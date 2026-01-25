@@ -1,0 +1,9 @@
+<?php
+/**
+ * Flash Message Component
+ * 
+ * Simply calls the utility class to render any pending flash messages
+ * with their associated CSS and JS.
+ */
+echo \Plugs\Utils\FlashMessage::render();
+?>
