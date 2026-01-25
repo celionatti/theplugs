@@ -2,53 +2,67 @@
 
 @section('content')
 <div data-aos="fade-up">
-    <h1>SPA Bridge</h1>
-    <p class="lead text-muted">
+    <h1 class="display-5 fw-bold mb-4">SPA Bridge</h1>
+    <p class="lead opacity-75 mb-5">
         The SPA Bridge is a lightweight functionality that intercepts internal links and form submissions to load
         content asynchronously.
     </p>
 
-    <h2 id="how-it-works">How it Works</h2>
-    <p>
+    <h2 class="fw-bold mb-3" id="how-it-works">How it Works</h2>
+    <p class="opacity-75">
         When you navigate to a link marked with SPA attributes, the framework fetches the next page in the background,
         extracts the <code>#app-content</code> (or a custom selector), and replaces it on the current page without a
         full reload.
     </p>
 
-    <h2 id="usage">Usage</h2>
+    <h2 class="fw-bold mt-5 mb-3" id="usage">Usage</h2>
 
-    <h3>Links</h3>
-    <p>To enable SPA navigation for a link, simply add the <code>data-spa="true"</code> attribute:</p>
-    <pre
-        class="bg-dark text-white p-3 rounded"><code>&lt;a href="/about" data-spa="true"&gt;Navigate to About&lt;/a&gt;</code></pre>
+    <h3 class="fw-semibold mb-2">Links</h3>
+    <p class="opacity-75">To enable SPA navigation for a link, simply add the <code>data-spa="true"</code> attribute:
+    </p>
+    <div class="mb-4">
+        <pre
+            class="code-box p-3 rounded"><code>&lt;a href="/about" data-spa="true"&gt;Navigate to About&lt;/a&gt;</code></pre>
+    </div>
 
-    <h3>Forms</h3>
-    <p>The bridge also works with forms. When submitted, the framework will send the data via AJAX and update the target
-        content area with the response:</p>
-    <pre class="bg-dark text-white p-3 rounded"><code>&lt;form action="/search" method="POST" data-spa="true"&gt;
+    <h3 class="fw-semibold mb-2">Forms</h3>
+    <p class="opacity-75">The bridge also works with forms. When submitted, the data is sent via AJAX and updates the
+        target automatically:</p>
+    <div class="mb-4">
+        <pre class="code-box p-3 rounded"><code>&lt;form action="/search" method="POST" data-spa="true"&gt;
     &lt;input type="text" name="query" /&gt;
     &lt;button type="submit"&gt;Search&lt;/button&gt;
 &lt;/form&gt;</code></pre>
-
-    <h2 id="custom-targets">Custom Targets</h2>
-    <p>By default, the SPA bridge updates the <code>#app-content</code> element. You can specify a different target
-        using <code>data-spa-target</code>:</p>
-    <pre class="bg-dark text-white p-3 rounded"><code>&lt;a href="/sidebar-update" data-spa="true" data-spa-target="#sidebar"&gt;
-    Update Sidebar Only
-&lt;/a&gt;</code></pre>
-
-    <div class="alert alert-warning border-0 shadow-sm">
-        <i class="fas fa-exclamation-triangle me-2"></i>
-        <strong>Note:</strong> The server must be prepared to return partial HTML when requested with the
-        <code>X-Plugs-SPA</code> header.
     </div>
 
-    <h2 id="benefits">Benefits</h2>
-    <ul>
-        <li><strong>Performance:</strong> Only fragments of the page are transmitted and rendered.</li>
-        <li><strong>State Persistence:</strong> Global JavaScript state (like audio players or persistent sidebars)
-            remains intact.</li>
-        <li><strong>Smoothness:</strong> Eliminates the "white flash" associated with full page reloads.</li>
-    </ul>
+    <h2 class="fw-bold mt-5 mb-3" id="custom-targets">Custom Targets</h2>
+    <p class="opacity-75">Specify a different update target using <code>data-spa-target</code>:</p>
+    <div class="mb-4">
+        <pre
+            class="code-box p-3 rounded"><code>&lt;a href="/sidebar" data-spa="true" data-spa-target="#sidebar"&gt;Update Sidebar Only&lt;/a&gt;</code></pre>
+    </div>
+
+    <div class="alert alert-info bg-opacity-10 border-0 p-4 rounded-4 mb-5">
+        <div class="d-flex align-items-center">
+            <span class="fs-4 me-3">💡</span>
+            <div class="small opacity-75">
+                <strong>Pro Tip:</strong> The framework automatically attaches an <code>X-Plugs-SPA</code> header so
+                your controllers can return partial HTML if needed.
+            </div>
+        </div>
+    </div>
 </div>
 @endsection
+
+@push('styles')
+<style>
+    .code-box {
+        background-color: rgba(var(--text-rgb), 0.05) !important;
+        border: 1px solid rgba(var(--text-rgb), 0.1);
+    }
+
+    .code-box code {
+        color: var(--primary);
+    }
+</style>
+@endpush

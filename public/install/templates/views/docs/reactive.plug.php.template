@@ -2,19 +2,20 @@
 
 @section('content')
 <div data-aos="fade-up">
-    <h1>Reactive Components</h1>
-    <p class="lead text-muted">
+    <h1 class="display-5 fw-bold mb-4">Reactive Components</h1>
+    <p class="lead opacity-75 mb-5">
         Reactive Components are PHP classes that manage their own state and can be updated instantly via AJAX using
         simple HTML directives.
     </p>
 
-    <h2 id="defining-components">Defining Components</h2>
-    <p>
+    <h2 class="fw-bold mb-3" id="defining-components">Defining Components</h2>
+    <p class="opacity-75">
         To create a reactive component, extend the <code>Plugs\View\ReactiveComponent</code> class. Define public
         properties to represent your component's state.
     </p>
 
-    <pre class="bg-dark text-white p-3 rounded"><code>namespace App\Components;
+    <div class="mb-4">
+        <pre class="code-box p-3 rounded"><code>namespace App\Components;
 
 use Plugs\View\ReactiveComponent;
 
@@ -29,35 +30,54 @@ class MyComponent extends ReactiveComponent {
         return 'components.my_component';
     }
 }</code></pre>
+    </div>
 
-    <h2 id="view-directives">Interactivity Directives</h2>
-    <p>
+    <h2 class="fw-bold mt-5 mb-3" id="view-directives">Interactivity Directives</h2>
+    <p class="opacity-75">
         Plugs provides special attributes to trigger server-side methods directly from your HTML:
     </p>
 
-    <ul>
-        <li><code>p-click</code>: Triggered on element click.</li>
-        <li><code>p-change</code>: Triggered on input value change.</li>
-        <li><code>p-submit</code>: Triggered on form submission.</li>
+    <ul class="opacity-75">
+        <li class="mb-2"><code>p-click</code>: Triggered on element click.</li>
+        <li class="mb-2"><code>p-change</code>: Triggered on input value change.</li>
+        <li class="mb-2"><code>p-submit</code>: Triggered on form submission.</li>
     </ul>
 
-    <h3>Example Template</h3>
-    <pre class="bg-dark text-white p-3 rounded"><code>&lt;div&gt;
+    <h3 class="fw-semibold mt-4 mb-2">Example Template</h3>
+    <div class="mb-4">
+        <pre class="code-box p-3 rounded"><code>&lt;div&gt;
     &lt;span&gt;Value: {!! $count !!}&lt;/span&gt;
     &lt;button p-click="increment"&gt;+&lt;/button&gt;
 &lt;/div&gt;</code></pre>
+    </div>
 
-    <h2 id="state-management">State Management</h2>
-    <p>
+    <h2 class="fw-bold mt-5 mb-3" id="state-management">State Management</h2>
+    <p class="opacity-75">
         The framework automatically serializes your component's state into the HTML. When an action is triggered, the
-        state is sent back to the server, hydrated into the component class, the method is executed, and the updated
-        HTML is returned.
+        state is sent back to the server, hydrated, executed, and the updated HTML is returned.
     </p>
 
-    <div class="alert alert-success border-0 shadow-sm">
-        <i class="fas fa-check-circle me-2"></i>
-        <strong>Type Safety:</strong> Plugs uses PHP Reflection to ensure state is correctly cast to the property types
-        (int, bool, float) during hydration.
+    <div class="alert alert-success bg-opacity-10 border-0 p-4 rounded-4 mb-5">
+        <div class="d-flex align-items-center">
+            <span class="fs-4 me-3">🛡️</span>
+            <div class="small opacity-75">
+                <strong>Type Safety:</strong> Plugs uses PHP Reflection to ensure state is correctly cast to the
+                property types (int, bool, etc.) during hydration.
+            </div>
+        </div>
     </div>
 </div>
 @endsection
+
+@push('styles')
+<style>
+    .code-box {
+        background-color: rgba(var(--text-rgb), 0.05) !important;
+        border: 1px solid rgba(var(--text-rgb), 0.1);
+    }
+
+    .code-box code {
+        color: var(--primary);
+    }
+</style>
+@endpush

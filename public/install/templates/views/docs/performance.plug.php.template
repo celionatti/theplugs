@@ -1,0 +1,104 @@
+@extends('layouts.docs')
+
+@section('content')
+<div data-aos="fade-up">
+    <h1 class="display-5 fw-bold mb-4">Performance Optimization</h1>
+
+    <p class="lead opacity-75 mb-5">
+        Plugs is designed for speed. In production environments, you can leverage persistent caching to achieve up to 3x
+        faster bootstrap times.
+    </p>
+
+    <div class="card glass-card border-0 mb-5">
+        <div class="card-body p-4">
+            <h4 class="fw-bold mb-3">🚀 The Optimization Strategy</h4>
+            <p class="opacity-75 mb-0">
+                During development, Plugs dynamically parses configuration files and route definitions on every request.
+                In production, this overhead can be eliminated by "compiling" these into single, high-performance PHP
+                files.
+            </p>
+        </div>
+    </div>
+
+    <h3 class="fw-bold mb-4">1. Configuration Caching</h3>
+    <p class="opacity-75">
+        Configuration caching combines all your <code>.env</code> and <code>config/*.php</code> files into a single
+        cached file.
+        This reduces disk I/O and CPU cycles significantly.
+    </p>
+    <div class="mb-4">
+        <pre class="code-box p-3 rounded"><code>php theplugs config:cache</code></pre>
+    </div>
+
+    <h3 class="fw-bold mb-4">2. Route Caching</h3>
+    <p class="opacity-75">
+        Route caching serializes all your route definitions. The framework can then load the entire routing table in a
+        single
+        atomic operation instead of parsing multiple files and executing closures.
+    </p>
+    <div class="mb-4">
+        <pre class="code-box p-3 rounded"><code>php theplugs route:cache</code></pre>
+    </div>
+
+    <div class="alert alert-warning bg-opacity-10 border-0 p-4 rounded-4 mb-5">
+        <div class="d-flex align-items-center">
+            <span class="fs-3 me-3">⚠️</span>
+            <div>
+                <strong class="text-warning">Closure Limitation:</strong> Routes using anonymous functions (Closures)
+                cannot be cached.
+                Move your route logic to Controller classes to enable route caching.
+            </div>
+        </div>
+    </div>
+
+    <h3 class="fw-bold mb-4">3. The Master Command</h3>
+    <p class="opacity-75">
+        For your deployment script, use the <code>optimize</code> command to cache everything at once:
+    </p>
+    <div class="mb-4">
+        <pre class="code-box p-3 rounded"><code>php theplugs optimize</code></pre>
+    </div>
+
+    <hr class="opacity-25 my-5">
+
+    <div class="d-flex justify-content-between align-items-center">
+        <a href="/docs/reactive" class="text-decoration-none opacity-50 hover-opacity-100 transition-all">← Reactive
+            Components</a>
+        <a href="/docs" class="text-primary text-decoration-none fw-bold">Back to Index</a>
+    </div>
+</div>
+@endsection
+
+@push('styles')
+<style>
+    .glass-card {
+        background: rgba(var(--text-rgb), 0.03);
+        border: 1px solid rgba(var(--text-rgb), 0.05);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+    }
+
+    .code-box {
+        background-color: rgba(var(--text-rgb), 0.05) !important;
+        border: 1px solid rgba(var(--text-rgb), 0.1);
+        font-family: 'JetBrains Mono', monospace;
+    }
+
+    .code-box code {
+        color: var(--primary);
+    }
+
+    .hover-opacity-100:hover {
+        opacity: 1 !important;
+    }
+
+    :root {
+        --text-rgb: 255, 255, 255;
+        /* Default for dark docs layout */
+    }
+
+    [data-theme="light"] {
+        --text-rgb: 0, 0, 0;
+    }
+</style>
+@endpush

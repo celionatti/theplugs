@@ -10,28 +10,31 @@ declare(strict_types=1);
 | This file is where you can define all of the routes that are handled
 | by your application. Just tell the router the URIs it should respond
 | to and give it the controller to call when that URI is requested.
-| Also - 
+| Also -
 | Using the Route facade for clean, static route definitions.
 */
 
-use Plugs\Facades\Route;
 use App\Http\Controllers\HomeController;
+use Plugs\Facades\Route;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/home', [HomeController::class, 'index']);
+
 
 // Documentation Routes
 Route::get('/docs', function () {
     return view("docs.index", ['title' => "Documentation"]);
 });
 
-Route::get('/docs/{page?}', function($page = 'index') {
+Route::get('/docs/{page?}', function ($page = 'index') {
     $titles = [
         'index' => 'Introduction',
         'examples' => 'Examples',
         'reactive' => 'Reactive Components',
-        'spa' => 'SPA Bridge'
+        'spa' => 'SPA Bridge',
+        'performance' => 'Performance Optimization',
     ];
+
     return view("docs.$page", ['title' => $titles[$page] ?? 'Documentation']);
 });
 

@@ -1,69 +1,92 @@
 @extends('layouts.default')
 
-@section('title', 'Welcome')
+@section('title', 'Welcome to Plugs')
 
 @section('content')
-<div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-lg-8 text-center">
-            <h1 class="display-4 mb-4">
-                <span style="font-family: 'Dancing Script', cursive; background: linear-gradient(135deg, #8b5cf6, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">
-                    Plugs
-                </span>
-            </h1>
-            <h2 class="mb-4 text-white">{{ $title ?? '{{APP_NAME}}' }}</h2>
-            <p class="lead text-white-50 mb-5">{{ $message ?? 'Your application is ready to go!' }}</p>
-            
-            <div class="card bg-dark text-light border-0 shadow-lg">
-                <div class="card-body p-5">
-                    <h4 class="mb-4">🚀 You're all set!</h4>
-                    <p class="mb-4">Your Plugs Framework installation was successful. Here's what you can do next:</p>
-                    
-                    <div class="row text-start g-4">
-                        <div class="col-md-6">
-                            <div class="d-flex align-items-start">
-                                <span class="me-3 fs-4">📚</span>
-                                <div>
-                                    <h6>Read the Docs</h6>
-                                    <p class="small text-warning mb-2">Learn about routing, controllers, views, and more.</p>
-                                    <a href="/docs" class="btn btn-outline-warning btn-sm px-3">Explore Documentation</a>
-                                </div>
-                            </div>
+<div class="hero-container">
+    <div class="hero-glow"></div>
+    <div class="container py-5 min-vh-100 d-flex flex-column justify-content-center">
+        <div class="row align-items-center">
+            <div class="col-lg-6 text-start mb-5 mb-lg-0">
+                <div class="badge-new mb-3">
+                    <span class="pulse"></span>
+                    Version 3.0.0 Optimized
+                </div>
+                <h1 class="display-3 fw-bold mb-4 text-white">
+                    <span class="plugs-text">Plugs</span><br>
+                    Framework
+                </h1>
+                <p class="lead text-white-50 mb-5 fs-4">
+                    The ultra-fast, premium PHP framework designed for developers who value performance, security, and
+                    aesthetics.
+                </p>
+
+                <div class="d-flex gap-3">
+                    <a href="/docs" class="btn btn-premium px-4 py-3">
+                        <i class="bi bi-book me-2"></i> Get Started
+                    </a>
+                    <a href="https://github.com/celionatti/plugs" class="btn btn-glass px-4 py-3">
+                        <i class="bi bi-github me-2"></i> GitHub
+                    </a>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="feature-grid">
+                    <div class="feature-card glass-card">
+                        <div class="feature-icon bg-success-glow">🚀</div>
+                        <h5>Ultra-Fast</h5>
+                        <p class="small text-white-50 p-0 m-0">Optimized with native route and config caching.</p>
+                    </div>
+                    <div class="feature-card glass-card">
+                        <div class="feature-icon bg-blue-glow">🛡️</div>
+                        <h5>Secure</h5>
+                        <p class="small text-white-50 p-0 m-0">Multi-layered shield and CSRF protection.</p>
+                    </div>
+                    <div class="feature-card glass-card">
+                        <div class="feature-icon bg-purple-glow">✨</div>
+                        <h5>Reactive</h5>
+                        <p class="small text-white-50 p-0 m-0">Live-updating components without JS overhead.</p>
+                    </div>
+                    <div class="feature-card glass-card">
+                        <div class="feature-icon bg-orange-glow">🎨</div>
+                        <h5>Premium</h5>
+                        <p class="small text-white-50 p-0 m-0">Modern OKLCH color system and dark mode.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-5 pt-5">
+            <div class="col-12 text-start">
+                <h4 class="text-white mb-4">Latest Breakthroughs</h4>
+                <div class="row g-4">
+                    <div class="col-md-4">
+                        <div class="update-card">
+                            <div class="update-tag">NEW</div>
+                            <h6>Premium Flash Messages</h6>
+                            <p class="small text-white-50">Beautiful OKLCH-powered alerts with staggered animations.</p>
+                            <a href="/docs" class="link-glow small">Learn more →</a>
                         </div>
-                        <div class="col-md-6">
-                            <div class="d-flex align-items-start">
-                                <span class="me-3 fs-4">🛠️</span>
-                                <div>
-                                    <h6>Build Your App</h6>
-                                    <p class="small text-warning mb-0">Create controllers, models, and views.</p>
-                                </div>
-                            </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="update-card">
+                            <div class="update-tag bg-info">OPTIMIZED</div>
+                            <h6>Route & Config Caching</h6>
+                            <p class="small text-white-50">Up to 3x faster bootstrap times for production.</p>
+                            <a href="/docs" class="link-glow small">Configure optimization →</a>
                         </div>
-                        <div class="col-md-6">
-                            <div class="d-flex align-items-start">
-                                <span class="me-3 fs-4">🎨</span>
-                                <div>
-                                    <h6>Customize</h6>
-                                    <p class="small text-warning mb-0">Update this page in <code>resources/views/home/index.plug.php</code></p>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="d-flex align-items-start">
-                                <span class="me-3 fs-4">⚙️</span>
-                                <div>
-                                    <h6>Configure</h6>
-                                    <p class="small text-warning mb-0">Update settings in your <code>.env</code> file and <code>config/</code> directory.</p>
-                                </div>
-                            </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="update-card">
+                            <div class="update-tag bg-primary">ENHANCED</div>
+                            <h6>The Plugs CLI</h6>
+                            <p class="small text-white-50">New `optimize` and `cache` commands for deployments.</p>
+                            <a href="/docs" class="link-glow small">CLI Guide →</a>
                         </div>
                     </div>
                 </div>
             </div>
-            
-            <p class="mt-5 text-white-50">
-                <small>Powered by Plugs Framework &bull; Created by <a href="https://github.com/celionatti" class="text-decoration-none text-light">Celio Natti</a></small>
-            </p>
         </div>
     </div>
 </div>
@@ -71,19 +94,195 @@
 
 @push('styles')
 <style>
+    :root {
+        --plugs-primary: oklch(70% 0.18 260);
+        --plugs-secondary: oklch(65% 0.15 285);
+        --hero-bg: oklch(15% 0.05 260);
+    }
+
     body {
-        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-        min-height: 100vh;
+        background-color: var(--hero-bg);
+        color: white;
+        overflow-x: hidden;
     }
-    .card {
-        background: rgba(30, 41, 59, 0.8) !important;
+
+    .hero-container {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .hero-glow {
+        position: absolute;
+        top: -10%;
+        right: -10%;
+        width: 60%;
+        height: 80%;
+        background: radial-gradient(circle, oklch(40% 0.15 260 / 0.15) 0%, transparent 70%);
+        z-index: -1;
+        filter: blur(100px);
+    }
+
+    .plugs-text {
+        background: linear-gradient(135deg, var(--plugs-primary), var(--plugs-secondary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .btn-premium {
+        background: linear-gradient(135deg, var(--plugs-primary), var(--plugs-secondary));
+        color: white;
+        border: none;
+        box-shadow: 0 10px 20px -5px oklch(50% 0.15 260 / 0.3);
+        transition: all 0.3s;
+        font-weight: 600;
+        border-radius: 12px;
+    }
+
+    .btn-premium:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 15px 30px -5px oklch(50% 0.15 260 / 0.4);
+        color: white;
+    }
+
+    .btn-glass {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: white;
         backdrop-filter: blur(10px);
+        transition: all 0.3s;
+        border-radius: 12px;
     }
-    code {
-        background: rgba(139, 92, 246, 0.2);
-        padding: 2px 6px;
+
+    .btn-glass:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+    }
+
+    .badge-new {
+        display: inline-flex;
+        align-items: center;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        padding: 6px 16px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: var(--plugs-primary);
+    }
+
+    .pulse {
+        width: 8px;
+        height: 8px;
+        background: var(--plugs-primary);
+        border-radius: 50%;
+        margin-right: 10px;
+        animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+    }
+
+    @keyframes pulse-ring {
+        0% {
+            transform: scale(.33);
+            opacity: 1;
+        }
+
+        80%,
+        100% {
+            opacity: 0;
+        }
+    }
+
+    .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+    }
+
+    .feature-card {
+        padding: 30px;
+        border-radius: 24px;
+        text-align: center;
+        transition: all 0.3s;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-5px);
+        background: rgba(255, 255, 255, 0.08);
+    }
+
+    .glass-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(20px);
+    }
+
+    .feature-icon {
+        width: 60px;
+        height: 60px;
+        margin: 0 auto 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 16px;
+        font-size: 24px;
+    }
+
+    .bg-success-glow {
+        background: oklch(75% 0.15 145 / 0.15);
+        color: oklch(75% 0.15 145);
+        border: 1px solid oklch(75% 0.15 145 / 0.2);
+    }
+
+    .bg-blue-glow {
+        background: oklch(70% 0.18 245 / 0.15);
+        color: oklch(70% 0.18 245);
+        border: 1px solid oklch(70% 0.18 245 / 0.2);
+    }
+
+    .bg-purple-glow {
+        background: oklch(70% 0.18 300 / 0.15);
+        color: oklch(70% 0.18 300);
+        border: 1px solid oklch(70% 0.18 300 / 0.2);
+    }
+
+    .bg-orange-glow {
+        background: oklch(75% 0.15 60 / 0.15);
+        color: oklch(75% 0.15 60);
+        border: 1px solid oklch(75% 0.15 60 / 0.2);
+    }
+
+    .update-card {
+        background: rgba(255, 255, 255, 0.02);
+        border-left: 3px solid var(--plugs-primary);
+        padding: 24px;
+        border-radius: 0 16px 16px 0;
+        height: 100%;
+        transition: all 0.3s;
+    }
+
+    .update-card:hover {
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    .update-tag {
+        display: inline-block;
+        font-size: 10px;
+        font-weight: 800;
+        padding: 2px 8px;
         border-radius: 4px;
-        color: #a78bfa;
+        background: var(--plugs-primary);
+        color: black;
+        margin-bottom: 12px;
+    }
+
+    .link-glow {
+        color: var(--plugs-primary);
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s;
+    }
+
+    .link-glow:hover {
+        text-shadow: 0 0 10px var(--plugs-primary);
     }
 </style>
 @endpush
