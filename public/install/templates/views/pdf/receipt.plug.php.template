@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Receipt - {{ $receipt_number ?? 'REC-001' }}</title>
+    <style>
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            color: #1a1a1a;
+            background-color: #f0f2f5;
+            padding: 50px;
+            font-size: 14px;
+        }
+
+        .receipt-card {
+            background: white;
+            width: 350px;
+            margin: 0 auto;
+            padding: 30px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            border-top: 5px solid #198754;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .brand {
+            font-size: 20px;
+            font-weight: bold;
+            color: #198754;
+            margin-bottom: 5px;
+        }
+
+        .title {
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: #666;
+            font-size: 12px;
+        }
+
+        .divider {
+            border-top: 1px dashed #ddd;
+            margin: 20px 0;
+        }
+
+        .info-row {
+            display: table;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .info-label {
+            display: table-cell;
+            color: #888;
+            font-size: 11px;
+            text-transform: uppercase;
+        }
+
+        .info-value {
+            display: table-cell;
+            text-align: right;
+            font-weight: bold;
+        }
+
+        .amount-section {
+            text-align: center;
+            margin: 30px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .amount-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .amount-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #1a1a1a;
+        }
+
+        .status {
+            text-align: center;
+            color: #198754;
+            font-weight: bold;
+            text-transform: uppercase;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+
+        .status-bk {
+            display: inline-block;
+            padding: 4px 12px;
+            background: #e8f5e9;
+            border-radius: 20px;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #aaa;
+            font-size: 11px;
+        }
+
+        .qr-placeholder {
+            width: 60px;
+            height: 60px;
+            background: #eee;
+            margin: 20px auto;
+            border: 1px solid #ddd;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="receipt-card">
+        <div class="header">
+            <div class="brand">{{ $company_name ?? 'PLUGS PAY' }}</div>
+            <div class="title">Official Payment Receipt</div>
+        </div>
+
+        <div class="info-row">
+            <span class="info-label">Receipt No:</span>
+            <span class="info-value">#{{ $receipt_number ?? 'REC-998271' }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Date:</span>
+            <span class="info-value">{{ $date ?? date('d M Y, H:i') }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Payer:</span>
+            <span class="info-value">{{ $customer_name ?? 'Jane Smith' }}</span>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="info-row">
+            <span class="info-label">Payment For:</span>
+            <span class="info-value">{{ $description ?? 'Subscription Upgrade' }}</span>
+        </div>
+        <div class="info-row">
+            <span class="info-label">Method:</span>
+            <span class="info-value">{{ $payment_method ?? 'Visa **** 4421' }}</span>
+        </div>
+
+        <div class="amount-section">
+            <div class="amount-label">Amount Paid</div>
+            <div class="amount-value">{{ $currency ?? '$' }}{{ number_format($amount ?? 49.99, 2) }}</div>
+            <div class="status">
+                <span class="status-bk">✔ Transaction Success</span>
+            </div>
+        </div>
+
+        <div class="qr-placeholder">
+            <!-- Representing a QR code -->
+            <div style="font-size: 8px; text-align: center; margin-top: 20px;">QR CODE</div>
+        </div>
+
+        <div class="footer">
+            Thank you for choosing {{ $company_name ?? 'Plugs' }}.<br>
+            Auth ID: {{ $auth_id ?? bin2hex(random_bytes(4)) }}
+        </div>
+    </div>
+</body>
+
+</html>
