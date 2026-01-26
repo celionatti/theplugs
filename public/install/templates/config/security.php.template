@@ -25,6 +25,7 @@ return [
             '#^/webhook/#',
             '#^/public/upload$#',
             '#^/plugs/component/action$#',
+            '#^/plugs/profiler#',
         ],
 
         // Add token to request attributes
