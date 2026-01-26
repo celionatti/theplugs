@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>CV - {{ $name ?? 'Your Name' }}</title>
+    <style>
+        body {
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            color: #333;
+            line-height: 1.5;
+        }
+
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 200px;
+            background-color: #2c3e50;
+            color: white;
+            padding: 40px 30px;
+        }
+
+        .main-content {
+            margin-left: 260px;
+            padding: 40px 40px 40px 0;
+        }
+
+        .name {
+            font-size: 32px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        .title {
+            font-size: 18px;
+            color: #7f8c8d;
+            margin-bottom: 20px;
+        }
+
+        .section-header {
+            border-bottom: 2px solid #2c3e50;
+            color: #2c3e50;
+            font-size: 18px;
+            font-weight: bold;
+            margin: 30px 0 15px;
+            padding-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        .experience-item {
+            margin-bottom: 20px;
+        }
+
+        .exp-header {
+            display: table;
+            width: 100%;
+        }
+
+        .exp-title {
+            display: table-cell;
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .exp-date {
+            display: table-cell;
+            text-align: right;
+            color: #7f8c8d;
+            font-size: 13px;
+        }
+
+        .exp-company {
+            color: #2980b9;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .sidebar-section {
+            margin-bottom: 30px;
+        }
+
+        .sidebar-title {
+            font-size: 14px;
+            font-weight: bold;
+            text-transform: uppercase;
+            border-bottom: 1px solid #34495e;
+            padding-bottom: 5px;
+            margin-bottom: 10px;
+            color: #bdc3c7;
+        }
+
+        .skill-tag {
+            display: inline-block;
+            background-color: #34495e;
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin: 0 4px 4px 0;
+            font-size: 12px;
+        }
+
+        .contact-info {
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="sidebar">
+        <div class="sidebar-section">
+            <div class="sidebar-title">Contact</div>
+            <div class="contact-info">📞 {{ $phone ?? '+123 456 7890' }}</div>
+            <div class="contact-info">📧 {{ $email ?? 'hello@example.com' }}</div>
+            <div class="contact-info">📍 {{ $location ?? 'Digital Nomad' }}</div>
+            <div class="contact-info">🔗 {{ $website ?? 'www.example.com' }}</div>
+        </div>
+
+        <div class="sidebar-section">
+            <div class="sidebar-title">Core Skills</div>
+            @foreach($skills ?? ['PHP', 'Laravel', 'Plugs', 'JavaScript', 'CSS/SCSS'] as $skill)
+            <div class="skill-tag">{{ $skill }}</div>
+            @endforeach
+        </div>
+
+        <div class="sidebar-section">
+            <div class="sidebar-title">Education</div>
+            <div style="font-size: 12px;">
+                <strong>BSc Comp Science</strong><br>
+                Tech University<br>
+                <span style="color: #bdc3c7;">2018 - 2022</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <div class="name">{{ $name ?? 'Celio Natti' }}</div>
+        <div class="title">{{ $job_title ?? 'Senior Fullstack Developer' }}</div>
+
+        <div class="section-header">Profile</div>
+        <div style="font-size: 14px;">
+            {{ $profile ?? 'Passionate software architect with a focus on building high-performance PHP frameworks and
+            scalable web applications. Expert in clean code, design patterns, and creating intuitive developer
+            experiences.' }}
+        </div>
+
+        <div class="section-header">Experience</div>
+
+        @foreach($experience ?? [] as $exp)
+        <div class="experience-item">
+            <div class="exp-header">
+                <div class="exp-title">{{ $exp['role'] }}</div>
+                <div class="exp-date">{{ $exp['dates'] }}</div>
+            </div>
+            <div class="exp-company">{{ $exp['company'] }}</div>
+            <div style="font-size: 13px; margin-top: 5px;">
+                {{ $exp['description'] }}
+            </div>
+        </div>
+        @endforeach
+
+        @if(empty($experience))
+        <div class="experience-item">
+            <div class="exp-header">
+                <div class="exp-title">Lead Framework Architect</div>
+                <div class="exp-date">2023 - Present</div>
+            </div>
+            <div class="exp-company">Plugs Labs</div>
+            <div style="font-size: 13px; margin-top: 5px;">
+                Leading the development of the Plugs framework, focusing on performance optimization and modular
+                architecture design.
+            </div>
+        </div>
+        <div class="experience-item">
+            <div class="exp-header">
+                <div class="exp-title">Senior PHP Developer</div>
+                <div class="exp-date">2021 - 2023</div>
+            </div>
+            <div class="exp-company">Global Tech Solutions</div>
+            <div style="font-size: 13px; margin-top: 5px;">
+                Developed and maintained large-scale enterprise applications using modern PHP standards.
+            </div>
+        </div>
+        @endif
+
+        <div class="section-header">Projects</div>
+        <div style="font-size: 14px;">
+            <strong>Plugs Framework:</strong> A modern, lightweight PHP framework designed for speed and simplicity.<br>
+            <strong>TrustFlow:</strong> A complex payment escrow system with biometric validation.
+        </div>
+    </div>
+</body>
+
+</html>

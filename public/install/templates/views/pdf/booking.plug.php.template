@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Booking Confirmation - {{ $booking_id ?? 'BK-772' }}</title>
+    <style>
+        body {
+            font-family: 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            color: #1f2937;
+            background-color: #f9fafb;
+        }
+
+        .header {
+            background-color: #111827;
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .brand {
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: -0.025em;
+            color: #10b981;
+            /* Emerald green */
+            margin-bottom: 8px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: -30px auto 40px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            padding: 40px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            background-color: #d1fae5;
+            color: #065f46;
+            border-radius: 9999px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+        }
+
+        .itinerary-grid {
+            display: table;
+            width: 100%;
+            margin-bottom: 30px;
+            border-bottom: 1px solid #e5e7eb;
+            padding-bottom: 30px;
+        }
+
+        .itinerary-col {
+            display: table-cell;
+            width: 50%;
+        }
+
+        .label {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 4px;
+        }
+
+        .value {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .sub-value {
+            font-size: 14px;
+            color: #4b5563;
+        }
+
+        .property-card {
+            background-color: #f3f4f6;
+            padding: 24px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+
+        .property-name {
+            font-size: 20px;
+            font-weight: 800;
+            margin-bottom: 4px;
+        }
+
+        .details-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .details-table td {
+            padding: 12px 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+
+        .total-section {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #111827;
+            color: white;
+            border-radius: 8px;
+            display: table;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .total-section .label {
+            color: #9ca3af;
+        }
+
+        .total-section .value {
+            font-size: 24px;
+            color: #10b981;
+        }
+
+        .footer {
+            text-align: center;
+            font-size: 12px;
+            color: #9ca3af;
+            margin-top: 40px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <div class="brand">{{ $company_name ?? 'PLUGS STAY' }}</div>
+        <div style="font-size: 16px; opacity: 0.9;">Your Reservation is Confirmed</div>
+    </div>
+
+    <div class="container">
+        <div class="status-badge">Confirmed</div>
+
+        <div style="margin-bottom: 30px;">
+            <div class="label">Booking ID</div>
+            <div class="value">#{{ $booking_id ?? 'BS-2026-9003' }}</div>
+        </div>
+
+        <div class="itinerary-grid">
+            <div class="itinerary-col">
+                <div class="label">Check-In</div>
+                <div class="value">{{ $check_in_date ?? 'Sun, 15 Mar 2026' }}</div>
+                <div class="sub-value">After {{ $check_in_time ?? '03:00 PM' }}</div>
+            </div>
+            <div class="itinerary-col" style="padding-left: 20px; border-left: 1px solid #e5e7eb;">
+                <div class="label">Check-Out</div>
+                <div class="value">{{ $check_out_date ?? 'Wed, 18 Mar 2026' }}</div>
+                <div class="sub-value">Before {{ $check_out_time ?? '11:00 AM' }}</div>
+            </div>
+        </div>
+
+        <div class="property-card">
+            <div class="label">Property / Location</div>
+            <div class="property-name">{{ $property_name ?? 'Ocean Breeze Resorts & Spa' }}</div>
+            <div class="sub-value">{{ $location ?? 'Luxury Block A, Coastal Road, Maldives' }}</div>
+        </div>
+
+        <table class="details-table">
+            <tr>
+                <td class="label">Guests</td>
+                <td class="value" style="text-align: right;">{{ $guests ?? '2 Adults' }}</td>
+            </tr>
+            <tr>
+                <td class="label">Accommodation</td>
+                <td class="value" style="text-align: right;">{{ $room_type ?? 'Deluxe Sea View Suite' }}</td>
+            </tr>
+            <tr>
+                <td class="label">Special Requests</td>
+                <td class="sub-value" style="text-align: right;">{{ $requests ?? 'High floor, feather pillows' }}</td>
+            </tr>
+        </table>
+
+        <div class="total-section">
+            <div style="display: table-cell; vertical-align: middle;">
+                <div class="label">Total Price (incl. tax)</div>
+            </div>
+            <div style="display: table-cell; text-align: right; vertical-align: middle;">
+                <div class="value">{{ $currency ?? '$' }}{{ number_format($total_price ?? 1250, 2) }}</div>
+            </div>
+        </div>
+
+        <div style="margin-top: 30px; font-size: 13px; color: #4b5563;">
+            <strong>Important Info:</strong> Please have a valid ID ready at check-in. Free cancellation ends 48 hours
+            before arrival.
+        </div>
+    </div>
+
+    <div class="footer">
+        Generated by Plugs Framework &bull; Booking Support: +1 (800) 123-PLUGS
+    </div>
+</body>
+
+</html>
