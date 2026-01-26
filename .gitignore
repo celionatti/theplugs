@@ -9,7 +9,6 @@
 .idea/
 .vscode/
 composer.lock
-composer.json
 package-lock.json
 /sample/
 
