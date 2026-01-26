@@ -240,7 +240,7 @@ $container->singleton(\Psr\Http\Message\ServerRequestInterface::class, function 
 if (\Plugs\Plugs::isProduction() && $router->loadFromPersistentCache()) {
     // Routes loaded from cache!
 } else {
-    require BASE_PATH . 'routes/default.php';
+    $router->loadInternalRoutes();
     require BASE_PATH . 'routes/web.php';
 
     // Load API Routes with Prefix and JSON Middleware
