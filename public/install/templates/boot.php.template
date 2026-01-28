@@ -254,7 +254,8 @@ if (\Plugs\Plugs::isProduction() && $router->loadFromPersistentCache()) {
 
 $router->enablePagesRouting(base_path('resources/pages'), [
     'namespace' => 'App\\Pages',
-    // 'cache' => true, // Enable in production
+    'cache' => \Plugs\Plugs::isProduction(),
+    'cache_file' => storage_path('framework/pages_routes.php'),
 ]);
 $router->loadPagesRoutes();
 
