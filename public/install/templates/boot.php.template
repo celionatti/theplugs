@@ -114,6 +114,9 @@ $app->pipe(new \Plugs\Http\Middleware\SPAMiddleware());
 // Add flash message lifecycle management
 $app->pipe(new \Plugs\Http\Middleware\FlashMiddleware());
 
+// Add validation exception handling
+$app->pipe(new \Plugs\Http\Middleware\HandleValidationExceptions());
+
 // Add security headers middleware
 if (!empty($securityConfig['headers'])) {
     $app->pipe(new SecurityHeadersMiddleware($securityConfig['headers']));
