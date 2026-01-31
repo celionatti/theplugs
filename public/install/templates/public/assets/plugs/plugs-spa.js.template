@@ -16,7 +16,32 @@ class PlugsSPA {
         };
 
         this.cache = new Map();
+        this.currentView = null; // Track active view controller
+
         this.init();
+    }
+
+    /**
+     * Define the view controller for the current page.
+     * Call this in an inline script within your view.
+     * 
+     * Pattern 1 (Object): Plugs.view({ mount() { ... }, unmount() { ... } })
+     * Pattern 2 (Function): Plugs.view(() => { ...; return () => { cleanup... } })
+     * 
+     * @param {object|function} controller 
+     */
+    view(controller) {
+        if (typeof controller === 'function') {
+            const cleanup = controller();
+            if (typeof cleanup === 'function') {
+                this.currentView = { unmount: cleanup };
+            } else {
+                this.currentView = null;
+            }
+        } else if (controller && typeof controller === 'object') {
+            this.currentView = controller;
+            if (controller.mount) controller.mount();
+        }
     }
 
     init() {
@@ -34,6 +59,7 @@ class PlugsSPA {
             backgroundColor: '#3b82f6',
             zIndex: '9999',
             transition: 'width 0.3s ease, opacity 0.3s ease',
+            pointerEvents: 'none',
             opacity: '0'
         });
         document.body.appendChild(this.progressBar);
@@ -60,7 +86,7 @@ class PlugsSPA {
         this.initializeComponents();
 
         window.plugsSPAInitialized = true;
-        console.log('Plugs SPA Bridge initialized (Production Mode).');
+        console.log('Plugs SPA Bridge initialized (v2.1).');
     }
 
     initializeComponents(container = document) {
@@ -76,29 +102,83 @@ class PlugsSPA {
         components.forEach(el => {
             if (el._plugInitialized) return;
 
-            // Find all elements with p-click within this component
-            const actions = el.querySelectorAll('[p-click], [p-change], [p-submit]');
-            actions.forEach(actionEl => {
-                if (actionEl.hasAttribute('p-click')) {
-                    actionEl.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        this.callComponentAction(el, 'click', actionEl.getAttribute('p-click'));
-                    });
-                }
-                // Add more event types as needed
+            // p-click
+            el.querySelectorAll('[p-click]').forEach(actionEl => {
+                actionEl.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.callComponentAction(el, 'click', actionEl.getAttribute('p-click'));
+                });
+            });
+
+            // p-change (inputs, selects)
+            el.querySelectorAll('[p-change]').forEach(actionEl => {
+                actionEl.addEventListener('change', (e) => {
+                    this.callComponentAction(el, 'change', actionEl.getAttribute('p-change'), this.getInputValue(actionEl));
+                });
+            });
+
+            // p-submit (forms)
+            el.querySelectorAll('form[p-submit]').forEach(formEl => {
+                formEl.addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const formData = new FormData(formEl);
+                    const data = Object.fromEntries(formData.entries());
+                    this.callComponentAction(el, 'submit', formEl.getAttribute('p-submit'), data);
+                });
+            });
+
+            // p-blur
+            el.querySelectorAll('[p-blur]').forEach(actionEl => {
+                actionEl.addEventListener('blur', (e) => {
+                    this.callComponentAction(el, 'blur', actionEl.getAttribute('p-blur'), this.getInputValue(actionEl));
+                });
+            });
+
+            // p-keyup (with p-debounce support)
+            el.querySelectorAll('[p-keyup]').forEach(actionEl => {
+                const action = actionEl.getAttribute('p-keyup');
+                const debounceTime = parseInt(actionEl.getAttribute('p-debounce') || '0');
+
+                let timer;
+                actionEl.addEventListener('keyup', (e) => {
+                    if (timer) clearTimeout(timer);
+                    timer = setTimeout(() => {
+                        this.callComponentAction(el, 'keyup', action, this.getInputValue(actionEl));
+                    }, debounceTime);
+                });
+            });
+
+            // p-intersect
+            el.querySelectorAll('[p-intersect]').forEach(actionEl => {
+                const action = actionEl.getAttribute('p-intersect');
+                const observer = new IntersectionObserver((entries) => {
+                    if (entries[0].isIntersecting) {
+                        this.callComponentAction(el, 'intersect', action);
+                        observer.disconnect(); // Typically intersect is a one-time trigger like "visible"
+                    }
+                });
+                observer.observe(actionEl);
             });
 
             el._plugInitialized = true;
         });
     }
 
-    async callComponentAction(componentEl, eventType, action) {
+    getInputValue(el) {
+        if (el.type === 'checkbox') return el.checked;
+        if (el.type === 'radio') return el.checked ? el.value : null;
+        return el.value;
+    }
+
+    async callComponentAction(componentEl, eventType, action, payload = null) {
         const name = componentEl.dataset.plugComponent;
         const state = componentEl.dataset.plugState;
         const id = componentEl.id;
 
-        // Visual feedback
-        componentEl.style.opacity = '0.7';
+        // Visual feedback (unless specifically disabled or it's a background event like intersect/keyup)
+        if (eventType !== 'intersect' && eventType !== 'keyup') {
+            componentEl.style.opacity = '0.7';
+        }
 
         try {
             const response = await fetch('/plugs/component/action', {
@@ -113,17 +193,24 @@ class PlugsSPA {
                     action: action,
                     state: state,
                     id: id,
-                    params: []
+                    payload: payload
                 })
             });
 
             if (!response.ok) throw new Error('Action failed');
 
+            this.handleFlashMessage(response);
+
             const result = await response.json();
 
             // Update HTML
-            componentEl.innerHTML = result.html;
-            componentEl.dataset.plugState = result.state;
+            if (result.html) {
+                componentEl.innerHTML = result.html;
+            }
+
+            if (result.state) {
+                componentEl.dataset.plugState = result.state;
+            }
 
             // Re-initialize children if they are components
             this.initializeComponents(componentEl);
@@ -243,6 +330,20 @@ class PlugsSPA {
         return link.host === window.location.host;
     }
 
+    handleFlashMessage(response) {
+        const flash = response.headers.get('X-Plugs-Flash');
+        if (flash) {
+            try {
+                const message = JSON.parse(flash);
+                // Dispatch event for other listeners
+                window.dispatchEvent(new CustomEvent('plugs:flash', { detail: message }));
+
+                // Default Toast (Simple alert if no UI library attached, can be overridden)
+                console.log('Flash:', message);
+            } catch (e) { }
+        }
+    }
+
     async navigate(url, pushState = true, targetSelector = null, fetchOptions = {}) {
         targetSelector = targetSelector || this.options.contentSelector;
         const contentArea = document.querySelector(targetSelector);
@@ -255,16 +356,27 @@ class PlugsSPA {
             return false;
         }
 
+        // View Transitions API
+        if (document.startViewTransition && targetSelector === this.options.contentSelector) {
+            return document.startViewTransition(() => this._performNavigation(url, pushState, targetSelector, fetchOptions, contentArea)).finished;
+        } else {
+            return this._performNavigation(url, pushState, targetSelector, fetchOptions, contentArea);
+        }
+    }
+
+    async _performNavigation(url, pushState, targetSelector, fetchOptions, contentArea) {
         this.options.onNavigate(url);
         document.body.classList.add(this.options.loaderClass);
         this.showProgress();
 
-        // Visual feedback
-        contentArea.style.opacity = '0.5';
+        // Visual feedback (unless View Transitions active)
+        if (!document.startViewTransition) {
+            contentArea.style.opacity = '0.5';
+        }
 
         // Skeleton Support
         const skeletonType = contentArea.getAttribute('data-spa-skeleton');
-        if (skeletonType) {
+        if (skeletonType && !document.startViewTransition) {
             contentArea.innerHTML = this.getSkeletonPlaceholder(skeletonType);
         }
 
@@ -293,6 +405,8 @@ class PlugsSPA {
                 });
 
                 if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
+
+                this.handleFlashMessage(response);
 
                 // Handle potential JSON response (e.g. for API-like forms)
                 const contentType = response.headers.get('content-type');
@@ -324,37 +438,48 @@ class PlugsSPA {
                 return true;
             }
 
-            // Update target content
-            contentArea.innerHTML = html;
+            // Internal Helper to swap and mount
+            const performUpdate = () => {
+                // Unmount current view
+                if (this.currentView && this.currentView.unmount) {
+                    try { this.currentView.unmount(); } catch (e) { console.error('Unmount Error:', e); }
+                }
+                this.currentView = null; // Reset
 
-            // Execute scripts in the new content
-            const scripts = contentArea.querySelectorAll('script');
-            scripts.forEach(oldScript => {
-                const newScript = document.createElement('script');
-                Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
-                newScript.appendChild(document.createTextNode(oldScript.innerHTML));
-                oldScript.parentNode.replaceChild(newScript, oldScript);
-            });
+                // Swap Content
+                contentArea.innerHTML = html;
 
-            // Update URL only for main content transitions
-            if (pushState && targetSelector === this.options.contentSelector) {
-                window.history.pushState({ spa: true }, '', url);
+                // Execute Scripts (This will trigger Plugs.view() calls in the new content)
+                contentArea.querySelectorAll('script').forEach(oldScript => {
+                    const newScript = document.createElement('script');
+                    Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
+                    newScript.appendChild(document.createTextNode(oldScript.innerHTML));
+                    oldScript.parentNode.replaceChild(newScript, oldScript);
+                });
+
+                // Initialize Reactivity in new content
+                this.initializeComponents(contentArea);
+
+                // Update URL and Scroll
+                if (pushState && targetSelector === this.options.contentSelector) {
+                    window.history.pushState({ spa: true }, '', url);
+                    window.scrollTo(0, 0);
+                }
+            };
+
+            // Execute Update (either directly or via transition)
+            if (document.startViewTransition && targetSelector === this.options.contentSelector) {
+                await document.startViewTransition(performUpdate).finished;
+            } else {
+                performUpdate();
             }
-
-            // Scroll to top only for main content
-            if (targetSelector === this.options.contentSelector) {
-                window.scrollTo(0, 0);
-            }
-
-            // Sync Reactive Components
-            this.initializeComponents();
 
             this.options.onComplete(url);
             return true;
         } catch (error) {
             this.options.onError(error);
             if (pushState && targetSelector === this.options.contentSelector) {
-                window.location.href = url;
+                window.location.href = url; // Fallback to normal navigation
             }
             return false;
         } finally {
@@ -418,4 +543,6 @@ class PlugsSPA {
 // Auto-initialize if script is loaded
 if (!window.plugsSPA) {
     window.plugsSPA = new PlugsSPA();
+    // Expose correctly
+    window.Plugs = window.plugsSPA;
 }
