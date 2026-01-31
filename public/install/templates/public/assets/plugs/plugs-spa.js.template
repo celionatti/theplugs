@@ -13,12 +13,29 @@ class PlugsSPA {
             onComplete: options.onComplete || (() => { }),
             onError: options.onError || ((err) => console.error('SPA Navigation Error:', err)),
             prefetch: options.prefetch !== false, // Default to true
+            cacheMaxSize: options.cacheMaxSize || 50, // Maximum cache entries
+            cacheTTL: options.cacheTTL || 300000, // 5 minutes in milliseconds
         };
 
         this.cache = new Map();
+        this.cacheTimestamps = new Map(); // Track when entries were cached
         this.currentView = null; // Track active view controller
 
         this.init();
+    }
+
+    /**
+     * Clean expired cache entries and enforce size limits
+     */
+    cleanCache() {
+        // Enforce size limit (remove oldest entries first)
+        if (this.cache.size <= this.options.cacheMaxSize) return;
+
+        while (this.cache.size > this.options.cacheMaxSize) {
+            const oldestUrl = this.cache.keys().next().value;
+            this.cache.delete(oldestUrl);
+            this.cacheTimestamps.delete(oldestUrl);
+        }
     }
 
     /**
@@ -86,7 +103,7 @@ class PlugsSPA {
         this.initializeComponents();
 
         window.plugsSPAInitialized = true;
-        console.log('Plugs SPA Bridge initialized (v2.1).');
+        console.log('Plugs SPA Bridge initialized (v2.2).');
     }
 
     initializeComponents(container = document) {
@@ -305,11 +322,20 @@ class PlugsSPA {
         // Debounce prefetch
         clearTimeout(link._prefetchTimer);
         link._prefetchTimer = setTimeout(() => {
+            if (this.cache.has(url)) return;
             this.prefetch(url);
-        }, 100);
+        }, 150);
     }
 
     async prefetch(url) {
+        // Check if already in cache and not expired
+        if (this.cache.has(url)) {
+            const cachedAt = this.cacheTimestamps.get(url);
+            if (Date.now() - cachedAt < this.options.cacheTTL) {
+                return;
+            }
+        }
+
         try {
             const response = await fetch(url, {
                 headers: {
@@ -320,6 +346,8 @@ class PlugsSPA {
             if (response.ok) {
                 const html = await response.text();
                 this.cache.set(url, html);
+                this.cacheTimestamps.set(url, Date.now());
+                this.cleanCache();
             }
         } catch (e) {
             // Silently fail prefetch
@@ -356,27 +384,16 @@ class PlugsSPA {
             return false;
         }
 
-        // View Transitions API
-        if (document.startViewTransition && targetSelector === this.options.contentSelector) {
-            return document.startViewTransition(() => this._performNavigation(url, pushState, targetSelector, fetchOptions, contentArea)).finished;
-        } else {
-            return this._performNavigation(url, pushState, targetSelector, fetchOptions, contentArea);
-        }
-    }
-
-    async _performNavigation(url, pushState, targetSelector, fetchOptions, contentArea) {
         this.options.onNavigate(url);
         document.body.classList.add(this.options.loaderClass);
         this.showProgress();
 
         // Visual feedback (unless View Transitions active)
-        if (!document.startViewTransition) {
-            contentArea.style.opacity = '0.5';
-        }
+        const useViewTransition = document.startViewTransition && targetSelector === this.options.contentSelector;
 
         // Skeleton Support
         const skeletonType = contentArea.getAttribute('data-spa-skeleton');
-        if (skeletonType && !document.startViewTransition) {
+        if (skeletonType && !useViewTransition) {
             contentArea.innerHTML = this.getSkeletonPlaceholder(skeletonType);
         }
 
@@ -387,18 +404,22 @@ class PlugsSPA {
                 ...(fetchOptions.headers || {})
             };
 
-            // If we are targeting a specific section, tell the server
             if (targetSelector !== this.options.contentSelector) {
                 headers['X-Plugs-Section'] = targetSelector.replace(/^[#.]/, '');
             }
 
             const isMainContent = targetSelector === this.options.contentSelector;
-
             let html;
+
             if (isMainContent && this.cache.has(url)) {
-                html = this.cache.get(url);
-                this.cache.delete(url); // Clear once used
-            } else {
+                // Check TTL even for manual navigation
+                const cachedAt = this.cacheTimestamps.get(url);
+                if (Date.now() - cachedAt < this.options.cacheTTL) {
+                    html = this.cache.get(url);
+                }
+            }
+
+            if (!html) {
                 const response = await fetch(url, {
                     ...fetchOptions,
                     headers
@@ -408,7 +429,6 @@ class PlugsSPA {
 
                 this.handleFlashMessage(response);
 
-                // Handle potential JSON response (e.g. for API-like forms)
                 const contentType = response.headers.get('content-type');
                 if (contentType && contentType.includes('application/json')) {
                     const json = await response.json();
@@ -419,11 +439,18 @@ class PlugsSPA {
                 }
 
                 html = await response.text();
+
+                // Update cache
+                if (isMainContent && (fetchOptions.method || 'GET').toUpperCase() === 'GET') {
+                    this.cache.set(url, html);
+                    this.cacheTimestamps.set(url, Date.now());
+                    this.cleanCache();
+                }
             }
 
-            // Extract Title if present
+            // Extract Title
             const titleMatch = html.match(/<title>(.*?)<\/title>/i);
-            if (titleMatch && titleMatch[1] && targetSelector === this.options.contentSelector) {
+            if (titleMatch && titleMatch[1] && isMainContent) {
                 document.title = titleMatch[1];
             }
 
@@ -438,18 +465,17 @@ class PlugsSPA {
                 return true;
             }
 
-            // Internal Helper to swap and mount
             const performUpdate = () => {
                 // Unmount current view
                 if (this.currentView && this.currentView.unmount) {
                     try { this.currentView.unmount(); } catch (e) { console.error('Unmount Error:', e); }
                 }
-                this.currentView = null; // Reset
+                this.currentView = null;
 
                 // Swap Content
                 contentArea.innerHTML = html;
 
-                // Execute Scripts (This will trigger Plugs.view() calls in the new content)
+                // Execute Scripts
                 contentArea.querySelectorAll('script').forEach(oldScript => {
                     const newScript = document.createElement('script');
                     Array.from(oldScript.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value));
@@ -457,18 +483,17 @@ class PlugsSPA {
                     oldScript.parentNode.replaceChild(newScript, oldScript);
                 });
 
-                // Initialize Reactivity in new content
+                // Initialize Reactivity
                 this.initializeComponents(contentArea);
 
                 // Update URL and Scroll
-                if (pushState && targetSelector === this.options.contentSelector) {
+                if (pushState && isMainContent) {
                     window.history.pushState({ spa: true }, '', url);
                     window.scrollTo(0, 0);
                 }
             };
 
-            // Execute Update (either directly or via transition)
-            if (document.startViewTransition && targetSelector === this.options.contentSelector) {
+            if (useViewTransition) {
                 await document.startViewTransition(performUpdate).finished;
             } else {
                 performUpdate();
@@ -476,17 +501,12 @@ class PlugsSPA {
 
             this.options.onComplete(url);
             return true;
-        } catch (error) {
-            this.options.onError(error);
-            if (pushState && targetSelector === this.options.contentSelector) {
-                window.location.href = url; // Fallback to normal navigation
-            }
+        } catch (err) {
+            this.options.onError(err);
             return false;
         } finally {
-            document.body.classList.remove(this.options.loaderClass);
             this.hideProgress();
-            // Reset styles
-            contentArea.style.opacity = '1';
+            document.body.classList.remove(this.options.loaderClass);
         }
     }
 
