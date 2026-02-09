@@ -12,7 +12,9 @@ composer.lock
 package-lock.json
 /sample/
 
-
+/public/assets/
+/public/plugs/
+/public/.htaccess
 /app/
 /config/
 /storage/
