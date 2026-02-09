@@ -115,7 +115,6 @@
             font-family: "Fira Code", monospace;
             font-size: 0.95rem;
             line-height: 1.5;
-            color: #d1d5db;
         }
 
         .docs-content .alert {
@@ -254,7 +253,7 @@
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script src="{{ asset('assets/js/global.js') }}"></script>
     <script src="https://unpkg.com/htmx.org@2.0.4"></script>
-    <script src="{{ asset('plugs/plugs-spa.js') }}"></script>
+    <script src="{{ asset('assets/plugs/plugs-spa.js') }}"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             // Add copy buttons to pre blocks

@@ -42,13 +42,11 @@ if ($validator->fails()) {
         <h2>3. Inline Error Handling</h2>
         <p>Displaying validation errors in your views is seamless with the <code>@error</code> directive.</p>
 
-        @verbatim
         <pre><code>&lt;!-- resources/views/register.plug.php --&gt;
 &lt;input name="email" type="email"&gt;
 @error('email')
     &lt;div class="text-danger small"&gt;{{ $message }}&lt;/div&gt;
 @enderror</code></pre>
-        @endverbatim
 
         <div class="alert alert-info">
             <strong>Pro Tip:</strong> Use <strong>ValueObjects</strong> in your routes to automatically validate and

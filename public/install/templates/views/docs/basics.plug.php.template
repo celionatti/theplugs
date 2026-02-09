@@ -118,7 +118,7 @@ public function index(UserRepository $users)
         <p class="opacity-75">Views are stored in the <code>resources/views</code> directory.</p>
         <div class="mb-3">
             <pre class="code-box p-3 rounded"><code><!-- resources/views/greeting.plug.php -->
-&lt;h1&gt;Hello, {{ $name }}&lt;/h1&gt;</code></pre>
+&lt;h1&gt;Hello, &#123;&#123; $name &#125;&#125;&lt;/h1&gt;</code></pre>
         </div>
 
         <h4 class="fw-semibold mt-4">Returning a View</h4>

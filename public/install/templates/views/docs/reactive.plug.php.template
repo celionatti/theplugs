@@ -74,11 +74,12 @@ class Counter extends ReactiveComponent
 <h3>2. The View Template</h3>
 
 <p>Create the corresponding view in <code>resources/views/components/counter.plug.php</code>. Use the
-    <code>p-click</code> directive to link elements to PHP methods.</p>
+    <code>p-click</code> directive to link elements to PHP methods.
+</p>
 
-<pre><code>&lt;div class="counter-card"&gt;
+<pre><code>&lt;div class="counter-card"&gt;.
     &lt;button p-click="decrement"&gt;-&lt;/button&gt;
-    &lt;span class="count"&gt;{{ $count }}&lt;/span&gt;
+    &lt;span class="count"&gt;&#123;&#123; $count &#125;&#125;&lt;/span&gt;
     &lt;button p-click="increment"&gt;+&lt;/button&gt;
 &lt;/div&gt;</code></pre>
 
@@ -86,9 +87,9 @@ class Counter extends ReactiveComponent
 
 <h2 id="usage">Usage in Views</h2>
 
-<p>To include a reactive component in any of your views, use the <code>@component</code> directive:</p>
+<p>To include a reactive component in any of your views, use the <code>&#64;component</code> directive:</p>
 
-<pre><code>@component('Counter', ['count' => 10])</code></pre>
+<pre><code>&#64;component('Counter', ['count' => 10])</code></pre>
 
 <p>The component will automatically initialize and handle its own reactivity.</p>
 
@@ -131,7 +132,8 @@ class Counter extends ReactiveComponent
 
 <ol>
     <li><strong>Initial Render</strong>: The server renders the component and serializes its initial state into a
-        <code>data-plug-state</code> attribute.</li>
+        <code>data-plug-state</code> attribute.
+    </li>
     <li><strong>User Action</strong>: The user clicks an element with <code>p-click="increment"</code>.</li>
     <li><strong>Request</strong>: The SPA Bridge sends an AJAX request to <code>/plugs/component/action</code> with the
         current state and the action name.</li>
