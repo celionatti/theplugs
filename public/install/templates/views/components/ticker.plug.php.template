@@ -1,0 +1,33 @@
+<div class="p-4 bg-dark text-white rounded shadow-sm border border-secondary">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <label class="small fw-bold text-white-50">Live Market Data</label>
+        <span class="badge bg-danger animate-pulse">LIVE</span>
+    </div>
+
+    <h2 class="display-4 fw-bold mb-0">
+        ${{ $price }}
+    </h2>
+    <div class="small text-white-50 mt-2">
+        Last updated: {{ $time }}
+    </div>
+</div>
+
+<style>
+    @keyframes pulse-red {
+        0% {
+            opacity: 1;
+        }
+
+        50% {
+            opacity: 0.5;
+        }
+
+        100% {
+            opacity: 1;
+        }
+    }
+
+    .animate-pulse {
+        animation: pulse-red 1.5s infinite;
+    }
+</style>

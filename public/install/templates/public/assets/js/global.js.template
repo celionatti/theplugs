@@ -9,17 +9,6 @@ AOS.init({
 const toggleBtn = document.getElementById("themeToggle");
 const html = document.documentElement;
 
-// Set RGB values for CSS variables
-function updateCSSVariables() {
-  const theme = html.getAttribute("data-theme");
-  if (theme === "dark") {
-    document.documentElement.style.setProperty("--bg-rgb", "15, 23, 42");
-  } else {
-    document.documentElement.style.setProperty("--bg-rgb", "249, 250, 251");
-  }
-  document.documentElement.style.setProperty("--primary-rgb", "16, 185, 129");
-}
-
 toggleBtn.addEventListener("click", () => {
   const theme = html.getAttribute("data-theme") === "dark" ? "light" : "dark";
   html.setAttribute("data-theme", theme);
@@ -28,7 +17,6 @@ toggleBtn.addEventListener("click", () => {
     theme === "dark"
       ? '<i class="fas fa-sun"></i>'
       : '<i class="fas fa-moon"></i>';
-  updateCSSVariables();
 });
 
 // Load saved theme
@@ -40,9 +28,6 @@ if (savedTheme) {
       ? '<i class="fas fa-sun"></i>'
       : '<i class="fas fa-moon"></i>';
 }
-
-// Initial CSS variable setup
-updateCSSVariables();
 
 // Navbar scroll effect
 const nav = document.getElementById("mainNav");
@@ -78,8 +63,8 @@ document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
 // Update version badge text dynamically (example)
 // In practice, you might load this from an API or config file
 function updateVersionInfo() {
-  const version = "3.0";
-  const releaseDate = "October 2023";
+  const version = "5.0";
+  const releaseDate = "October 2026";
 
   // Update all version badges
   document.querySelectorAll(".version-badge").forEach((badge) => {
@@ -97,3 +82,27 @@ function updateVersionInfo() {
 
 // Call on load
 updateVersionInfo();
+
+// Initialize Toasts (Global Handler for HTMX/SPA)
+document.addEventListener('htmx:load', function (evt) {
+  const target = evt.detail.elt || document;
+  target.querySelectorAll('.toast').forEach(toastEl => {
+    // Initialize Bootstrap Toast
+    const toast = new bootstrap.Toast(toastEl);
+
+    // Auto-show if not already shown (though .show class usually handles it)
+    if (!toastEl.classList.contains('show')) {
+      toast.show();
+    }
+
+    // Handle auto-dismiss
+    if (toastEl.dataset.autoDismiss) {
+      const delay = parseInt(toastEl.dataset.autoDismiss) || 5000;
+      setTimeout(() => {
+        toast.hide();
+        // Remove from DOM after animation
+        setTimeout(() => toastEl.remove(), 500);
+      }, delay);
+    }
+  });
+});

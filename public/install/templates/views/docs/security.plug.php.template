@@ -1,0 +1,46 @@
+@extends('layouts.docs')
+
+@section('title', 'Security & Protection')
+
+@section('content')
+<h1>Security & Protection</h1>
+
+<p>Plugs is "Secure by Default." The framework includes an advanced <strong>Security Shield</strong> that monitors and
+    blocks malicious activity.</p>
+
+<h2 id="shield">1. The Security Shield</h2>
+
+<p>The Shield is a high-performance middleware that analyzes every request for: </p>
+<ul>
+    <li>SQL Injection patterns</li>
+    <li>XSS Payloads</li>
+    <li>Path Traversal attempts</li>
+    <li>Suspicious User Agents</li>
+</ul>
+
+<pre><code># .env
+SECURITY_SHIELD=true</code></pre>
+
+<h2 id="threat">2. Threat Detector</h2>
+
+<p>Logs and tracks potential attackers. If a client hits too many security rules, they can be automatically rate-limited
+    or blocked.</p>
+
+<h2 id="mass-assignment">3. Mass Assignment Guard</h2>
+
+<p>Standard in all Models to prevent illicit data modification.</p>
+
+<pre><code>class User extends Model {
+    protected array $fillable = ['name', 'email'];
+}</code></pre>
+
+<h2 id="headers">4. Zero-Config Security Headers</h2>
+
+<p>Plugs automatically injects hardened HTTP headers:</p>
+<ul>
+    <li><code>X-Content-Type-Options: nosniff</code></li>
+    <li><code>X-Frame-Options: SAMEORIGIN</code></li>
+    <li><code>Content-Security-Policy</code> (configurable)</li>
+    <li><code>Strict-Transport-Security</code></li>
+</ul>
+@endsection

@@ -38,7 +38,7 @@
 <div data-aos="fade-up">
     <div class="mb-5">
         <h1 class="display-5 fw-bold mb-3">Documentation Index</h1>
-        <p class="lead opacity-75">Master the Plugs Framework from basics to advanced production optimization.</p>
+        <p class="lead">Master the Plugs Framework from basics to advanced production optimization.</p>
     </div>
 
     <div class="row g-4 mb-5">
@@ -48,7 +48,8 @@
                 <h5 class="fw-bold">Getting Started</h5>
                 <p class="small opacity-75 flex-grow-1">Learn the core concepts of routing, controllers, and views that
                     power every Plugs app.</p>
-                <a href="/docs/spa" class="btn btn-sm btn-outline-primary stretched-link">Basic Guide</a>
+                <a href="{{ url('/docs/basics') }}" class="btn btn-sm btn-outline-primary stretched-link">Basic
+                    Guide</a>
             </div>
         </div>
         <div class="col-md-6 col-lg-4">
@@ -57,7 +58,8 @@
                 <h5 class="fw-bold">Performance</h5>
                 <p class="small opacity-75 flex-grow-1">Optimize your app for production with route caching and
                     configuration pre-compilation.</p>
-                <a href="/docs/performance" class="btn btn-sm btn-outline-success stretched-link">Optimization Guide</a>
+                <a href="{{ url('/docs/performance') }}"
+                    class="btn btn-sm btn-outline-success stretched-link">Optimization Guide</a>
             </div>
         </div>
         <div class="col-md-6 col-lg-4">
@@ -66,7 +68,8 @@
                 <h5 class="fw-bold">Advanced Flow</h5>
                 <p class="small opacity-75 flex-grow-1">Explore Reactive Components and the SPA Bridge for modern,
                     interactive user experiences.</p>
-                <a href="/docs/reactive" class="btn btn-sm btn-outline-info stretched-link">Modern Features</a>
+                <a href="{{ url('/docs/reactive') }}" class="btn btn-sm btn-outline-info stretched-link">Modern
+                    Features</a>
             </div>
         </div>
     </div>
@@ -76,16 +79,16 @@
         <div class="col-md-6">
             <h6 class="text-uppercase fw-bold small text-muted mb-3">The Basics</h6>
             <ul class="list-unstyled">
-                <li class="mb-2"><a href="/docs/spa"
+                <li class="mb-2"><a href="{{ url('/docs/basics#routing') }}"
                         class="text-decoration-none hover-primary transition-all d-flex align-items-center"><i
                             class="fas fa-route me-2 small opacity-50"></i> Routing & URLs</a></li>
-                <li class="mb-2"><a href="/docs/spa"
+                <li class="mb-2"><a href="{{ url('/docs/basics#controllers') }}"
                         class="text-decoration-none hover-primary transition-all d-flex align-items-center"><i
                             class="fas fa-gamepad me-2 small opacity-50"></i> Controllers & Logic</a></li>
-                <li class="mb-2"><a href="/docs/spa"
+                <li class="mb-2"><a href="{{ url('/docs/basics#views') }}"
                         class="text-decoration-none hover-primary transition-all d-flex align-items-center"><i
                             class="fas fa-paint-brush me-2 small opacity-50"></i> Views & Components</a></li>
-                <li class="mb-2"><a href="/docs/spa"
+                <li class="mb-2"><a href="{{ url('/docs/basics#security') }}"
                         class="text-decoration-none hover-primary transition-all d-flex align-items-center"><i
                             class="fas fa-shield-alt me-2 small opacity-50"></i> Security & Shield</a></li>
             </ul>
@@ -93,18 +96,18 @@
         <div class="col-md-6">
             <h6 class="text-uppercase fw-bold small text-muted mb-3">Advanced Topics</h6>
             <ul class="list-unstyled">
-                <li class="mb-2"><a href="/docs/reactive"
+                <li class="mb-2"><a href="{{ url('/docs/reactive') }}"
                         class="text-decoration-none hover-primary transition-all d-flex align-items-center"><i
                             class="fas fa-fire me-2 small opacity-50"></i> Reactive Components</a></li>
-                <li class="mb-2"><a href="/docs/spa"
+                <li class="mb-2"><a href="{{ url('/docs/caching') }}"
                         class="text-decoration-none hover-primary transition-all d-flex align-items-center"><i
-                            class="fas fa-rocket me-2 small opacity-50"></i> Bridge SPA Engine</a></li>
-                <li class="mb-2"><a href="/docs/performance"
+                            class="fas fa-bolt me-2 small opacity-50"></i> Tiered Caching</a></li>
+                <li class="mb-2"><a href="{{ url('/docs/security') }}"
                         class="text-decoration-none hover-primary transition-all d-flex align-items-center"><i
-                            class="fas fa-cog me-2 small opacity-50"></i> Production Caching</a></li>
-                <li class="mb-2"><a href="/docs/performance"
+                            class="fas fa-shield-virus me-2 small opacity-50"></i> Security Shield</a></li>
+                <li class="mb-2"><a href="{{ url('/docs/health_metrics') }}"
                         class="text-decoration-none hover-primary transition-all d-flex align-items-center"><i
-                            class="fas fa-terminal me-2 small opacity-50"></i> Plugs CLI Tool</a></li>
+                            class="fas fa-chart-line me-2 small opacity-50"></i> Health & Metrics</a></li>
             </ul>
         </div>
     </div>

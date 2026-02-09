@@ -10,11 +10,7 @@
                 🌙
             </button>
 
-            <button
-                class="navbar-toggler"
-                type="button"
-                data-bs-toggle="collapse"
-                data-bs-target="#navMenu">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
                 <span class="navbar-toggler-icon"></span>
             </button>
         </div>
@@ -32,7 +28,7 @@
                     <a class="nav-link" href="#code">Examples</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#docs">Documentation</a>
+                    <a class="nav-link" href="{{ route('docs') }}">Documentation</a>
                 </li>
                 <li class="nav-item ms-lg-3">
                     <a class="btn btn-primary btn-sm px-4" href="#get-started">Get Started</a>

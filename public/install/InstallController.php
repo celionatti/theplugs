@@ -686,6 +686,22 @@ class InstallController
     }
 
     /**
+     * Get title for a specific step
+     */
+    public function getStepTitle(int $step): string
+    {
+        $titles = [
+            1 => 'System Requirements',
+            2 => 'Database Configuration',
+            3 => 'Application Settings',
+            4 => 'Admin Account',
+            5 => 'Ready to Launch',
+        ];
+
+        return $titles[$step] ?? 'Installation';
+    }
+
+    /**
      * Attempt to run composer install
      */
     public function installComposer(): array

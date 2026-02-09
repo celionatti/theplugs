@@ -1,0 +1,47 @@
+<?php
+
+namespace App\Components;
+
+use Plugs\View\ReactiveComponent;
+
+class Search extends ReactiveComponent
+{
+    public string $query = '';
+    public array $results = [];
+    public bool $searching = false;
+
+    public function search(string $query = '')
+    {
+        $this->query = $query;
+        $this->searching = true;
+
+        // Simulate network delay
+        usleep(500000); // 0.5s
+
+        $data = [
+            'Laravel Framework',
+            'Symfony Components',
+            'Plugs Micro-Framework',
+            'React JS',
+            'Vue JS',
+            'Tailwind CSS',
+            'Bootstrap 5',
+            'Alpine JS',
+        ];
+
+        if (empty($this->query)) {
+            $this->results = [];
+        } else {
+            $this->results = array_filter($data, function ($item) {
+                return stripos($item, $this->query) !== false;
+            });
+        }
+
+        $this->searching = false;
+    }
+
+    public function render()
+    {
+        return 'components.search';
+    }
+}

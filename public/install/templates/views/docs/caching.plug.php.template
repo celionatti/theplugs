@@ -1,0 +1,44 @@
+@extends('layouts.docs')
+
+@section('title', 'Caching & Performance')
+
+@section('content')
+<h1>Caching & Performance</h1>
+
+<p>Plugs implements a high-performance <strong>Tiered Caching</strong> system that ensures your application stays snappy
+    even under heavy load.</p>
+
+<h2 id="tiered">1. Tiered Cache (L1/L2)</h2>
+
+<p>The framework can use multiple cache layers simultaneously:</p>
+<ul>
+    <li><strong>L1 (Local)</strong>: Fast in-memory/APC cache for hot data.</li>
+    <li><strong>L2 (Distributed)</strong>: Redis or Memcached for shared data across nodes.</li>
+</ul>
+
+<pre><code>// Automatically handles tiered lookups
+$data = Cache::remember('users.count', 3600, fn() => User::count());</code></pre>
+
+<h2 id="tagged">2. Tagged Caching</h2>
+
+<p>Group related cache entries and invalidate them all at once.</p>
+
+<pre><code>Cache::tags(['people', 'authors'])->put('John', $user, $seconds);
+
+// Flush all 'people' entries
+Cache::tags('people')->flush();</code></pre>
+
+<h2 id="warmer">3. Cache Warmer</h2>
+
+<p>Proactively warm your cache before users hit the application.</p>
+
+<pre><code># Invoke your custom warmers
+php theplugs cache:warm</code></pre>
+
+<h2 id="optimization">4. Route & Config Caching</h2>
+
+<p>Eliminate bootstrap overhead in production by freezing your application state.</p>
+
+<pre><code># Compile everything for maximum speed
+php theplugs optimize</code></pre>
+@endsection

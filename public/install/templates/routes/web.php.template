@@ -10,38 +10,66 @@ declare(strict_types=1);
 | This file is where you can define all of the routes that are handled
 | by your application. Just tell the router the URIs it should respond
 | to and give it the controller to call when that URI is requested.
-| Also -
+| Also - 
 | Using the Route facade for clean, static route definitions.
 */
 
-use App\Http\Controllers\HomeController;
 use Plugs\Facades\Route;
+use App\Http\Controllers\HomeController;
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
 Route::get('/home', [HomeController::class, 'index']);
 
-
 // Documentation Routes
-Route::get('/docs', function () {
-    return view("docs.index", ['title' => "Documentation"]);
-});
+Route::get('/docs/{path?}', function ($path = 'index') {
+    $viewPath = "docs." . str_replace('/', '.', $path);
 
-Route::get('/docs/{page?}', function ($page = 'index') {
     $titles = [
         'index' => 'Introduction',
-        'examples' => 'Examples',
+        'basics' => 'The Basics',
+        'configuration' => 'Configuration',
+        'architecture.lifecycle' => 'Request Lifecycle',
+        'architecture.frontend' => 'Frontend Architecture',
+        'dependency-injection' => 'Dependency Injection',
+        'routing_advanced' => 'Advanced Routing',
+        'async' => 'Async & Concurrency',
+        'microservices' => 'Microservices',
+        'caching' => 'Tiered Caching',
+        'security' => 'Security Shield',
+        'type-safety' => 'Type Safety',
+        'database.basics' => 'Database & ORM',
+        'features.validation' => 'Validation',
         'reactive' => 'Reactive Components',
         'spa' => 'SPA Bridge',
-        'performance' => 'Performance Optimization',
+        'health_metrics' => 'Health & Metrics',
     ];
 
-    return view("docs.$page", ['title' => $titles[$page] ?? 'Documentation']);
+    $titleKey = str_replace('/', '.', $path);
+
+    return view($viewPath, ['title' => $titles[$titleKey] ?? 'Documentation']);
+})->where('path', '.*')->name('docs');
+
+// Demo Routes
+Route::get('/async-demo', function () {
+    $start = microtime(true);
+    $client = new \Plugs\Http\HTTPClient();
+
+    $results = parallel([
+        'google' => fn() => $client->getAsync('https://www.google.com'),
+        'bing' => fn() => $client->getAsync('https://www.bing.com'),
+    ]);
+
+    $duration = microtime(true) - $start;
+
+    return [
+        'duration' => $duration,
+        'results' => [
+            'google' => $results['google']->getStatusCode(),
+            'bing' => $results['bing']->getStatusCode(),
+        ],
+    ];
 });
 
-// Add your routes here
-// Route::get('/about', [HomeController::class, 'about'])->name('about');
-// Route::get('/contact', [HomeController::class, 'contact'])->name('contact');
-
-// Route::group(['prefix' => 'admin'], function () {
-//     Route::get('/', [AdminController::class, 'dashboard'])->name('admin.dashboard');
-// });
+Route::get('/htmx-demo', function () {
+    return view('demos.htmx')->renderSmart();
+});

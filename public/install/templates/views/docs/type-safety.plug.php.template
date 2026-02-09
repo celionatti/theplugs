@@ -1,0 +1,61 @@
+@extends('layouts.docs')
+
+@section('title', 'Type Safety Features')
+
+@section('content')
+<h1>Type Safety Features</h1>
+
+<p>Plugs is built for strict typing, helping you catch errors at development time rather than in production.</p>
+
+<h2 id="events">1. Typed Events</h2>
+
+<p>Plugs encourages the use of <code>TypedEvent</code> classes instead of string-based event names.</p>
+
+<pre><code>use Plugs\Event\TypedEvent;
+
+class OrderPaid extends TypedEvent
+{
+    public function __construct(
+        public readonly int $orderId,
+        public readonly float $amount
+    ) {}
+}
+
+// Dispatching (fully typed)
+Event::dispatch(new OrderPaid(1234, 99.99));
+
+// Listening
+Event::listen(OrderPaid::class, function (OrderPaid $event) {
+    // $event->amount is float
+});</code></pre>
+
+<h2 id="objects">2. Value Objects & Route Binding</h2>
+
+<p>Domain Driven Design (DDD) is first-class. If you define a controller argument as a <code>ValueObject</code>, the
+    router automatically hydrates it from the URL.</p>
+
+<pre><code>use Plugs\Support\ValueObject;
+
+class UserId extends ValueObject {}
+
+// In Controller
+public function show(UserId $id) 
+{
+    // $id is automatically instantiated from path parameter
+}</code></pre>
+
+<h2 id="routing">3. Strict Routing</h2>
+
+<p>Always use the array-callable syntax for route definitions. This allows IDEs to track usages and enables refactoring
+    safety.</p>
+
+<pre><code>// Safe and Refactorable
+$router->get('/profile', [ProfileController::class, 'index']);</code></pre>
+
+<h2 id="helpers">4. IDE Helpers & Generators</h2>
+
+<p>Keep your IDE smart with the Plugs Generator:</p>
+
+<pre><code># Generates auto-completion for config(), view(), etc.
+php theplugs type:gen</code></pre>
+@endsection

@@ -1,0 +1,49 @@
+@extends('layouts.docs')
+
+@section('title', 'Health, Metrics & Observability')
+
+@section('content')
+<h1>Health, Metrics & Observability</h1>
+
+<p>Understand exactly how your application is performing with built-in monitoring tools.</p>
+
+<h2 id="health">1. Health Checks</h2>
+
+<p>Plugs provides a standard endpoint for load balancers and monitoring tools.</p>
+
+<ul>
+    <li><strong>Endpoint</strong>: <code>/health</code> (configurable)</li>
+    <li><strong>Checks</strong>: Database connection, Redis availability, Disk space, and custom logic.</li>
+</ul>
+
+<pre><code>// Register a custom check in a Provider
+Health::addCheck('api_external', fn() => Http::get('...')->ok());</code></pre>
+
+<h2 id="metrics">2. Metrics Collector (Prometheus)</h2>
+
+<p>Expose application metrics (RAM, CPU, Request Latency) in a format Prometheus understands.</p>
+
+<ul>
+    <li><strong>Endpoint</strong>: <code>/metrics</code></li>
+    <li><strong>Dashboards</strong>: Ships with a pre-built Grafana template.</li>
+</ul>
+
+<h2 id="openapi">3. OpenAPI & Swagger UI</h2>
+
+<p>Keep your API documentation alive and interactive.</p>
+
+<ul>
+    <li><strong>Docs</strong>: <code>/api/docs</code></li>
+    <li><strong>JSON</strong>: <code>/api/openapi.json</code></li>
+</ul>
+
+<h2 id="profiler">4. Profiler</h2>
+
+<p>In <code>local</code> mode, a floating profiler bar provides deep insights into:</p>
+<ul>
+    <li>Executed SQL queries</li>
+    <li>Registered Routes</li>
+    <li>Memory usage per middleware</li>
+    <li>Event Bus activity</li>
+</ul>
+@endsection

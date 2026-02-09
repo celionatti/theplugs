@@ -2,75 +2,73 @@
 $appName = $stepData['session_data']['app']['name'] ?? 'Plugs Framework';
 $appUrl = $stepData['session_data']['app']['url'] ?? '';
 ?>
-<div class="step-content" style="text-align: center;">
-    <div class="success-icon">
-        ✓
+<div class="step-content">
+    <div class="success-hero animate-in">
+        <div class="success-orb">
+            <i class="fas fa-check"></i>
+        </div>
+        <h2 class="success-title">System Fully Operational</h2>
+        <p class="success-message">
+            Congratulations! <strong><?= htmlspecialchars($appName) ?></strong> has been successfully deployed and is
+            ready for development.
+        </p>
     </div>
 
-    <h2 class="success-title">Installation Complete!</h2>
-    <p class="success-message">
-        Congratulations!
-        <?= htmlspecialchars($appName) ?> has been successfully installed.
-    </p>
-
-    <div class="warning-box">
-        <span class="warning-icon">⚠️</span>
-        <div class="warning-text">
-            <strong>Security Notice:</strong> For security reasons, please delete the
-            <code style="background: rgba(0,0,0,0.2); padding: 2px 6px; border-radius: 4px;">install</code>
-            folder from your server immediately.
-            <div class="code-block" style="margin-top: 0.5rem; text-align: left;">
-                rm -rf
-                <?= htmlspecialchars(dirname(INSTALL_PATH)) ?>/install
-            </div>
+    <div class="alert animate-in stagger-1"
+        style="background: oklch(65% 0.2 25 / 0.1); border: 1px solid oklch(65% 0.2 25 / 0.2); color: var(--error); margin-bottom: 2rem;">
+        <i class="fas fa-shield-virus fa-lg"></i>
+        <div>
+            <strong>Critical Security Action</strong><br>
+            Please remove the <code>install</code> directory from your project root to prevent unauthorized
+            re-configuration.
         </div>
     </div>
 
-    <div
-        style="background: var(--bg-input); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; margin: 2rem 0; text-align: left;">
-        <h3 style="font-size: 1rem; margin-bottom: 1rem; color: var(--text-secondary);">📋 Quick Start</h3>
-        <ul style="list-style: none; color: var(--text-muted); font-size: 0.95rem; line-height: 2;">
-            <li>✅ Application files created</li>
-            <li>✅ Database tables initialized</li>
-            <li>✅ Admin account created</li>
-            <li>✅ Configuration files generated</li>
-            <li>✅ Installation locked (plugs.lock)</li>
-        </ul>
-        <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
-            <p style="color: var(--text-dim); font-size: 0.9rem; margin-bottom: 0.5rem;">
-                <strong>Next Steps:</strong>
-            </p>
-            <ol style="color: var(--text-muted); font-size: 0.9rem; padding-left: 1.25rem; line-height: 1.8;">
-                <li>Delete the <code>install</code> folder</li>
-                <li>Run <code>composer install</code> to install dependencies</li>
-                <li>Visit your homepage and start building!</li>
+    <div class="form-section animate-in stagger-2" style="text-align: left;">
+        <h3
+            style="font-size: 1.1rem; margin-bottom: 1.25rem; color: var(--pl-primary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">
+            <i class="fas fa-clipboard-list me-2"></i> Deployment Summary
+        </h3>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+            <div style="opacity: 0.8; font-size: 0.95rem;"><i class="fas fa-check text-success me-2"></i> File Hierarchy
+                Created</div>
+            <div style="opacity: 0.8; font-size: 0.95rem;"><i class="fas fa-check text-success me-2"></i> Schema
+                Migrations Done</div>
+            <div style="opacity: 0.8; font-size: 0.95rem;"><i class="fas fa-check text-success me-2"></i> Admin
+                Privilege Granted</div>
+            <div style="opacity: 0.8; font-size: 0.95rem;"><i class="fas fa-check text-success me-2"></i> Env
+                Configuration Active</div>
+        </div>
+
+        <div style="padding-top: 1.25rem; border-top: 1px solid oklch(100% 0 0 / 0.05);">
+            <p style="color: var(--text-muted); font-weight: 600; margin-bottom: 0.75rem;">Next Milestones:</p>
+            <ol style="color: var(--text-dim); font-size: 0.9rem; padding-left: 1.25rem; line-height: 1.8;">
+                <li>Execute secure cleanup with the button below</li>
+                <li>Verify your installation in the <a href="https://github.com/celionatti/plugs" target="_blank"
+                        style="color: var(--pl-primary);">Plugs Documentation</a></li>
+                <li>Begin building your masterpiece!</li>
             </ol>
         </div>
     </div>
 
-    <div class="btn-group" style="justify-content: center; flex-wrap: wrap; gap: 15px; margin-top: 2rem;">
-        <button type="button" class="btn btn-primary" id="btn-cleanup"
-            style="padding: 0.8rem 2.5rem; font-size: 1.1rem; box-shadow: 0 4px 15px rgba(var(--accent-primary-rgb), 0.3);">
-            🚀 Launch Application & Cleanup
-        </button>
-        <button type="button" class="btn btn-secondary" id="btn-composer"
-            style="background: var(--bg-card); border: 1px solid var(--border-color);">
-            📦 Install Dependencies
-        </button>
-        <a href="<?= htmlspecialchars($appUrl) ?>/" class="btn btn-secondary" id="btn-home"
-            style="opacity: 0.7; font-size: 0.9rem;">
-            🏠 Skip Cleanup
+    <div class="btn-group animate-in stagger-3" style="flex-direction: column; gap: 1rem;">
+        <div style="display: flex; gap: 1rem;">
+            <button type="button" class="btn btn-primary" id="btn-cleanup"
+                style="flex: 2; font-weight: 800; font-size: 1.1rem;">
+                <i class="fas fa-rocket me-2"></i> Finalize & Launch App
+            </button>
+            <button type="button" class="btn btn-secondary" id="btn-composer" style="flex: 1;">
+                <i class="fas fa-box me-2"></i> Sync Deps
+            </button>
+        </div>
+        <a href="<?= htmlspecialchars($appUrl) ?>/" class="btn btn-secondary"
+            style="opacity: 0.5; font-size: 0.85rem; padding: 0.5rem;">
+            <i class="fas fa-external-link-alt me-2"></i> Navigate to Homepage (Skip Cleanup)
         </a>
     </div>
 
-    <div id="action-status" style="margin-top: 1rem; color: var(--text-dim); min-height: 24px; font-size: 0.9rem;">
-    </div>
-
-    <p style="margin-top: 2rem; color: var(--text-dim); font-size: 0.9rem;">
-        Need help? Check out the
-        <a href="https://github.com/celionatti/plugs" target="_blank"
-            style="color: var(--accent-primary);">documentation</a>.
-    </p>
+    <div id="action-status" class="animate-in stagger-3"
+        style="margin-top: 1.5rem; text-align: center; color: var(--text-dim); min-height: 24px;"></div>
 </div>
 
 <script>
@@ -79,31 +77,31 @@ $appUrl = $stepData['session_data']['app']['url'] ?? '';
         const status = document.getElementById('action-status');
         btn.disabled = true;
         const originalText = btn.innerHTML;
-        btn.innerHTML = '⏳ Installing...';
-        status.innerHTML = 'Running composer install... This may take a minute.';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Syncing...';
+        status.innerHTML = '<span class="animate-in">Initializing Composer sync... Please wait.</span>';
 
         try {
             const response = await fetch('?action=composer', { method: 'POST' });
             const data = await response.json();
 
             if (data.success) {
-                btn.innerHTML = '✅ Dependencies Installed';
-                btn.style.color = '#4ade80';
-                btn.style.borderColor = '#4ade80';
-                status.innerHTML = data.message;
+                btn.innerHTML = '<i class="fas fa-check-circle me-2"></i> Synced';
+                btn.style.color = 'var(--success)';
+                btn.style.borderColor = 'var(--success)';
+                status.innerHTML = '<span class="animate-in">' + data.message + '</span>';
             } else {
-                btn.innerHTML = '❌ Installation Failed';
+                btn.innerHTML = '<i class="fas fa-exclamation-circle me-2"></i> Failed';
                 btn.disabled = false;
-                status.innerHTML = 'Error: ' + (data.error || 'Unknown error');
+                status.innerHTML = '<span class="animate-in text-error">Error: ' + (data.error || 'Sync failed') + '</span>';
                 if (data.details) {
                     console.error(data.details);
                     alert('Composer Output:\n' + data.details);
                 }
             }
         } catch (e) {
-            btn.innerHTML = '❌ Error';
+            btn.innerHTML = '<i class="fas fa-wifi-slash me-2"></i> Network Error';
             btn.disabled = false;
-            status.innerHTML = 'Network error occurred.';
+            status.innerHTML = '<span class="animate-in text-error">Communication failed.</span>';
         }
     });
 
@@ -112,25 +110,23 @@ $appUrl = $stepData['session_data']['app']['url'] ?? '';
         const originalText = btn.innerHTML;
 
         btn.disabled = true;
-        btn.innerHTML = '⏳ Cleaning up and launching...';
+        btn.innerHTML = '<i class="fas fa-circle-notch fa-spin me-2"></i> Optimizing & Cleaning...';
 
         try {
             const response = await fetch('?action=cleanup', { method: 'POST' });
             const data = await response.json();
 
             if (data.success) {
-                // Check for a redirect URL (used for external cleanup scripts)
                 if (data.redirect) {
                     window.location.href = data.redirect;
                 } else {
                     window.location.href = '<?= htmlspecialchars($appUrl) ?>/';
                 }
             } else {
-                alert(data.error || 'Cleanup failed. Please delete the "install" folder manually.');
+                alert(data.error || 'Cleanup halted. Please perform manually.');
                 window.location.href = '<?= htmlspecialchars($appUrl) ?>/';
             }
         } catch (e) {
-            // Fallback in case of networking error (or if self-deletion caused the request to hang/fail)
             window.location.href = '<?= htmlspecialchars($appUrl) ?>/';
         }
     });

@@ -1,5 +1,5 @@
 /**
- * Plugs Framework Installer - JavaScript
+ * Plugs Framework Installer - Enhanced Interactivity
  */
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -7,11 +7,12 @@ document.addEventListener('DOMContentLoaded', function () {
     initPasswordStrength();
     initDatabaseTypeChange();
     initTestConnection();
-    initFormValidation();
+    initFormInteractions();
+    initCopyButtons();
 });
 
 /**
- * Password Strength Indicator
+ * Password Strength Indicator with Premium Feedback
  */
 function initPasswordStrength() {
     const passwordInput = document.getElementById('admin_password');
@@ -21,34 +22,32 @@ function initPasswordStrength() {
 
     passwordInput.addEventListener('input', function () {
         const password = this.value;
-        const strength = calculatePasswordStrength(password);
+        const result = calculatePasswordStrength(password);
+        const strength = result.score;
 
         strengthBar.className = 'password-strength-fill';
 
         if (password.length === 0) {
             strengthBar.style.width = '0';
-        } else if (strength < 2) {
-            strengthBar.classList.add('weak');
-        } else if (strength < 3) {
-            strengthBar.classList.add('fair');
-        } else if (strength < 4) {
-            strengthBar.classList.add('good');
         } else {
-            strengthBar.classList.add('strong');
+            strengthBar.style.width = (strength * 20) + '%';
+            if (strength <= 2) strengthBar.classList.add('weak');
+            else if (strength <= 4) strengthBar.classList.add('fair');
+            else if (strength <= 6) strengthBar.classList.add('good');
+            else strengthBar.classList.add('strong');
         }
     });
 }
 
 function calculatePasswordStrength(password) {
-    let strength = 0;
+    let score = 0;
+    if (password.length >= 8) score += 2;
+    if (password.length >= 12) score += 2;
+    if (/[a-z]/.test(password) && /[A-Z]/.test(password)) score += 1;
+    if (/\d/.test(password)) score += 1;
+    if (/[^a-zA-Z0-9]/.test(password)) score += 2;
 
-    if (password.length >= 8) strength++;
-    if (password.length >= 12) strength++;
-    if (/[a-z]/.test(password) && /[A-Z]/.test(password)) strength++;
-    if (/\d/.test(password)) strength++;
-    if (/[^a-zA-Z0-9]/.test(password)) strength++;
-
-    return strength;
+    return { score: Math.min(score, 10) };
 }
 
 /**
@@ -75,29 +74,30 @@ function initDatabaseTypeChange() {
         const driver = this.value;
         const isSqlite = driver === 'sqlite';
 
-        // Toggle field visibility for SQLite
-        if (dbHostGroup) dbHostGroup.style.display = isSqlite ? 'none' : '';
-        if (dbPortGroup) dbPortGroup.style.display = isSqlite ? 'none' : '';
-        if (dbUsernameGroup) dbUsernameGroup.style.display = isSqlite ? 'none' : '';
-        if (dbPasswordGroup) dbPasswordGroup.style.display = isSqlite ? 'none' : '';
+        // Animate visibility changes
+        [dbHostGroup, dbPortGroup, dbUsernameGroup, dbPasswordGroup].forEach(el => {
+            if (el) {
+                if (isSqlite) {
+                    el.style.opacity = '0';
+                    setTimeout(() => el.style.display = 'none', 300);
+                } else {
+                    el.style.display = '';
+                    setTimeout(() => el.style.opacity = '1', 10);
+                }
+            }
+        });
 
         // Update database label for SQLite
         if (dbDatabaseGroup) {
-            const label = dbDatabaseGroup.querySelector('label');
+            const label = dbDatabaseGroup.querySelector('.form-label');
             const hint = dbDatabaseGroup.querySelector('.form-hint');
             if (isSqlite && label) {
-                label.textContent = 'Database File Path';
+                label.textContent = 'SQLite Database Path';
             } else if (label) {
-                label.textContent = 'Database Name';
-            }
-            if (hint) {
-                hint.textContent = isSqlite
-                    ? 'Leave empty for default (storage/database.sqlite)'
-                    : 'The name of the database to use';
+                label.textContent = 'Database / Schema Name';
             }
         }
 
-        // Update port for database type
         if (portInput && defaultPorts[driver]) {
             portInput.value = defaultPorts[driver];
         }
@@ -105,7 +105,7 @@ function initDatabaseTypeChange() {
 }
 
 /**
- * Test Database Connection
+ * Test Database Connection with Premium Loading State
  */
 function initTestConnection() {
     const testBtn = document.getElementById('test-connection-btn');
@@ -116,12 +116,14 @@ function initTestConnection() {
     testBtn.addEventListener('click', async function (e) {
         e.preventDefault();
 
-        const originalText = testBtn.innerHTML;
-        testBtn.innerHTML = '<span class="spinner"></span> Testing...';
+        const originalHTML = testBtn.innerHTML;
+        testBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Analyzing Connection...';
         testBtn.disabled = true;
 
+        statusEl.className = 'connection-status animate-in';
+        statusEl.innerHTML = '<i class="fas fa-network-wired me-2"></i> Pinging database server...';
+
         const formData = new FormData();
-        formData.append('action', 'test_connection');
         formData.append('db_driver', document.getElementById('db_driver')?.value || 'mysql');
         formData.append('db_host', document.getElementById('db_host')?.value || 'localhost');
         formData.append('db_port', document.getElementById('db_port')?.value || '3306');
@@ -138,27 +140,30 @@ function initTestConnection() {
             const result = await response.json();
 
             if (statusEl) {
-                statusEl.className = 'connection-status ' + (result.success ? 'success' : 'error');
-                statusEl.innerHTML = result.success
-                    ? '✓ Connection successful!'
-                    : '✗ ' + (result.error || 'Connection failed');
+                if (result.success) {
+                    statusEl.className = 'connection-status animate-in text-success';
+                    statusEl.innerHTML = '<i class="fas fa-check-double me-2"></i> Connection handshake successful!';
+                } else {
+                    statusEl.className = 'connection-status animate-in text-error';
+                    statusEl.innerHTML = '<i class="fas fa-exclamation-circle me-2"></i> ' + (result.error || 'Connection failed');
+                }
             }
         } catch (error) {
             if (statusEl) {
-                statusEl.className = 'connection-status error';
-                statusEl.innerHTML = '✗ Connection test failed';
+                statusEl.className = 'connection-status animate-in text-error';
+                statusEl.innerHTML = '<i class="fas fa-wifi-slash me-2"></i> Network propagation fault';
             }
         }
 
-        testBtn.innerHTML = originalText;
+        testBtn.innerHTML = originalHTML;
         testBtn.disabled = false;
     });
 }
 
 /**
- * Form Validation
+ * Form Interactions and Loading States
  */
-function initFormValidation() {
+function initFormInteractions() {
     const forms = document.querySelectorAll('form');
 
     forms.forEach(form => {
@@ -166,54 +171,60 @@ function initFormValidation() {
             const submitBtn = form.querySelector('button[type="submit"]');
 
             if (submitBtn && !submitBtn.disabled) {
-                const originalText = submitBtn.innerHTML;
-                submitBtn.innerHTML = '<span class="spinner"></span> Processing...';
-                submitBtn.disabled = true;
+                const originalHTML = submitBtn.innerHTML;
 
-                // Re-enable after timeout (in case of error)
+                // Use setTimeout to allow the submit event to propagate before disabling
                 setTimeout(() => {
-                    submitBtn.innerHTML = originalText;
-                    submitBtn.disabled = false;
-                }, 10000);
+                    submitBtn.innerHTML = '<i class="fas fa-circle-notch fa-spin me-2"></i> Processing Request...';
+                    submitBtn.disabled = true;
+                }, 0);
+
+                // Recovery in case of massive lag
+                setTimeout(() => {
+                    if (submitBtn.disabled) {
+                        submitBtn.innerHTML = originalHTML;
+                        submitBtn.disabled = false;
+                    }
+                }, 15000);
             }
         });
     });
 
-    // Password confirmation validation
-    const passwordConfirm = document.getElementById('admin_password_confirm');
-    const password = document.getElementById('admin_password');
-
-    if (passwordConfirm && password) {
-        passwordConfirm.addEventListener('input', function () {
-            if (this.value !== password.value) {
-                this.setCustomValidity('Passwords do not match');
-            } else {
-                this.setCustomValidity('');
-            }
-        });
-
-        password.addEventListener('input', function () {
-            if (passwordConfirm.value && passwordConfirm.value !== this.value) {
-                passwordConfirm.setCustomValidity('Passwords do not match');
-            } else {
-                passwordConfirm.setCustomValidity('');
-            }
-        });
-    }
+    // Custom Checkbox Trigger
+    const checkboxes = document.querySelectorAll('.custom-checkbox');
+    checkboxes.forEach(label => {
+        const input = label.querySelector('input[type="checkbox"]');
+        if (input) {
+            input.addEventListener('change', () => {
+                label.style.borderColor = input.checked ? 'var(--pl-primary)' : 'var(--glass-border)';
+            });
+        }
+    });
 }
 
 /**
- * Copy to Clipboard
+ * Copy to Clipboard with Premium Notification
  */
-function copyToClipboard(text) {
-    navigator.clipboard.writeText(text).then(() => {
-        // Show brief feedback
-        const toast = document.createElement('div');
-        toast.className = 'alert alert-success';
-        toast.style.cssText = 'position: fixed; bottom: 20px; right: 20px; z-index: 1000; padding: 0.75rem 1rem;';
-        toast.textContent = 'Copied to clipboard!';
-        document.body.appendChild(toast);
+function initCopyButtons() {
+    // Shared utility for the success page
+    window.copyText = function (text) {
+        navigator.clipboard.writeText(text).then(() => {
+            const toast = document.createElement('div');
+            toast.className = 'alert animate-in';
+            toast.style.cssText = `
+                position: fixed; top: 2rem; right: 2rem; z-index: 10000;
+                background: var(--pl-primary); color: var(--bg-body);
+                padding: 1rem 1.5rem; border-radius: 12px; font-weight: 700;
+                box-shadow: 0 10px 30px oklch(0% 0 0 / 0.3);
+            `;
+            toast.innerHTML = '<i class="fas fa-clipboard-check me-2"></i> Securely Copied!';
+            document.body.appendChild(toast);
 
-        setTimeout(() => toast.remove(), 2000);
-    });
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(20px)';
+                setTimeout(() => toast.remove(), 400);
+            }, 2500);
+        });
+    };
 }

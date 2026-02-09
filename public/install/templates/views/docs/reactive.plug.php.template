@@ -1,83 +1,149 @@
 @extends('layouts.docs')
 
+@section('title', 'Reactive Components (Bolt)')
+
 @section('content')
-<div data-aos="fade-up">
-    <h1 class="display-5 fw-bold mb-4">Reactive Components</h1>
-    <p class="lead opacity-75 mb-5">
-        Reactive Components are PHP classes that manage their own state and can be updated instantly via AJAX using
-        simple HTML directives.
-    </p>
+<h1>Reactive Components (Bolt)</h1>
 
-    <h2 class="fw-bold mb-3" id="defining-components">Defining Components</h2>
-    <p class="opacity-75">
-        To create a reactive component, extend the <code>Plugs\View\ReactiveComponent</code> class. Define public
-        properties to represent your component's state.
-    </p>
+<p>Reactive Components (also known as <strong>Bolt</strong>) allow you to build interactive UI components using only
+    PHP. No JavaScript knowledge is required to create dynamic, real-time interfaces.</p>
 
-    <div class="mb-4">
-        <pre class="code-box p-3 rounded"><code>namespace App\Components;
+<hr>
+
+<h2 id="overview">Overview</h2>
+
+<p>Reactive Components bridge the gap between your server-side PHP logic and the client-side DOM. When an action is
+    triggered on the frontend (like clicking a button), the component's state is sent to the server, processed by your
+    PHP class, and the updated HTML is sent back to be swapped seamlessly into the page.</p>
+
+<h3>Key Features</h3>
+<ul>
+    <li><strong>Server-Side State</strong>: Your component state lives in PHP public properties.</li>
+    <li><strong>Auto-Hydration</strong>: State is automatically preserved between requests.</li>
+    <li><strong>Zero-JS Interactivity</strong>: Use directives like <code>p-click</code> to trigger PHP methods.</li>
+    <li><strong>Component Scoping</strong>: Styles and logic are encapsulated within the component.</li>
+</ul>
+
+<hr>
+
+<h2 id="generation">Quick Generation</h2>
+
+<p>You can quickly scaffold a reactive component using the CLI:</p>
+
+<pre><code>php theplugs make:component Name --bolt</code></pre>
+
+<p>This will create both the PHP class and the corresponding view file.</p>
+
+<hr>
+
+<h2 id="creating">Creating a Component</h2>
+
+<p>Reactive components consist of two parts: a <strong>PHP Class</strong> and a <strong>Plug View</strong>.</p>
+
+<h3>1. The PHP Class</h3>
+
+<p>Create your component class in <code>app/Components</code>. It must extend <code>Plugs\View\ReactiveComponent</code>.
+</p>
+
+<pre><code>namespace App\Components;
 
 use Plugs\View\ReactiveComponent;
 
-class MyComponent extends ReactiveComponent {
-    public int $count = 10;
+class Counter extends ReactiveComponent
+{
+    // Public properties are automatically synced with the frontend
+    public int $count = 0;
 
-    public function increment() {
-        $this->count++;
+    public function increment(): void
+    {
+        $this-&gt;count++;
     }
 
-    public function render() {
-        return 'components.my_component';
+    public function decrement(): void
+    {
+        $this-&gt;count--;
+    }
+
+    public function render()
+    {
+        // Return the name of the view file
+        return 'components.counter';
     }
 }</code></pre>
-    </div>
 
-    <h2 class="fw-bold mt-5 mb-3" id="view-directives">Interactivity Directives</h2>
-    <p class="opacity-75">
-        Plugs provides special attributes to trigger server-side methods directly from your HTML:
-    </p>
+<h3>2. The View Template</h3>
 
-    <ul class="opacity-75">
-        <li class="mb-2"><code>p-click</code>: Triggered on element click.</li>
-        <li class="mb-2"><code>p-change</code>: Triggered on input value change.</li>
-        <li class="mb-2"><code>p-submit</code>: Triggered on form submission.</li>
-    </ul>
+<p>Create the corresponding view in <code>resources/views/components/counter.plug.php</code>. Use the
+    <code>p-click</code> directive to link elements to PHP methods.</p>
 
-    <h3 class="fw-semibold mt-4 mb-2">Example Template</h3>
-    <div class="mb-4">
-        <pre class="code-box p-3 rounded"><code>&lt;div&gt;
-    &lt;span&gt;Value: {!! $count !!}&lt;/span&gt;
+<pre><code>&lt;div class="counter-card"&gt;
+    &lt;button p-click="decrement"&gt;-&lt;/button&gt;
+    &lt;span class="count"&gt;{{ $count }}&lt;/span&gt;
     &lt;button p-click="increment"&gt;+&lt;/button&gt;
 &lt;/div&gt;</code></pre>
-    </div>
 
-    <h2 class="fw-bold mt-5 mb-3" id="state-management">State Management</h2>
-    <p class="opacity-75">
-        The framework automatically serializes your component's state into the HTML. When an action is triggered, the
-        state is sent back to the server, hydrated, executed, and the updated HTML is returned.
-    </p>
+<hr>
 
-    <div class="alert alert-success bg-opacity-10 border-0 p-4 rounded-4 mb-5">
-        <div class="d-flex align-items-center">
-            <span class="fs-4 me-3">🛡️</span>
-            <div class="small opacity-75">
-                <strong>Type Safety:</strong> Plugs uses PHP Reflection to ensure state is correctly cast to the
-                property types (int, bool, etc.) during hydration.
-            </div>
-        </div>
-    </div>
+<h2 id="usage">Usage in Views</h2>
+
+<p>To include a reactive component in any of your views, use the <code>@component</code> directive:</p>
+
+<pre><code>@component('Counter', ['count' => 10])</code></pre>
+
+<p>The component will automatically initialize and handle its own reactivity.</p>
+
+<hr>
+
+<h2 id="directives">Directives</h2>
+
+<div class="table-responsive">
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Directive</th>
+                <th>Description</th>
+                <th>Example</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>p-click</code></td>
+                <td>Triggers a PHP method on click.</td>
+                <td><code>&lt;button p-click="save"&gt;Save&lt;/button&gt;</code></td>
+            </tr>
+            <tr>
+                <td><code>p-change</code></td>
+                <td>Triggers a PHP method on input change.</td>
+                <td><code>&lt;select p-change="filter"&gt;...&lt;/select&gt;</code></td>
+            </tr>
+            <tr>
+                <td><code>p-submit</code></td>
+                <td>Intercepts form submission and calls method.</td>
+                <td><code>&lt;form p-submit="search"&gt;...&lt;/form&gt;</code></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<hr>
+
+<h2 id="lifecycle">How it Works (The Lifecycle)</h2>
+
+<ol>
+    <li><strong>Initial Render</strong>: The server renders the component and serializes its initial state into a
+        <code>data-plug-state</code> attribute.</li>
+    <li><strong>User Action</strong>: The user clicks an element with <code>p-click="increment"</code>.</li>
+    <li><strong>Request</strong>: The SPA Bridge sends an AJAX request to <code>/plugs/component/action</code> with the
+        current state and the action name.</li>
+    <li><strong>Hydration</strong>: The server takes the serialized state, reconstructs the <code>Counter</code> class,
+        and populates its properties.</li>
+    <li><strong>Execution</strong>: The <code>increment()</code> method is called on the PHP object.</li>
+    <li><strong>Re-render</strong>: The server re-renders the component's view with the updated state.</li>
+    <li><strong>Swap</strong>: The SPA Bridge receives the new HTML and replaces the component's inner DOM.</li>
+</ol>
+
+<div class="alert alert-important">
+    <i class="fas fa-exclamation-triangle"></i> <strong>Important</strong>: Reactive components must be wrapped in a
+    single root element in their view file to ensure correct DOM swapping.
 </div>
 @endsection
-
-@push('styles')
-<style>
-    .code-box {
-        background-color: rgba(var(--text-rgb), 0.05) !important;
-        border: 1px solid rgba(var(--text-rgb), 0.1);
-    }
-
-    .code-box code {
-        color: var(--primary);
-    }
-</style>
-@endpush

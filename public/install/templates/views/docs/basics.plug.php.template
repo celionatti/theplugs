@@ -1,0 +1,232 @@
+@extends('layouts.docs')
+
+@section('content')
+<div data-aos="fade-up">
+    <h1 class="display-5 fw-bold mb-4">The Basics</h1>
+    <p class="lead opacity-75 mb-5">
+        Master the fundamental building blocks of the Plugs Framework. From routing to database interactions, this guide
+        covers everything you need to build robust applications.
+    </p>
+
+    <div class="row g-4 mb-5">
+        <div class="col-md-6">
+            <div class="card glass-card h-100 border-0">
+                <div class="card-body p-4">
+                    <div class="icon-box bg-primary bg-opacity-10 text-primary mb-3">🛣️</div>
+                    <h5 class="fw-bold">Routing</h5>
+                    <p class="small opacity-75">Define URL patterns and map them to closures or controllers.</p>
+                    <a href="#routing" class="btn btn-sm btn-outline-primary stretched-link">Jump to Routing</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card glass-card h-100 border-0">
+                <div class="card-body p-4">
+                    <div class="icon-box bg-success bg-opacity-10 text-success mb-3">🎮</div>
+                    <h5 class="fw-bold">Controllers</h5>
+                    <p class="small opacity-75">Organize your application logic into reusable classes.</p>
+                    <a href="#controllers" class="btn btn-sm btn-outline-success stretched-link">Jump to Controllers</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <hr class="opacity-10 my-5">
+
+    <section id="routing" class="mb-5">
+        <h2 class="fw-bold mb-3">Routing</h2>
+        <p class="opacity-75 mb-4">
+            Routes are defined in <code>routes/web.php</code>. The `Plugs\Facades\Route` facade provides a clean,
+            expressive API for defining routes.
+        </p>
+
+        <h4 class="fw-semibold mt-4">Basic Route</h4>
+        <div class="mb-3">
+            <pre class="code-box p-3 rounded"><code>use Plugs\Facades\Route;
+
+Route::get('/', function () {
+    return 'Hello World';
+});</code></pre>
+        </div>
+
+        <h4 class="fw-semibold mt-4">Route Parameters</h4>
+        <p class="opacity-75">Capture segments of the URI within your route definition.</p>
+        <div class="mb-3">
+            <pre class="code-box p-3 rounded"><code>Route::get('/user/{id}', function ($id) {
+    return 'User ' . $id;
+});
+
+// Optional Parameters
+Route::get('/posts/{page?}', function ($page = 1) {
+    return 'Page ' . $page;
+});</code></pre>
+        </div>
+
+        <h4 class="fw-semibold mt-4">Named Routes</h4>
+        <p class="opacity-75">Named routes allow the convenient generation of URLs or redirects.</p>
+        <div class="mb-3">
+            <pre class="code-box p-3 rounded"><code>Route::get('/profile', [UserController::class, 'show'])->name('profile');
+
+// Generating URLs...
+$url = route('profile');</code></pre>
+        </div>
+    </section>
+
+    <section id="controllers" class="mb-5">
+        <h2 class="fw-bold mb-3">Controllers</h2>
+        <p class="opacity-75 mb-4">
+            Instead of defining all of your request handling logic as closures in route files, you may wish to organize
+            this behavior using "controller" classes.
+        </p>
+
+        <h4 class="fw-semibold mt-4">Basic Controller</h4>
+        <div class="mb-3">
+            <pre class="code-box p-3 rounded"><code>namespace App\Http\Controllers;
+
+use Plugs\Base\Controller\Controller;
+
+class UserController extends Controller
+{
+    public function show($id)
+    {
+        return $this->view('user.profile', ['id' => $id]);
+    }
+}</code></pre>
+        </div>
+
+        <h4 class="fw-semibold mt-4">Dependency Injection</h4>
+        <p class="opacity-75">The Plugs service container automatically resolves dependencies type-hinted in your
+            controller methods.</p>
+        <div class="mb-3">
+            <pre class="code-box p-3 rounded"><code>use App\Repositories\UserRepository;
+
+public function index(UserRepository $users)
+{
+    return $users->all();
+}</code></pre>
+        </div>
+    </section>
+
+    <section id="views" class="mb-5">
+        <h2 class="fw-bold mb-3">Views & Templates</h2>
+        <p class="opacity-75 mb-4">
+            Plugs uses a powerful templating engine that allows you to separate your controller logic from your
+            presentation logic.
+        </p>
+
+        <h4 class="fw-semibold mt-4">Creating a View</h4>
+        <p class="opacity-75">Views are stored in the <code>resources/views</code> directory.</p>
+        <div class="mb-3">
+            <pre class="code-box p-3 rounded"><code><!-- resources/views/greeting.plug.php -->
+&lt;h1&gt;Hello, {{ $name }}&lt;/h1&gt;</code></pre>
+        </div>
+
+        <h4 class="fw-semibold mt-4">Returning a View</h4>
+        <div class="mb-3">
+            <pre class="code-box p-3 rounded"><code>return view('greeting', ['name' => 'James']);</code></pre>
+        </div>
+    </section>
+
+    <section id="database" class="mb-5">
+        <h2 class="fw-bold mb-3">Database & Models</h2>
+        <p class="opacity-75 mb-4">
+            The active record implementation in Plugs provides a beautiful, simple ActiveRecord implementation for
+            working with your database.
+        </p>
+
+        <h4 class="fw-semibold mt-4">Defining a Model</h4>
+        <div class="mb-3">
+            <pre class="code-box p-3 rounded"><code>namespace App\Models;
+
+use Plugs\Base\Model\PlugModel;
+
+class User extends PlugModel
+{
+    protected $table = 'users';
+}</code></pre>
+        </div>
+
+        <h4 class="fw-semibold mt-4">Retrieving Models</h4>
+        <div class="mb-3">
+            <pre class="code-box p-3 rounded"><code>// Retrieve all models
+$users = User::all();
+
+// Retrieve a model by primary key
+$user = User::find(1);
+
+// Querying
+$users = User::where('active', 1)->get();</code></pre>
+        </div>
+
+        <h4 class="fw-semibold mt-4">Creating & Updating</h4>
+        <div class="mb-3">
+            <pre class="code-box p-3 rounded"><code>// Create
+$user = User::create(['name' => 'John', 'email' => 'john@example.com']);
+
+// Update
+$user->name = 'Jane';
+$user->save();</code></pre>
+        </div>
+    </section>
+
+    <div class="alert alert-info bg-opacity-10 border-0 p-4 rounded-4 mb-5">
+        <div class="d-flex align-items-center">
+            <span class="fs-4 me-3">🛡️</span>
+            <div>
+                <strong class="text-info">Security First:</strong>
+                <p class="mb-0 small opacity-75">
+                    Plugs automatically protects your application with CSRF tokens, secure headers, and SQL injection
+                    prevention via parameter binding.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-between align-items-center mt-5">
+        <a href="{{ url('/docs') }}" class="text-decoration-none opacity-50 hover-opacity-100 transition-all">← Back to
+            Index</a>
+        <a href="{{ url('/docs/reactive') }}" class="btn btn-primary px-4 rounded-pill">Next: Reactive Components →</a>
+    </div>
+</div>
+@endsection
+
+@push('styles')
+<style>
+    .glass-card {
+        background: rgba(var(--text-rgb), 0.03);
+        border: 1px solid rgba(var(--text-rgb), 0.05);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        transition: transform 0.3s;
+    }
+
+    .glass-card:hover {
+        transform: translateY(-5px);
+        background: rgba(var(--text-rgb), 0.05);
+    }
+
+    .icon-box {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+    }
+
+    .code-box {
+        background-color: rgba(var(--text-rgb), 0.05) !important;
+        border: 1px solid rgba(var(--text-rgb), 0.1);
+        font-family: 'JetBrains Mono', monospace;
+    }
+
+    .code-box code {
+        color: var(--primary);
+    }
+
+    .hover-opacity-100:hover {
+        opacity: 1 !important;
+    }
+</style>
+@endpush

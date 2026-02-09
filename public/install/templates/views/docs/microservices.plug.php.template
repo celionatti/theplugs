@@ -1,0 +1,56 @@
+@extends('layouts.docs')
+
+@section('title', 'Microservices & Event-Driven Architecture')
+
+@section('content')
+<h1>Microservices & Event-Driven Architecture</h1>
+
+<p>Plugs is designed for distributed systems. It provides first-class support for Event Sourcing and Worker
+    Orchestration.</p>
+
+<h2 id="event-bus">1. Event Bus (Redis Streams)</h2>
+
+<p>For production environments, Plugs uses Redis Streams via the <code>redis</code> driver to ensure message persistence
+    and delivery guarantees.</p>
+
+<pre><code># .env
+EVENT_BUS_DRIVER=redis
+REDIS_HOST=127.0.0.1</code></pre>
+
+<h3>Publishing & Subscribing</h3>
+
+<pre><code>// Dispatch to the cloud
+EventBus::publish('user.signed_up', ['id' => 1]);
+
+// Listen in a long-running process
+EventBus::subscribe('user.signed_up', function($data) {
+    Mail::to($data['email'])->send(new WelcomeMail());
+});</code></pre>
+
+<h2 id="workers">2. Distributed Workers</h2>
+
+<p>Plugs workers are lightweight Fiber-based processes. You can run them via the CLI:</p>
+
+<pre><code># Run a specific queue with 4 concurrent fibers
+php theplugs worker:run --queue=emails --concurrency=4</code></pre>
+
+<h2 id="orchestrator">3. Worker Orchestrator (Auto-Scaling)</h2>
+
+<p>The Orchestrator manages worker pools and scales them based on queue pressure.</p>
+
+<pre><code># Start orchestrator with auto-scaling enabled
+php theplugs orchestrator:run --auto-scale --min-workers=2 --max-workers=20</code></pre>
+
+<h3>Scaling Metrics</h3>
+<ul>
+    <li><strong>Throughput</strong>: Jobs processed per second.</li>
+    <li><strong>Latency</strong>: Average job execution time.</li>
+    <li><strong>Backpressure</strong>: Queue length vs. Worker capacity.</li>
+</ul>
+
+<h2 id="health">4. Health Monitoring</h2>
+
+<p>Monitor your cluster's health via the built-in collector:</p>
+
+<pre><code>php theplugs health:check</code></pre>
+@endsection

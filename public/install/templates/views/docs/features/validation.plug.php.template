@@ -1,0 +1,68 @@
+@extends('layouts.docs')
+
+@section('content')
+<div data-aos="fade-up">
+    <h1 class="display-5 fw-bold mb-4">Validation & Data Integrity</h1>
+    <p class="lead opacity-75 mb-5">
+        Ensure your application data is clean and valid with Plugs' robust, declarative validation system.
+    </p>
+
+    <div class="docs-content">
+        <h2>1. Using the Validator</h2>
+        <p>The <code>Validator</code> service allows you to define rules and check data directly in your controllers or
+            services.</p>
+
+        <pre><code>use Plugs\Support\Facades\Validator;
+
+$data = $request->all();
+$rules = [
+    'email' => 'required|email|unique:users',
+    'password' => 'required|min:8|confirmed',
+    'age' => 'numeric|min:18'
+];
+
+$validator = Validator::make($data, $rules);
+
+if ($validator->fails()) {
+    return redirect()->back()
+        ->withErrors($validator)
+        ->withInput();
+}</code></pre>
+
+        <h2>2. Available Rules</h2>
+        <p>Plugs ships with 30+ built-in rules to cover almost every use case:</p>
+        <ul>
+            <li><code>required</code>, <code>nullable</code>, <code>sometimes</code></li>
+            <li><code>email</code>, <code>url</code>, <code>ip</code>, <code>json</code></li>
+            <li><code>unique:table</code>, <code>exists:table</code> (Database validation)</li>
+            <li><code>min:value</code>, <code>max:value</code>, <code>between:min,max</code></li>
+            <li><code>confirmed</code> (Matches another field, e.g., password_confirmation)</li>
+        </ul>
+
+        <h2>3. Inline Error Handling</h2>
+        <p>Displaying validation errors in your views is seamless with the <code>@error</code> directive.</p>
+
+        <pre><code>&lt;!-- resources/views/register.plug.php --&gt;
+&lt;input name="email" type="email"&gt;
+@error('email')
+    &lt;div class="text-danger small"&gt;{{ $message }}&lt;/div&gt;
+@enderror</code></pre>
+
+        <div class="alert alert-info">
+            <strong>Pro Tip:</strong> Use <strong>ValueObjects</strong> in your routes to automatically validate and
+            cast IDs or UUIDs before they even hit your controller.
+        </div>
+    </div>
+
+    <div class="nav-next-prev">
+        <a href="{{ url('/docs/database/basics') }}" class="nav-card">
+            <span class="label">Previous</span>
+            <span class="title">Database & ORM</span>
+        </a>
+        <a href="{{ url('/docs/reactive') }}" class="nav-card text-end">
+            <span class="label">Next</span>
+            <span class="title">Reactive Components</span>
+        </a>
+    </div>
+</div>
+@endsection

@@ -1,0 +1,44 @@
+@extends('layouts.docs')
+
+@section('title', 'Async & Concurrency')
+
+@section('content')
+<h1>Async & Concurrency</h1>
+
+<p>Plugs leverages PHP Fibers to provide a non-blocking execution model that scales.</p>
+
+<h2 id="async-await">1. Async & Await</h2>
+
+<p>Use the <code>async()</code> and <code>await()</code> helpers to execute promises without blocking the main process
+    loop.</p>
+
+<pre><code>$result = async(function() {
+    $response = await(Http::getAsync('...'));
+    return $response->json();
+});</code></pre>
+
+<h2 id="parallel">2. Parallel Processing</h2>
+
+<p>Need to run multiple tasks at once? <code>Async::parallel</code> handles orchestration and wait logic for you.</p>
+
+<pre><code>use Plugs\Concurrency\Async;
+
+[$users, $posts] = Async::parallel([
+    fn() => Http::get('.../users'),
+    fn() => Http::get('.../posts')
+]);</code></pre>
+
+<h2 id="client">3. Async HTTP Client</h2>
+
+<p>The built-in client is built on Guzzle with Fiber-aware handlers.</p>
+
+<pre><code>use Plugs\Http\Client\AsyncClient;
+
+$client = new AsyncClient();
+$promise = $client->getAsync('/api/data');</code></pre>
+
+<h2 id="why-fibers">4. Why Fibers?</h2>
+
+<p>Unlike ReactPHP or Swoole, Plugs' Fiber-based async allows you to write code that <em>looks</em> synchronous but
+    performs asynchronously under the hood, maintaining high readability.</p>
+@endsection

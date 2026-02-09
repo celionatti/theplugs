@@ -24,40 +24,187 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{{ asset('assets/css/global.css') }}">
     <style>
+        .docs-layout {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 2rem;
+            min-height: calc(100vh - 76px);
+        }
+
+        .docs-sidebar-wrapper {
+            position: sticky;
+            top: 76px;
+            height: calc(100vh - 76px);
+            padding: 2rem 0;
+            overflow-y: auto;
+            border-right: 1px solid var(--border);
+        }
+
         .docs-content {
-            line-height: 1.7;
+            line-height: 1.8;
+            color: var(--text);
+            padding: 2rem 0;
+            max-width: 850px;
         }
 
         .docs-content h1 {
             font-weight: 800;
-            margin-bottom: 2rem;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+            letter-spacing: -0.03em;
+            color: var(--text);
         }
 
         .docs-content h2 {
             font-weight: 700;
-            margin-top: 3rem;
-            margin-bottom: 1rem;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 0.5rem;
+            margin-top: 4rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 0.75rem;
+            color: var(--text);
         }
 
         .docs-content h3 {
             font-weight: 600;
-            margin-top: 2rem;
-            margin-bottom: 1rem;
+            margin-top: 2.5rem;
+            margin-bottom: 1.25rem;
+            color: var(--text);
         }
 
         .docs-content code:not([class]) {
-            background: #f8f9fa;
-            padding: 0.2rem 0.4rem;
-            border-radius: 4px;
-            color: var(--primary);
+            background: oklch(70% 0.17 145 / 0.1);
+            padding: 0.2rem 0.5rem;
+            border-radius: 6px;
+            color: var(--pl-primary);
             font-size: 0.9em;
+            font-family: "Fira Code", monospace;
+        }
+
+        .docs-content pre {
+            position: relative;
+            background: oklch(20% 0.04 259);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin: 2.5rem 0;
+            overflow: hidden;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            padding: 0.5rem;
+            background: oklch(100% 0 0 / 0.05);
+            border: 1px solid oklch(100% 0 0 / 0.1);
+            border-radius: 8px;
+            color: var(--text);
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: var(--transition-smooth);
+            z-index: 10;
+        }
+
+        .copy-btn:hover {
+            background: var(--pl-primary);
+            color: white;
+            border-color: var(--pl-primary);
+        }
+
+        .docs-content pre code {
+            font-family: "Fira Code", monospace;
+            font-size: 0.95rem;
+            line-height: 1.5;
         }
 
         .docs-content .alert {
-            border-left: 4px solid;
-            border-radius: 0 8px 8px 0;
+            border-left: 4px solid var(--pl-primary);
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            border-radius: 0 16px 16px 0;
+            padding: 2rem;
+            margin: 2.5rem 0;
+            color: var(--text);
+        }
+
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem 1.25rem;
+            color: var(--text-muted);
+            text-decoration: none !important;
+            border-radius: 12px;
+            transition: var(--transition-smooth);
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .sidebar-link i {
+            width: 20px;
+            text-align: center;
+            opacity: 0.7;
+        }
+
+        .sidebar-link:hover,
+        .sidebar-link.active {
+            background: oklch(70% 0.17 145 / 0.1);
+            color: var(--pl-primary);
+        }
+
+        .sidebar-link.active i {
+            opacity: 1;
+        }
+
+        .nav-next-prev {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-top: 5rem;
+        }
+
+        .nav-card {
+            padding: 1.5rem;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            text-decoration: none !important;
+            transition: var(--transition-smooth);
+            background: var(--card);
+        }
+
+        .nav-card:hover {
+            border-color: var(--pl-primary);
+            transform: translateY(-4px);
+            box-shadow: var(--shadow);
+        }
+
+        .nav-card .label {
+            font-size: 0.75rem;
+            text-uppercase: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .nav-card .title {
+            font-weight: 700;
+            color: var(--text);
+            font-size: 1.1rem;
+        }
+
+        @media (max-width: 992px) {
+            .docs-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .docs-sidebar-wrapper {
+                position: static;
+                height: auto;
+                border-right: none;
+                border-bottom: 1px solid var(--border);
+                margin-bottom: 2rem;
+            }
         }
     </style>
     @stack('styles')
@@ -66,45 +213,71 @@
 <body>
     <Header />
 
-    <div class="container py-5 mt-5">
-        <div class="row">
+    <div class="container-fluid px-lg-5">
+        <div class="docs-layout">
             <!-- Sidebar -->
-            <div class="col-lg-3 d-none d-lg-block border-end">
+            <aside class="docs-sidebar-wrapper d-none d-lg-block">
                 <Sidebar />
-            </div>
+            </aside>
 
             <!-- Main Content -->
-            <div class="col-lg-9 ps-lg-5">
-                <nav aria-label="breadcrumb" class="mb-4">
-                    <ol class="breadcrumb">
-                        <li class="breadcrumb-item"><a href="/" class="text-decoration-none text-muted">Home</a></li>
-                        <li class="breadcrumb-item"><a href="/docs" class="text-decoration-none text-muted"
-                                data-spa="true">Docs</a></li>
-                        <li class="breadcrumb-item active" aria-current="page">{{ $title }}</li>
-                    </ol>
-                </nav>
+            <main class="docs-content-wrapper min-vh-100">
+                <div class="ps-lg-5">
+                    <nav aria-label="breadcrumb" class="mb-5 pt-5">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="/">Home</a></li>
+                            <li class="breadcrumb-item"><a href="/docs" data-spa="true">Docs</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">{{ $title }}</li>
+                        </ol>
+                    </nav>
 
-                <article class="docs-content" id="app-content">
-                    @yield('content')
-                </article>
+                    <article class="docs-content" id="app-content">
+                        @yield('content')
+                    </article>
 
-                <hr class="my-5">
+                    <div class="nav-next-prev">
+                        <div id="prev-link"></div>
+                        <div id="next-link"></div>
+                    </div>
 
-                <div class="d-flex justify-content-between">
-                    <div id="prev-link"></div>
-                    <div id="next-link"></div>
+                    <footer class="mt-5 pt-5 border-top opacity-50 small pb-5">
+                        &copy; {{ date('Y') }} The Plugs Framework. Built for high-performance PHP.
+                    </footer>
                 </div>
-            </div>
+            </main>
         </div>
     </div>
-
-    <Footer />
 
     <!-- Scripts -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script src="{{ asset('assets/js/global.js') }}"></script>
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
     <script src="{{ asset('assets/plugs/plugs-spa.js') }}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Add copy buttons to pre blocks
+            document.querySelectorAll('pre').forEach(block => {
+                const button = document.createElement('button');
+                button.className = 'copy-btn';
+                button.innerHTML = '<i class="far fa-copy"></i>';
+                block.appendChild(button);
+
+                button.addEventListener('click', () => {
+                    const code = block.querySelector('code').innerText;
+                    navigator.clipboard.writeText(code).then(() => {
+                        button.innerHTML = '<i class="fas fa-check"></i>';
+                        setTimeout(() => {
+                            button.innerHTML = '<i class="far fa-copy"></i>';
+                        }, 2000);
+                    });
+                });
+            });
+
+            // Logic for Next/Prev links would typically check current sidebar active state
+            // and find neighbors. Simulating for now or extracting from Sidebar component.
+        });
+    </script>
     @stack('scripts')
 </body>
 

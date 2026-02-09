@@ -1,0 +1,48 @@
+@extends('layouts.docs')
+
+@section('title', 'Request Lifecycle')
+
+@section('content')
+<h1>Request Lifecycle</h1>
+
+<p>Understanding the Plugs Request Lifecycle is key to building complex applications and optimizing performance.</p>
+
+<h2 id="entry">1. Entry Point</h2>
+<p>Every request starts in <code>public/index.php</code>. This file is the gateway to your application. It loads the
+    Composer autoloader and initializes the framework.</p>
+
+<h2 id="boot">2. Bootstrapping</h2>
+<p>The <code>Plugs\Bootstrap\Bootstrapper</code> takes over. It:</p>
+<ul>
+    <li>Loads the <code>.env</code> file and merges configurations.</li>
+    <li>Registers core services in the DI Container.</li>
+    <li>Discovers and boots all <code>ServiceProviders</code> in <code>app/Providers</code>.</li>
+    <li>Sets up the Error and Exception handlers.</li>
+</ul>
+
+<h2 id="router">3. Router Dispatch</h2>
+<p>Once bootstrapped, the <code>Router</code> analyzes the incoming <code>Request</code>:</p>
+<ul>
+    <li>It matches the URI and HTTP method against registered routes.</li>
+    <li>It resolves any route parameters and performs <strong>ValueObject Binding</strong>.</li>
+    <li>It wraps the execution in a <strong>Middleware Pipeline</strong>.</li>
+</ul>
+
+<h2 id="middleware">4. Middleware Pipeline</h2>
+<p>Requests pass through a chain of global and route-specific middlewares (CSRF, Security Shield, Auth). Each middleware
+    can:</p>
+<ul>
+    <li>Modify the Request.</li>
+    <li>Halt execution and return a Response (e.g., Redirect if not auth).</li>
+    <li>Pass the Request to the next layer.</li>
+</ul>
+
+<h2 id="controller">5. Controller Resolution</h2>
+<p>The Container instantiates your <code>Controller</code> and <strong>Auto-Wires</strong> its constructor and method
+    dependencies. Your logic executes, potentially interacting with Models or Services, and returns a
+    <code>Response</code> or <code>View</code>.</p>
+
+<h2 id="exit">6. Exit Pipeline</h2>
+<p>The <code>Response</code> travels back through those same middlewares (allowing them to modify headers, etc.) and is
+    finally sent to the client's browser.</p>
+@endsection

@@ -1,68 +1,82 @@
 @extends('layouts.docs')
 
+@section('title', 'SPA Bridge')
+
 @section('content')
-<div data-aos="fade-up">
-    <h1 class="display-5 fw-bold mb-4">SPA Bridge</h1>
-    <p class="lead opacity-75 mb-5">
-        The SPA Bridge is a lightweight functionality that intercepts internal links and form submissions to load
-        content asynchronously.
-    </p>
+<h1>SPA Bridge</h1>
 
-    <h2 class="fw-bold mb-3" id="how-it-works">How it Works</h2>
-    <p class="opacity-75">
-        When you navigate to a link marked with SPA attributes, the framework fetches the next page in the background,
-        extracts the <code>#app-content</code> (or a custom selector), and replaces it on the current page without a
-        full reload.
-    </p>
+<p>The Plugs <strong>SPA Bridge</strong> is a lightweight, zero-config engine that transforms your multi-page
+    application into a fluid, high-performance Single Page Application experience.</p>
 
-    <h2 class="fw-bold mt-5 mb-3" id="usage">Usage</h2>
+<hr>
 
-    <h3 class="fw-semibold mb-2">Links</h3>
-    <p class="opacity-75">To enable SPA navigation for a link, simply add the <code>data-spa="true"</code> attribute:
-    </p>
-    <div class="mb-4">
-        <pre
-            class="code-box p-3 rounded"><code>&lt;a href="/about" data-spa="true"&gt;Navigate to About&lt;/a&gt;</code></pre>
-    </div>
+<h2 id="overview">Overview</h2>
 
-    <h3 class="fw-semibold mb-2">Forms</h3>
-    <p class="opacity-75">The bridge also works with forms. When submitted, the data is sent via AJAX and updates the
-        target automatically:</p>
-    <div class="mb-4">
-        <pre class="code-box p-3 rounded"><code>&lt;form action="/search" method="POST" data-spa="true"&gt;
-    &lt;input type="text" name="query" /&gt;
-    &lt;button type="submit"&gt;Search&lt;/button&gt;
-&lt;/form&gt;</code></pre>
-    </div>
+<p>Unlike traditional SPAs that require a separate frontend framework (like React or Vue), the SPA Bridge works with
+    your existing Plug views. It intercepts link clicks, fetches the next page via AJAX, and intelligently swaps the
+    content without a full browser refresh.</p>
 
-    <h2 class="fw-bold mt-5 mb-3" id="custom-targets">Custom Targets</h2>
-    <p class="opacity-75">Specify a different update target using <code>data-spa-target</code>:</p>
-    <div class="mb-4">
-        <pre
-            class="code-box p-3 rounded"><code>&lt;a href="/sidebar" data-spa="true" data-spa-target="#sidebar"&gt;Update Sidebar Only&lt;/a&gt;</code></pre>
-    </div>
+<h3>Key Benefits</h3>
+<ul>
+    <li><strong>Instant Transitions</strong>: No "white flash" between page loads.</li>
+    <li><strong>State Preservation</strong>: Audio players, sidebars, and form states persist across navigation.</li>
+    <li><strong>Zero JavaScript</strong>: Everything is handled by the framework's core; you just write standard HTML.
+    </li>
+    <li><strong>SEO Friendly</strong>: Your site remains fully crawlable as it still serves standard HTML.</li>
+</ul>
 
-    <div class="alert alert-info bg-opacity-10 border-0 p-4 rounded-4 mb-5">
-        <div class="d-flex align-items-center">
-            <span class="fs-4 me-3">💡</span>
-            <div class="small opacity-75">
-                <strong>Pro Tip:</strong> The framework automatically attaches an <code>X-Plugs-SPA</code> header so
-                your controllers can return partial HTML if needed.
-            </div>
-        </div>
-    </div>
+<hr>
+
+<h2 id="enabling">Enabling the Bridge</h2>
+
+<p>The SPA Bridge is enabled by default in all new Plugs projects. You can control it via the <code>data-spa</code>
+    attribute on links or globally in your configuration.</p>
+
+<h3>Individual Links</h3>
+<p>To make a link navigate via the SPA Bridge, simply add the <code>data-spa="true"</code> attribute:</p>
+
+<pre><code>&lt;a href="/profile" data-spa="true"&gt;View Profile&lt;/a&gt;</code></pre>
+
+<h3>Global Activation</h3>
+<p>You can enable the Bridge for all internal links by adding the following to your <code>layouts/app.plug.php</code>:
+</p>
+
+<pre><code>&lt;body data-spa-enabled="true"&gt;
+    ...
+&lt;/body&gt;</code></pre>
+
+<hr>
+
+<h2 id="how-it-works">How It Works</h2>
+
+<ol>
+    <li><strong>Interception</strong>: The bridge listens for clicks on <code>data-spa</code> links.</li>
+    <li><strong>Background Fetch</strong>: It requests the page via <code>fetch()</code> with an
+        <code>X-SPA-Request</code> header.</li>
+    <li><strong>Partial Rendering</strong>: The server detects the header and only renders the
+        <code>@yield('content')</code> section.</li>
+    <li><strong>DOM Diffing</strong>: The bridge receives the HTML and uses an efficient diffing algorithm to update
+        only the changed elements.</li>
+    <li><strong>History Management</strong>: The browser's URL and back/forward history are updated via the
+        <code>History API</code>.</li>
+</ol>
+
+<hr>
+
+<h2 id="events">Lifecycle Events</h2>
+
+<p>You can listen for bridge events to trigger custom JavaScript (like re-initializing 3rd party libraries):</p>
+
+<pre><code>document.addEventListener('spa:navigate', (e) => {
+    console.log('Navigating to:', e.detail.url);
+});
+
+document.addEventListener('spa:loaded', () => {
+    // Re-initialize tooltips, etc.
+});</code></pre>
+
+<div class="alert alert-info">
+    <i class="fas fa-info-circle"></i> <strong>Pro Tip</strong>: Use the <code>spa:loaded</code> event to run any
+    JavaScript that needs to execute after every page transition.
 </div>
 @endsection
-
-@push('styles')
-<style>
-    .code-box {
-        background-color: rgba(var(--text-rgb), 0.05) !important;
-        border: 1px solid rgba(var(--text-rgb), 0.1);
-    }
-
-    .code-box code {
-        color: var(--primary);
-    }
-</style>
-@endpush

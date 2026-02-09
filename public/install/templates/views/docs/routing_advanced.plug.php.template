@@ -1,0 +1,72 @@
+@extends('layouts.docs')
+
+@section('title', 'Advanced Routing & API Versioning')
+
+@section('content')
+<h1>Advanced Routing & API Versioning</h1>
+
+<p>Plugs introduces enterprise-grade routing capabilities including API versioning, route macros, and declarative
+    middleware pipelines.</p>
+
+<h2 id="versioning">API Versioning</h2>
+
+<p>You can now version your API routes easily using route groups. The <code>ApiVersion</code> class handles version
+    extraction from headers, query parameters, or prefixes.</p>
+
+<h3>Usage</h3>
+
+<pre><code>use Plugs\Router\Router;
+
+$router->group(['prefix' => 'api', 'version' => 'v1'], function (Router $r) {
+    $r->get('/users', [UserController::class, 'index']);
+});</code></pre>
+
+<p>This creates a route at <code>/api/v1/users</code>.</p>
+
+<h3>Version Resolution</h3>
+
+<p>The <code>Plugs\Router\ApiVersion</code> class automatically resolves the requested version from:</p>
+<ol>
+    <li><strong>Header</strong>: <code>X-API-Version: v1</code></li>
+    <li><strong>Query Parameter</strong>: <code>?api_version=v1</code></li>
+</ol>
+
+<h2 id="macros">Route Macros</h2>
+
+<p>Extend the router with custom methods using macros.</p>
+
+<pre><code>use Plugs\Router\Router;
+
+Router::macro('customRoute', function ($uri) {
+    return $this->get($uri, function () {
+        return 'Custom Logic';
+    });
+});
+
+$router->customRoute('/test');</code></pre>
+
+<h2 id="openapi">OpenAPI Generation</h2>
+
+<p>Automatically generate an OpenAPI JSON specification from your defined routes.</p>
+
+<pre><code>php plg route:openapi</code></pre>
+
+<p>This command scans your application's routes and outputs an <code>openapi.json</code> file in the root directory.</p>
+
+<h2 id="pipelines">Declarative Middleware Pipelines</h2>
+
+<p>The <code>Plugs\Http\Pipeline</code> class allows you to chain middleware declaratively, similar to the "Pipe and
+    Filter" pattern.</p>
+
+<pre><code>use Plugs\Http\Pipeline;
+
+$response = (new Pipeline())
+    ->send($request)
+    ->through([
+        EnsureTokenIsValid::class,
+        LogRequest::class,
+    ])
+    ->then(function ($request) {
+        return new Response('Core Logic');
+    });</code></pre>
+@endsection

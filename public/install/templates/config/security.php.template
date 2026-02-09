@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use Plugs\Http\ResponseFactory;
 
+
 /*
 |--------------------------------------------------------------------------
 | Security Configuration File
@@ -23,9 +24,7 @@ return [
         'except' => [
             '#^/api/#',
             '#^/webhook/#',
-            '#^/public/upload$#',
-            '#^/plugs/component/action$#',
-            '#^/plugs/profiler#',
+            '#^/public/upload$#'
         ],
 
         // Add token to request attributes
@@ -37,17 +36,19 @@ return [
         // Log failures for security monitoring
         'log_failures' => true,
 
-        // Custom error handler (Set to a class or null for high-performance caching)
-        'error_handler' => null,
+        // Custom error handler
+        'error_handler' => function ($request) {
+            return ResponseFactory::json([
+                'error' => 'Invalid security token'
+            ], 419);
+        },
 
         // CSRF class configuration
         'csrf_config' => [
             'token_lifetime' => 3600,
             'use_per_request_tokens' => true,
-            'strict_mode' => true,
-            'use_masking' => true,
-            'context_bound' => true,
-        ],
+            'strict_mode' => true
+        ]
     ],
 
     // Security Headers
@@ -120,7 +121,7 @@ return [
                     'scraper',
                     'curl',
                     'wget',
-                    'python-requests',
+                    'python-requests'
                 ],
                 'block_suspicious_bots' => true, // Auto-block detected bots
             ],

@@ -4,73 +4,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Install Plugs Framework - Step
-        <?= $step ?>
-    </title>
+    <title>Plugs Framework - <?= $controller->getStepTitle($step) ?></title>
+
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700;800&family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
         rel="stylesheet">
+
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Styles -->
     <link rel="stylesheet" href="assets/install.css">
 </head>
 
 <body>
     <div class="installer-container">
         <!-- Header -->
-        <header class="installer-header">
+        <header class="installer-header animate-in">
             <div class="brand">
                 <span class="brand-icon">⚡</span>
                 <span class="brand-text">Plugs</span>
             </div>
-            <div class="header-subtitle">Framework Installation</div>
+            <div class="header-subtitle">Next-Gen PHP Framework</div>
         </header>
 
         <!-- Progress Steps -->
-        <div class="progress-container">
-            <div class="progress-bar">
+        <div class="progress-container animate-in stagger-1">
+            <div class="progress-bar-wrapper">
                 <div class="progress-fill" style="width: <?= ($step / 5) * 100 ?>%"></div>
             </div>
             <div class="steps">
-                <div class="step <?= $step >= 1 ? 'active' : '' ?> <?= $step > 1 ? 'completed' : '' ?>">
-                    <div class="step-number">
-                        <?= $step > 1 ? '✓' : '1' ?>
+                <?php
+                $steps = [
+                    1 => ['label' => 'System', 'icon' => 'fa-server'],
+                    2 => ['label' => 'Database', 'icon' => 'fa-database'],
+                    3 => ['label' => 'App', 'icon' => 'fa-cog'],
+                    4 => ['label' => 'Admin', 'icon' => 'fa-user-shield'],
+                    5 => ['label' => 'Ready', 'icon' => 'fa-rocket'],
+                ];
+                foreach ($steps as $i => $data):
+                    $isActive = $step >= $i;
+                    $isCompleted = $step > $i;
+                    ?>
+                    <div class="step <?= $isActive ? 'active' : '' ?> <?= $isCompleted ? 'completed' : '' ?>">
+                        <div class="step-number">
+                            <?php if ($isCompleted): ?>
+                                <i class="fas fa-check"></i>
+                            <?php else: ?>
+                                <?= $i ?>
+                            <?php endif; ?>
+                        </div>
+                        <div class="step-label"><?= $data['label'] ?></div>
                     </div>
-                    <div class="step-label">Requirements</div>
-                </div>
-                <div class="step <?= $step >= 2 ? 'active' : '' ?> <?= $step > 2 ? 'completed' : '' ?>">
-                    <div class="step-number">
-                        <?= $step > 2 ? '✓' : '2' ?>
-                    </div>
-                    <div class="step-label">Database</div>
-                </div>
-                <div class="step <?= $step >= 3 ? 'active' : '' ?> <?= $step > 3 ? 'completed' : '' ?>">
-                    <div class="step-number">
-                        <?= $step > 3 ? '✓' : '3' ?>
-                    </div>
-                    <div class="step-label">Settings</div>
-                </div>
-                <div class="step <?= $step >= 4 ? 'active' : '' ?> <?= $step > 4 ? 'completed' : '' ?>">
-                    <div class="step-number">
-                        <?= $step > 4 ? '✓' : '4' ?>
-                    </div>
-                    <div class="step-label">Admin</div>
-                </div>
-                <div class="step <?= $step >= 5 ? 'active' : '' ?>">
-                    <div class="step-number">5</div>
-                    <div class="step-label">Finish</div>
-                </div>
+                <?php endforeach; ?>
             </div>
         </div>
 
         <!-- Main Content -->
-        <main class="installer-main">
+        <main class="installer-main animate-in stagger-2">
             <?php if (!empty($error)): ?>
                 <div class="alert alert-error">
-                    <span class="alert-icon">⚠️</span>
-                    <span>
-                        <?= htmlspecialchars($error) ?>
-                    </span>
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span><?= htmlspecialchars($error) ?></span>
                 </div>
             <?php endif; ?>
 
@@ -78,14 +76,13 @@
         </main>
 
         <!-- Footer -->
-        <footer class="installer-footer">
-            <p>&copy;
-                <?= date('Y') ?> Plugs Framework. Created by <a href="https://github.com/celionatti"
-                    target="_blank">Celio Natti</a>
-            </p>
+        <footer class="installer-footer animate-in stagger-3">
+            <p>&copy; <?= date('Y') ?> <a href="https://github.com/celionatti/plugs" target="_blank">Plugs
+                    Framework</a>. Crafted with precision.</p>
         </footer>
     </div>
 
+    <!-- Scripts -->
     <script src="assets/install.js"></script>
 </body>
 

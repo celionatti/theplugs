@@ -1,0 +1,45 @@
+@extends('layouts.docs')
+
+@section('title', 'Frontend Engine')
+
+@section('content')
+<h1>Frontend Engine</h1>
+
+<p>Plugs bridges the gap between traditional SSR and modern SPAs with a native, zero-config Frontend Engine.</p>
+
+<h2 id="reactive">1. Reactive Components</h2>
+<p>Think of Reactive Components as "Live" templates. They allow you to update parts of your UI in response to
+    server-side state changes without full page reloads.</p>
+
+<pre><code>// resources/views/components/counter.plug.php
+&lt;div class="reactive-counter"&gt;
+    &lt;span&gt;Counter: {{ $count }}&lt;/span&gt;
+    &lt;button wire:click="increment"&gt;+&lt;/button&gt;
+&lt;/div&gt;</code></pre>
+
+<p><strong>How it works:</strong></p>
+<p>The framework tracks "wire" attributes and sends small AJAX payloads to the server, which re-renders the component
+    and diffs the DOM on the frontend.</p>
+
+<h2 id="spa">2. SPA Bridge (The "Plugs-SPA")</h2>
+<p>Our built-in SPA engine turns standard multi-page applications into high-performance Single Page Applications.</p>
+
+<ul>
+    <li><strong>Non-Blocking Navigation</strong>: Only the <code>@yield('content')</code> section is replaced during
+        navigation.</li>
+    <li><strong>State Preservation</strong>: Global elements like the Navigation Bar and Sidebar persist across page
+        loads.</li>
+    <li><strong>Auto-Discovery</strong>: Simply add <code>data-spa="true"</code> to any link, and the Plugs Bridge
+        handles the rest.</li>
+</ul>
+
+<pre><code>&lt;a href="/profile" data-spa="true"&gt;View Profile&lt;/a&gt;</code></pre>
+
+<h2 id="assets">3. Asset Bundling</h2>
+<p>Plugs automatically manages your CSS/JS dependencies, ensuring that only necessary assets are loaded for the current
+    view, reducing initial load times.</p>
+
+<h2 id="htmx">4. Integration with HTMX</h2>
+<p>For power users, Plugs provides deep integration with <strong>HTMX</strong>, allowing you to use declarative
+    attributes to handle complex interactions with zero JavaScript.</p>
+@endsection

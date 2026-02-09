@@ -1,9 +1,7 @@
 <style>
     .docs-sidebar {
-        position: sticky;
-        top: 2rem;
-        height: calc(100vh - 4rem);
-        overflow-y: auto;
+        /* Scroll handled by layout wrapper */
+        padding-right: 1rem;
     }
 
     .docs-sidebar .list-group-item a:hover {
@@ -31,46 +29,88 @@
 <!-- Docs Sidebar -->
 <div class="docs-sidebar">
     <div class="list-group list-group-flush">
+        <!-- Getting Started -->
         <div class="list-group-item bg-transparent border-0 ps-0">
-            <h6 class="text-uppercase fw-bold small text-muted mb-3">Core</h6>
-            <Link href="/docs"
-                class="d-flex align-items-center mb-2 docs-link {{ request()->is('docs') ? 'active' : '' }}">
-            <i class="fas fa-rocket me-2 small"></i> Introduction
-            </Link>
-            <a href="/docs/spa"
-                class="d-flex align-items-center mb-2 docs-link {{ request()->is('docs/spa') ? 'active' : '' }}"
-                data-spa=true>
-                <i class="fas fa-bolt me-2 small"></i> SPA Bridge
+            <h6 class="text-uppercase fw-bold small text-muted mb-3">Getting Started</h6>
+            <a href="{{ url('/docs') }}" class="sidebar-link {{ request()->is('docs') ? 'active' : '' }}">
+                <i class="fas fa-flag"></i> Introduction
             </a>
-            <a href="/docs/reactive"
-                class="d-flex align-items-center mb-2 docs-link {{ request()->is('docs/reactive') ? 'active' : '' }}"
-                data-spa="true">
-                <i class="fas fa-sync-alt me-2 small"></i> Reactive Components
+            <a href="{{ url('/docs/basics') }}" class="sidebar-link {{ request()->is('docs/basics') ? 'active' : '' }}">
+                <i class="fas fa-book-open"></i> The Basics
             </a>
-            <a href="/docs/performance"
-                class="d-flex align-items-center mb-2 docs-link {{ request()->is('docs/performance') ? 'active' : '' }}"
-                data-spa="true">
-                <i class="fas fa-bolt me-2 small"></i> Performance
+            <a href="{{ url('/docs/configuration') }}"
+                class="sidebar-link {{ request()->is('docs/configuration') ? 'active' : '' }}">
+                <i class="fas fa-sliders-h"></i> Configuration
             </a>
         </div>
 
+        <!-- Core Concepts -->
         <div class="list-group-item bg-transparent border-0 ps-0 mt-4">
-            <h6 class="text-uppercase fw-bold small text-muted mb-3">Advanced</h6>
-            <a href="/docs/examples"
-                class="d-flex align-items-center mb-2 docs-link {{ request()->is('docs/examples') ? 'active' : '' }}"
-                data-spa="true">
-                <i class="fas fa-laptop-code me-2 small"></i> Interactive Examples
+            <h6 class="text-uppercase fw-bold small text-muted mb-3">Core Concepts</h6>
+            <a href="{{ url('/docs/architecture/lifecycle') }}"
+                class="sidebar-link {{ request()->is('docs/architecture/lifecycle') ? 'active' : '' }}">
+                <i class="fas fa-sync"></i> Lifecycle
+            </a>
+            <a href="{{ url('/docs/dependency-injection') }}"
+                class="sidebar-link {{ request()->is('docs/dependency-injection') ? 'active' : '' }}">
+                <i class="fas fa-vial"></i> Dependency Injection
+            </a>
+            <a href="{{ url('/docs/routing_advanced') }}"
+                class="sidebar-link {{ request()->is('docs/routing_advanced') ? 'active' : '' }}">
+                <i class="fas fa-route"></i> Advanced Routing
             </a>
         </div>
 
+        <!-- Advanced Features -->
         <div class="list-group-item bg-transparent border-0 ps-0 mt-4">
-            <h6 class="text-uppercase fw-bold small text-muted mb-3">Links</h6>
-            <a href="/" class="d-flex align-items-center docs-link mb-2">
-                <i class="fas fa-home me-2 small"></i> Back to Home
+            <h6 class="text-uppercase fw-bold small text-muted mb-3">Advanced Features</h6>
+            <a href="{{ url('/docs/async') }}" class="sidebar-link {{ request()->is('docs/async') ? 'active' : '' }}">
+                <i class="fas fa-bolt"></i> Async & Concurrency
             </a>
-            <a href="https://github.com/celionatti/plugs" class="d-flex align-items-center docs-link mb-2"
-                target="_blank">
-                <i class="fab fa-github me-2 small"></i> GitHub
+            <a href="{{ url('/docs/microservices') }}"
+                class="sidebar-link {{ request()->is('docs/microservices') ? 'active' : '' }}">
+                <i class="fas fa-network-wired"></i> Microservices
+            </a>
+            <a href="{{ url('/docs/caching') }}" class="sidebar-link {{ request()->is('docs/caching') ? 'active' : '' }}">
+                <i class="fas fa-memory"></i> Tiered Caching
+            </a>
+            <a href="{{ url('/docs/security') }}" class="sidebar-link {{ request()->is('docs/security') ? 'active' : '' }}">
+                <i class="fas fa-shield-alt"></i> Security Shield
+            </a>
+            <a href="{{ url('/docs/type-safety') }}" class="sidebar-link {{ request()->is('docs/type-safety') ? 'active' : '' }}">
+                <i class="fas fa-check-double"></i> Type Safety
+            </a>
+        </div>
+
+        <!-- Deep Dives -->
+        <div class="list-group-item bg-transparent border-0 ps-0 mt-4">
+            <h6 class="text-uppercase fw-bold small text-muted mb-3">Deep Dives</h6>
+            <a href="{{ url('/docs/database/basics') }}"
+                class="sidebar-link {{ request()->is('docs/database/basics') ? 'active' : '' }}">
+                <i class="fas fa-database"></i> Database & ORM
+            </a>
+            <a href="{{ url('/docs/features/validation') }}"
+                class="sidebar-link {{ request()->is('docs/features/validation') ? 'active' : '' }}">
+                <i class="fas fa-spell-check"></i> Validation
+            </a>
+            <a href="{{ url('/docs/reactive') }}" class="sidebar-link {{ request()->is('docs/reactive') ? 'active' : '' }}">
+                <i class="fas fa-palette"></i> Reactive Components
+            </a>
+            <a href="{{ url('/docs/spa') }}" class="sidebar-link {{ request()->is('docs/spa') ? 'active' : '' }}">
+                <i class="fas fa-project-diagram"></i> SPA Bridge
+            </a>
+            <a href="{{ url('/docs/health_metrics') }}"
+                class="sidebar-link {{ request()->is('docs/health_metrics') ? 'active' : '' }}">
+                <i class="fas fa-heartbeat"></i> Health & Metrics
+            </a>
+        </div>
+
+        <div class="list-group-item bg-transparent border-0 ps-0 mt-4 pt-4 border-top">
+            <a href="{{ url('/') }}" class="sidebar-link">
+                <i class="fas fa-home"></i> Back to Home
+            </a>
+            <a href="https://github.com/celionatti/plugs" class="sidebar-link" target="_blank">
+                <i class="fab fa-github"></i> GitHub
             </a>
         </div>
     </div>

@@ -1,0 +1,72 @@
+@extends('layouts.docs')
+
+@section('content')
+<div data-aos="fade-up">
+    <h1 class="display-5 fw-bold mb-4">Database & ORM</h1>
+    <p class="lead opacity-75 mb-5">
+        Plugs provides a clean, expressive API for interacting with databases, whether you prefer raw SQL, a fluent
+        Query Builder, or Active Record models.
+    </p>
+
+    <div class="docs-content">
+        <h2>1. The DB Facade</h2>
+        <p>The <code>DB</code> facade is your primary tool for executing queries. It handles connection pooling and
+            prepared statements automatically.</p>
+
+        <pre><code>use Plugs\Support\Facades\DB;
+
+// Executing a raw query
+$users = DB::select("SELECT * FROM users WHERE active = ?", [true]);
+
+// Executing an insert
+DB::insert("INSERT INTO logs (message) VALUES (?)", ["System boot"]);</code></pre>
+
+        <h2>2. Query Builder</h2>
+        <p>For most tasks, the Query Builder is the preferred way to interact with your data. It provides a readable,
+            IDE-friendly syntax.</p>
+
+        <pre><code>$users = DB::table('users')
+    ->where('last_login', '>', '2025-01-01')
+    ->orderBy('name', 'asc')
+    ->limit(10)
+    ->get();</code></pre>
+
+        <h2>3. Models & Active Record</h2>
+        <p>Plugs Models bridge your database tables with PHP objects, allowing for intuitive data manipulation.</p>
+
+        <pre><code>class User extends Model
+{
+    // Define fillable attributes for security
+    protected array $fillable = ['name', 'email'];
+}
+
+// Finding a user by ID
+$user = User::find(1);
+echo $user->name;
+
+// Saving changes
+$user->name = "Updated Name";
+$user->save();</code></pre>
+
+        <h2>4. Migrations</h2>
+        <p>Keep your database schema in sync with your code using the built-in migration system.</p>
+
+        <pre><code class="language-bash"># Create a new migration
+php theplugs make:migration create_posts_table
+
+# Run pending migrations
+php theplugs migrate</code></pre>
+    </div>
+
+    <div class="nav-next-prev">
+        <a href="{{ url('/docs/type-safety') }}" class="nav-card">
+            <span class="label">Previous</span>
+            <span class="title">Type Safety</span>
+        </a>
+        <a href="{{ url('/docs/features/validation') }}" class="nav-card text-end">
+            <span class="label">Next</span>
+            <span class="title">Validation</span>
+        </a>
+    </div>
+</div>
+@endsection

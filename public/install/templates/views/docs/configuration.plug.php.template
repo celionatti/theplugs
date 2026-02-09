@@ -1,0 +1,94 @@
+@extends('layouts.docs')
+
+@section('title', 'Configuration System')
+
+@section('content')
+<h1>Configuration System</h1>
+
+<p>Plugs features a <strong>Zero-Config</strong> philosophy. By using "Smart Defaults" and internal auto-wiring, you can
+    run a full-featured application with just a <code>.env</code> file.</p>
+
+<h2 id="zero-config">1. Zero-Config & Smart Defaults</h2>
+
+<p>The framework maintains internal defaults for all core components (Mail, Cache, Database, etc.) in
+    <code>Plugs\Config\DefaultConfig</code>. You <strong>do not</strong> need to create files in <code>config/</code>
+    unless you want deep customization.</p>
+
+<h3>Native .env Integration</h3>
+
+<p>Most common settings are mapped directly to environment variables:</p>
+
+<div class="table-responsive">
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Feature</th>
+                <th>Key</th>
+                <th>Default</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Cache</strong></td>
+                <td><code>CACHE_DEFAULT</code></td>
+                <td><code>file</code></td>
+            </tr>
+            <tr>
+                <td><strong>Session</strong></td>
+                <td><code>SESSION_DRIVER</code></td>
+                <td><code>file</code></td>
+            </tr>
+            <tr>
+                <td><strong>Queue</strong></td>
+                <td><code>QUEUE_CONNECTION</code></td>
+                <td><code>sync</code></td>
+            </tr>
+            <tr>
+                <td><strong>Event Bus</strong></td>
+                <td><code>EVENT_BUS_DRIVER</code></td>
+                <td><code>sync</code></td>
+            </tr>
+            <tr>
+                <td><strong>Security</strong></td>
+                <td><code>SECURITY_SHIELD</code></td>
+                <td><code>true</code></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<h2 id="auto-discovery">2. Auto-Discovery</h2>
+
+<p>Plugs automatically discovers and registers your application's Service Providers.</p>
+
+<ul>
+    <li><strong>Location</strong>: All classes in <code>app/Providers/</code> are scanned and loaded automatically.</li>
+    <li><strong>Customization</strong>: You no longer need to manually list providers in an <code>app.php</code> config
+        file.</li>
+</ul>
+
+<h2 id="deployment">3. Deployment Optimization</h2>
+
+<p>For production, you can cache your configuration to eliminate filesystem hits:</p>
+
+<pre><code># Compile defaults and .env into a single cache file
+php theplugs optimize</code></pre>
+
+<h2 id="overrides">4. Manual Overrides</h2>
+
+<p>To override a default that isn't in <code>.env</code>, create a corresponding file in <code>config/</code>. The
+    framework will <strong>recursively merge</strong> your settings into the defaults.</p>
+
+<p><strong>Example: <code>config/mail.php</code></strong></p>
+<pre><code>&lt;?php
+return [
+    'from' => [
+        'address' => 'noreply@yourdomain.com',
+        'name' => 'System'
+    ]
+];</code></pre>
+
+<div class="alert alert-info">
+    <i class="fas fa-info-circle"></i> <strong>Note</strong>: You only need to return the keys you wish to change.
+</div>
+@endsection

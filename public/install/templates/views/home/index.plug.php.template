@@ -1,6 +1,6 @@
 @extends('layouts.default')
 
-@section('title', 'Welcome to Plugs')
+@section('title', 'Installation Successful')
 
 @section('content')
 <div class="hero-container">
@@ -8,85 +8,66 @@
     <div class="container py-5 min-vh-100 d-flex flex-column justify-content-center">
         <div class="row align-items-center">
             <div class="col-lg-6 text-start mb-5 mb-lg-0">
-                <div class="badge-new mb-3">
-                    <span class="pulse"></span>
-                    Version 4.0.0 Optimized
+                <div class="version-badge mb-4">
+                    <span class="pl-pulse"></span>
+                    Framework v5.0.0 Installed
                 </div>
-                <h1 class="display-3 fw-bold mb-4 text-white">
-                    <span class="plugs-text">Plugs</span><br>
-                    Framework
+                <h1 class="display-2 fw-bold mb-4">
+                    <span class="plugs-highlight">Plugs</span><br>
+                    Next-Gen PHP
                 </h1>
-                <p class="lead text-white-50 mb-5 fs-4">
-                    The ultra-fast, premium PHP framework designed for developers who value performance, security, and
-                    aesthetics.
+                <p class="lead mb-5 fs-4">
+                    Congratulations! Your Plugs Framework application "{{ $title ?? '{{APP_NAME}}' }}" is ready.
                 </p>
 
+                <div class="card glass border-0 shadow-lg mb-5">
+                    <div class="card-body p-4">
+                        <h4 class="mb-3">🚀 You're all set!</h4>
+                        <p class="text-muted small mb-0">
+                            The framework has been initialized with all core components, routes, and documentation.
+                            Start building your next masterpiece today.
+                        </p>
+                    </div>
+                </div>
+
                 <div class="d-flex gap-3">
-                    <a href="/docs" class="btn btn-premium px-4 py-3">
-                        <i class="bi bi-book me-2"></i> Get Started
+                    <a href="{{ route('docs') }}" class="btn btn-premium px-5 py-3">
+                        Read the Docs
                     </a>
-                    <a href="https://github.com/celionatti/plugs" class="btn btn-glass px-4 py-3">
-                        <i class="bi bi-github me-2"></i> GitHub
+                    <a href="https://github.com/celionatti/plugs" class="btn btn-outline px-5 py-3">
+                        GitHub
                     </a>
                 </div>
             </div>
 
             <div class="col-lg-6">
                 <div class="feature-grid">
-                    <div class="feature-card glass-card">
-                        <div class="feature-icon bg-success-glow">🚀</div>
+                    <div class="feature-card glass">
+                        <div class="feat-icon success">🚀</div>
                         <h5>Ultra-Fast</h5>
-                        <p class="small text-white-50 p-0 m-0">Optimized with native route and config caching.</p>
+                        <p class="small text-muted mb-0">Optimized with native route and config caching.</p>
                     </div>
-                    <div class="feature-card glass-card">
-                        <div class="feature-icon bg-blue-glow">🛡️</div>
+                    <div class="feature-card glass">
+                        <div class="feat-icon info">🛡️</div>
                         <h5>Secure</h5>
-                        <p class="small text-white-50 p-0 m-0">Multi-layered shield and CSRF protection.</p>
+                        <p class="small text-muted mb-0">Multi-layered shield and CSRF protection.</p>
                     </div>
-                    <div class="feature-card glass-card">
-                        <div class="feature-icon bg-purple-glow">✨</div>
+                    <div class="feature-card glass">
+                        <div class="feat-icon accent">✨</div>
                         <h5>Reactive</h5>
-                        <p class="small text-white-50 p-0 m-0">Live-updating components without JS overhead.</p>
+                        <p class="small text-muted mb-0">Live-updating components without JS overhead.</p>
                     </div>
-                    <div class="feature-card glass-card">
-                        <div class="feature-icon bg-orange-glow">🎨</div>
+                    <div class="feature-card glass">
+                        <div class="feat-icon warning">🎨</div>
                         <h5>Premium</h5>
-                        <p class="small text-white-50 p-0 m-0">Modern OKLCH color system and dark mode.</p>
+                        <p class="small text-muted mb-0">Modern OKLCH color system and dark mode.</p>
                     </div>
                 </div>
             </div>
         </div>
-
-        <div class="row mt-5 pt-5">
-            <div class="col-12 text-start">
-                <h4 class="text-white mb-4">Latest Breakthroughs</h4>
-                <div class="row g-4">
-                    <div class="col-md-4">
-                        <div class="update-card">
-                            <div class="update-tag">NEW</div>
-                            <h6>Premium Flash Messages</h6>
-                            <p class="small text-white-50">Beautiful OKLCH-powered alerts with staggered animations.</p>
-                            <a href="/docs" class="link-glow small">Learn more →</a>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="update-card">
-                            <div class="update-tag bg-info">OPTIMIZED</div>
-                            <h6>Route & Config Caching</h6>
-                            <p class="small text-white-50">Up to 3x faster bootstrap times for production.</p>
-                            <a href="/docs" class="link-glow small">Configure optimization →</a>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="update-card">
-                            <div class="update-tag bg-primary">ENHANCED</div>
-                            <h6>The Plugs CLI</h6>
-                            <p class="small text-white-50">New `optimize` and `cache` commands for deployments.</p>
-                            <a href="/docs" class="link-glow small">CLI Guide →</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        
+        <div class="text-center mt-auto pt-5 opacity-50">
+            <p class="small">Powered by Plugs Framework &bull; Created by <a href="https://github.com/celionatti" class="text-decoration-none text-light">Celio Natti</a></p>
         </div>
     </div>
 </div>
@@ -95,194 +76,118 @@
 @push('styles')
 <style>
     :root {
-        --plugs-primary: oklch(70% 0.18 260);
-        --plugs-secondary: oklch(65% 0.15 285);
-        --hero-bg: oklch(15% 0.05 260);
+        --hero-text: oklch(98% 0.01 145);
     }
 
     body {
-        background-color: var(--hero-bg);
-        color: white;
-        overflow-x: hidden;
+        background-color: var(--bg);
+        color: var(--text);
     }
 
     .hero-container {
         position: relative;
         overflow: hidden;
+        background: radial-gradient(circle at top right, oklch(70% 0.17 145 / 0.05) 0%, transparent 70%);
     }
 
-    .hero-glow {
-        position: absolute;
-        top: -10%;
-        right: -10%;
-        width: 60%;
-        height: 80%;
-        background: radial-gradient(circle, oklch(40% 0.15 260 / 0.15) 0%, transparent 70%);
-        z-index: -1;
-        filter: blur(100px);
-    }
-
-    .plugs-text {
-        background: linear-gradient(135deg, var(--plugs-primary), var(--plugs-secondary));
+    .plugs-highlight {
+        background: linear-gradient(135deg, var(--pl-primary), var(--pl-primary-light));
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
     }
 
     .btn-premium {
-        background: linear-gradient(135deg, var(--plugs-primary), var(--plugs-secondary));
+        background: var(--pl-primary);
         color: white;
         border: none;
-        box-shadow: 0 10px 20px -5px oklch(50% 0.15 260 / 0.3);
-        transition: all 0.3s;
-        font-weight: 600;
+        font-weight: 700;
         border-radius: 12px;
+        transition: var(--transition-smooth);
+        box-shadow: 0 10px 20px oklch(70% 0.17 145 / 0.2);
     }
 
     .btn-premium:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 15px 30px -5px oklch(50% 0.15 260 / 0.4);
+        background: var(--pl-primary-light);
         color: white;
+        transform: translateY(-3px);
+        box-shadow: 0 15px 30px oklch(70% 0.17 145 / 0.3);
     }
 
-    .btn-glass {
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        color: white;
-        backdrop-filter: blur(10px);
-        transition: all 0.3s;
+    .btn-outline {
+        background: transparent;
+        border: 2px solid var(--border);
+        color: var(--text);
+        font-weight: 600;
         border-radius: 12px;
+        transition: var(--transition-smooth);
     }
 
-    .btn-glass:hover {
-        background: rgba(255, 255, 255, 0.1);
-        color: white;
-    }
-
-    .badge-new {
-        display: inline-flex;
-        align-items: center;
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        padding: 6px 16px;
-        border-radius: 20px;
-        font-size: 0.85rem;
-        font-weight: 500;
-        color: var(--plugs-primary);
-    }
-
-    .pulse {
-        width: 8px;
-        height: 8px;
-        background: var(--plugs-primary);
-        border-radius: 50%;
-        margin-right: 10px;
-        animation: pulse-ring 2s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
-    }
-
-    @keyframes pulse-ring {
-        0% {
-            transform: scale(.33);
-            opacity: 1;
-        }
-
-        80%,
-        100% {
-            opacity: 0;
-        }
+    .btn-outline:hover {
+        background: var(--border);
+        color: var(--text);
+        transform: translateY(-3px);
     }
 
     .feature-grid {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
-        gap: 20px;
+        gap: 24px;
     }
 
-    .feature-card {
-        padding: 30px;
-        border-radius: 24px;
-        text-align: center;
-        transition: all 0.3s;
-    }
-
-    .feature-card:hover {
-        transform: translateY(-5px);
-        background: rgba(255, 255, 255, 0.08);
-    }
-
-    .glass-card {
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        backdrop-filter: blur(20px);
-    }
-
-    .feature-icon {
-        width: 60px;
-        height: 60px;
-        margin: 0 auto 20px;
+    .feat-icon {
+        width: 50px;
+        height: 50px;
         display: flex;
         align-items: center;
         justify-content: center;
-        border-radius: 16px;
-        font-size: 24px;
+        border-radius: 12px;
+        font-size: 20px;
+        margin-bottom: 1.5rem;
     }
 
-    .bg-success-glow {
-        background: oklch(75% 0.15 145 / 0.15);
-        color: oklch(75% 0.15 145);
-        border: 1px solid oklch(75% 0.15 145 / 0.2);
+    .feat-icon.success {
+        background: oklch(75% 0.15 145 / 0.1);
+        color: var(--pl-success);
     }
 
-    .bg-blue-glow {
-        background: oklch(70% 0.18 245 / 0.15);
-        color: oklch(70% 0.18 245);
-        border: 1px solid oklch(70% 0.18 245 / 0.2);
+    .feat-icon.info {
+        background: oklch(70% 0.18 245 / 0.1);
+        color: var(--pl-info);
     }
 
-    .bg-purple-glow {
-        background: oklch(70% 0.18 300 / 0.15);
-        color: oklch(70% 0.18 300);
-        border: 1px solid oklch(70% 0.18 300 / 0.2);
+    .feat-icon.accent {
+        background: oklch(75% 0.18 200 / 0.1);
+        color: var(--pl-accent);
     }
 
-    .bg-orange-glow {
-        background: oklch(75% 0.15 60 / 0.15);
-        color: oklch(75% 0.15 60);
-        border: 1px solid oklch(75% 0.15 60 / 0.2);
+    .feat-icon.warning {
+        background: oklch(80% 0.15 85 / 0.1);
+        color: var(--pl-warning);
     }
 
-    .update-card {
-        background: rgba(255, 255, 255, 0.02);
-        border-left: 3px solid var(--plugs-primary);
-        padding: 24px;
-        border-radius: 0 16px 16px 0;
-        height: 100%;
-        transition: all 0.3s;
+    .pl-pulse {
+        width: 8px;
+        height: 8px;
+        background: var(--pl-primary);
+        border-radius: 50%;
+        animation: pl-pulse-ring 2s infinite;
     }
 
-    .update-card:hover {
-        background: rgba(255, 255, 255, 0.05);
-    }
+    @keyframes pl-pulse-ring {
+        0% {
+            transform: scale(.95);
+            box-shadow: 0 0 0 0 oklch(70% 0.17 145 / 0.7);
+        }
 
-    .update-tag {
-        display: inline-block;
-        font-size: 10px;
-        font-weight: 800;
-        padding: 2px 8px;
-        border-radius: 4px;
-        background: var(--plugs-primary);
-        color: black;
-        margin-bottom: 12px;
-    }
+        70% {
+            transform: scale(1);
+            box-shadow: 0 0 0 10px oklch(70% 0.17 145 / 0);
+        }
 
-    .link-glow {
-        color: var(--plugs-primary);
-        text-decoration: none;
-        font-weight: 500;
-        transition: all 0.3s;
-    }
-
-    .link-glow:hover {
-        text-shadow: 0 0 10px var(--plugs-primary);
+        100% {
+            transform: scale(.95);
+            box-shadow: 0 0 0 0 oklch(70% 0.17 145 / 0);
+        }
     }
 </style>
 @endpush

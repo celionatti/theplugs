@@ -40,11 +40,49 @@
         <div class="col-lg-6 order-lg-1">
             <div class="p-4 bg-white rounded shadow-sm border text-center">
                 <div class="d-grid gap-2">
-                    <a href="/docs" class="btn btn-primary" data-spa="true">Intro Page</a>
-                    <a href="/docs/spa" class="btn btn-outline-primary" data-spa="true">SPA Bridge Guide</a>
-                    <a href="/docs/reactive" class="btn btn-outline-success" data-spa="true">Reactive Guide</a>
+                    <a href="{{ url('/docs') }}" class="btn btn-primary" data-spa="true">Intro Page</a>
+                    <a href="{{ url('/docs/spa') }}" class="btn btn-outline-primary" data-spa="true">SPA Bridge
+                        Guide</a>
+                    <a href="{{ url('/docs/reactive') }}" class="btn btn-outline-success" data-spa="true">Reactive
+                        Guide</a>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <hr class="my-4">
+
+    <div class="row align-items-center mb-5">
+        <div class="col-lg-6">
+            <h3>3. Real-Time Search</h3>
+            <p>
+                This example demonstrates <code>p-keyup</code> with debounce and loading states.
+                Type in the box to simulate a server-side search.
+            </p>
+            <div class="alert alert-light border small">
+                <strong>Source:</strong> <code>App\Components\Search.php</code>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <Search />
+        </div>
+    </div>
+
+    <hr class="my-4">
+
+    <div class="row align-items-center mb-5">
+        <div class="col-lg-6 order-lg-2">
+            <h3>4. Live Polling</h3>
+            <p>
+                This component updates itself every 2 seconds using <code>p-poll</code>.
+                Perfect for dashboards, stock tickers, or live feeds.
+            </p>
+            <div class="alert alert-light border small">
+                <strong>Source:</strong> <code>App\Components\Ticker.php</code>
+            </div>
+        </div>
+        <div class="col-lg-6 order-lg-1">
+            <Ticker />
         </div>
     </div>
 
