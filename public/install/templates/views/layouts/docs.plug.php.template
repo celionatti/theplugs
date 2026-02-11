@@ -208,6 +208,7 @@
         }
     </style>
     @stack('styles')
+    {!! \Plugs\Facades\SEO::render() !!}
 </head>
 
 <body>
