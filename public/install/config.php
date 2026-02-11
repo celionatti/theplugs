@@ -156,6 +156,7 @@ return [
         'composer.json' => 'composer.json.template',
         'public/index.php' => 'public/index.php.template',
         'public/.htaccess' => 'public/.htaccess.template',
+        'public/favicon.svg' => 'public/favicon.svg.template',
         'public/assets/css/global.css' => 'public/assets/css/global.css.template',
         'public/assets/js/global.js' => 'public/assets/js/global.js.template',
         'public/plugs/plugs-spa.js' => 'public/plugs/plugs-spa.js.template',
