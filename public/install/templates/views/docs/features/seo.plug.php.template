@@ -64,8 +64,9 @@ SEO::addMetadata('theme-color', '#00b894');</code></pre>
     <div class="mt-4">
         <pre><code class="language-html">&lt;head&gt;
     &lt;!-- Other tags --&gt;
-    {!! SEO::render() !!}
-&lt;/head&gt;</code></pre>
+    @{!! \Plugs\Facades\SEO::render() !!}
+&lt;/head&gt;
+</code></pre>
     </div>
 
     <h2 id="configuration">Configuration</h2>
