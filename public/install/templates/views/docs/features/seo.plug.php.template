@@ -1,0 +1,84 @@
+@extends('layouts.docs')
+
+@section('content')
+<div data-aos="fade-up">
+    <div class="mb-5">
+        <h1 class="display-5 fw-bold mb-3">SEO & AI Accessibility</h1>
+        <p class="lead">Optimize your application for search engines and AI models with a centralized management system.</p>
+    </div>
+
+    <div class="alert alert-info">
+        <i class="fas fa-magic me-2"></i>
+        The SEO Manager is automatically available via the <code>SEO</code> facade. It's integrated into the default documentation and layout templates.
+    </div>
+
+    <h2 id="metadata">Metadata Management</h2>
+    <p>Use the <code>SEO</code> facade to set standard meta tags, social media metadata (OpenGraph & Twitter Cards), and canonical URLs.</p>
+
+    <div class="mt-4">
+        <pre><code class="language-php">use Plugs\Facades\SEO;
+
+// Set basic metadata
+SEO::setTitle('My Awesome Page')
+   ->setDescription('Detailed description of my awesome page content.')
+   ->setImage(asset('images/og-main.png'))
+   ->setUrl(url('/awesome-page'));
+
+// Add custom metadata
+SEO::addMetadata('author', 'John Doe');
+SEO::addMetadata('theme-color', '#00b894');</code></pre>
+    </div>
+
+    <h2 id="json-ld">Structured Data (JSON-LD)</h2>
+    <p>Enhance your search results with structured data. This helps search engines and AI agents understand the context of your content.</p>
+
+    <div class="mt-4">
+        <pre><code class="language-php">SEO::addJsonLd([
+    '@context' => 'https://schema.org',
+    '@type' => 'Organization',
+    'name' => 'Plugs Framework',
+    'url' => 'https://plugs-framework.com',
+    'logo' => asset('logo.png')
+]);</code></pre>
+    </div>
+
+    <h2 id="ai-accessibility">AI Accessibility</h2>
+    <p>Plugs includes a specialized middleware to detect and optimize content for AI crawlers like GPTBot and ClaudeBot.</p>
+
+    <div class="mt-4">
+        <h6>Enable AI Optimization</h6>
+        <p>Register the <code>ai.optimize</code> middleware in your routes or groups.</p>
+        <pre><code class="language-php">Route::middleware('ai.optimize')->group(function() {
+    Route::get('/articles', [ArticleController::class, 'index']);
+});</code></pre>
+    </div>
+
+    <div class="alert alert-warning">
+        <i class="fas fa-robot me-2"></i>
+        When an AI agent is detected, the middleware adds a <code>X-AI-Optimized: true</code> header and ensures search engines are signaled via <code>X-Robots-Tag</code>.
+    </div>
+
+    <h2 id="rendering">Rendering</h2>
+    <p>The SEO tags are rendered in your layout's <code>&lt;head&gt;</code> using the <code>render()</code> method.</p>
+
+    <div class="mt-4">
+        <pre><code class="language-html">&lt;head&gt;
+    &lt;!-- Other tags --&gt;
+    {!! SEO::render() !!}
+&lt;/head&gt;</code></pre>
+    </div>
+
+    <h2 id="configuration">Configuration</h2>
+    <p>Default SEO values can be customized in your framework defaults. Key settings include default titles, title appendixes, and default social images.</p>
+
+    <div class="mt-4">
+        <pre><code class="language-php">// In DefaultConfig.php or your app config
+'seo' => [
+    'default_title' => 'Plugs Framework',
+    'title_appendix' => ' | Plugs',
+    'default_description' => 'High-performance PHP framework...',
+    'keywords' => 'php, framework, plugs',
+]</code></pre>
+    </div>
+</div>
+@endsection

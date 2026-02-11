@@ -81,6 +81,10 @@
                 class="sidebar-link {{ request()->is('docs/features/ai') ? 'active' : '' }}" data-spa="true">
                 <i class="fas fa-brain"></i> AI SDK
             </a>
+            <a href="{{ url('/docs/features/seo') }}"
+                class="sidebar-link {{ request()->is('docs/features/seo') ? 'active' : '' }}" data-spa="true">
+                <i class="fas fa-search"></i> SEO & AI
+            </a>
             <a href="{{ url('/docs/type-safety') }}" class="sidebar-link {{ request()->is('docs/type-safety') ? 'active' : '' }}" data-spa="true">
                 <i class="fas fa-check-double"></i> Type Safety
             </a>

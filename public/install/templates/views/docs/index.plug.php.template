@@ -108,6 +108,9 @@
                 <li class="mb-2"><a href="{{ url('/docs/features/ai') }}"
                         class="text-decoration-none hover-primary transition-all d-flex align-items-center"><i
                             class="fas fa-brain me-2 small opacity-50"></i> AI SDK (OpenAI, Gemini, etc.)</a></li>
+                <li class="mb-2"><a href="{{ url('/docs/features/seo') }}"
+                        class="text-decoration-none hover-primary transition-all d-flex align-items-center"><i
+                            class="fas fa-search me-2 small opacity-50"></i> SEO & AI Accessibility</a></li>
                 <li class="mb-2"><a href="{{ url('/docs/health_metrics') }}"
                         class="text-decoration-none hover-primary transition-all d-flex align-items-center"><i
                             class="fas fa-chart-line me-2 small opacity-50"></i> Health & Metrics</a></li>
