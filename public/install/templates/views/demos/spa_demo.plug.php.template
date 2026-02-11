@@ -1,0 +1,32 @@
+@extends('layouts.default')
+
+@section('title', 'SPA & Bolt Demo')
+
+@section('content')
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-5">
+        <h1>SPA & Reactive Components Demo</h1>
+        <a href="/" class="btn btn-secondary" data-spa="true">Back to Home</a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-8 mx-auto">
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> This page demonstrates the power of <strong>Bolt (Reactive
+                    Components)</strong> and the <strong>SPA Bridge</strong>.
+                try navigating away and back to see the speed!
+            </div>
+
+            <!-- The Reactive Component -->
+            <SpaDemoComponent />
+
+            <div class="mt-5">
+                <h3>Docs</h3>
+                <p>Check out the documentation for more details on how to build this.</p>
+                <a href="/docs/reactive" class="btn btn-primary" data-spa="true">Read Reactive Docs</a>
+                <a href="/docs/spa" class="btn btn-outline-primary" data-spa="true">Read SPA Docs</a>
+            </div>
+        </div>
+    </div>
+</div>
+@endsection

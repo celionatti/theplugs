@@ -87,9 +87,9 @@ class Counter extends ReactiveComponent
 
 <h2 id="usage">Usage in Views</h2>
 
-<p>To include a reactive component in any of your views, use the <code>&#64;component</code> directive:</p>
+<p>To include a reactive component in any of your views, use the component tag syntax:</p>
 
-<pre><code>&#64;component('Counter', ['count' => 10])</code></pre>
+<pre><code>&lt;Counter count="10" /&gt;</code></pre>
 
 <p>The component will automatically initialize and handle its own reactivity.</p>
 
@@ -111,6 +111,36 @@ class Counter extends ReactiveComponent
                 <td><code>p-click</code></td>
                 <td>Triggers a PHP method on click.</td>
                 <td><code>&lt;button p-click="save"&gt;Save&lt;/button&gt;</code></td>
+            </tr>
+            <tr>
+                <td><code>p-init</code></td>
+                <td>Calls a method when component is initialized.</td>
+                <td><code>&lt;div p-init="setup"&gt;...&lt;/div&gt;</code></td>
+            </tr>
+            <tr>
+                <td><code>p-poll</code></td>
+                <td>Polls the server at a given interval.</td>
+                <td><code>&lt;div p-poll="2000" p-poll-action="refresh"&gt;...&lt;/div&gt;</code></td>
+            </tr>
+            <tr>
+                <td><code>p-outside</code></td>
+                <td>Triggers when clicking outside the element.</td>
+                <td><code>&lt;div p-outside="close"&gt;...&lt;/div&gt;</code></td>
+            </tr>
+            <tr>
+                <td><code>p-intersect</code></td>
+                <td>Triggers when element enters viewport.</td>
+                <td><code>&lt;div p-intersect="onShow"&gt;...&lt;/div&gt;</code></td>
+            </tr>
+            <tr>
+                <td><code>p-confirm</code></td>
+                <td>Shows confirmation before action.</td>
+                <td><code>&lt;button p-click="delete" p-confirm="Sure?"&gt;...&lt;/button&gt;</code></td>
+            </tr>
+            <tr>
+                <td><code>p-loading</code></td>
+                <td>Toggles a loading indicator.</td>
+                <td><code>&lt;div p-loading=".spinner"&gt;...&lt;/div&gt;</code></td>
             </tr>
             <tr>
                 <td><code>p-change</code></td>

@@ -1,0 +1,70 @@
+<?php
+
+namespace App\Components;
+
+use Plugs\View\ReactiveComponent;
+
+class SpaDemoComponent extends ReactiveComponent
+{
+    public int $counter = 0;
+    public string $message = '';
+    public string $lastAction = 'None';
+    public string $currentTime = '';
+    public bool $isVisible = true;
+    public bool $initialized = false;
+    public string $outsideClickStatus = 'Waiting for click outside...';
+    public bool $isVisibleInViewport = false;
+
+    public function init()
+    {
+        $this->initialized = true;
+        $this->lastAction = 'Component Initialized (p-init)';
+        $this->currentTime = date('H:i:s');
+    }
+
+    public function increment()
+    {
+        $this->counter++;
+        $this->lastAction = 'Incremented Counter';
+    }
+
+    public function decrement()
+    {
+        $this->counter--;
+        $this->lastAction = 'Decremented Counter';
+    }
+
+    public function updateMessage($value)
+    {
+        $this->message = $value;
+        $this->lastAction = 'Updated Message: ' . $value;
+    }
+
+    public function refreshTime()
+    {
+        $this->currentTime = date('H:i:s');
+    }
+
+    public function toggleVisibility()
+    {
+        $this->isVisible = !$this->isVisible;
+        $this->lastAction = 'Toggled Visibility';
+    }
+
+    public function handleOutsideClick()
+    {
+        $this->outsideClickStatus = 'Clicked Outside! ' . date('H:i:s');
+        $this->lastAction = 'Outside Click Detected (p-outside)';
+    }
+
+    public function markAsVisible()
+    {
+        $this->isVisibleInViewport = true;
+        $this->lastAction = 'Element Intersected Viewport (p-intersect)';
+    }
+
+    public function render()
+    {
+        return 'components.spa-demo-component';
+    }
+}

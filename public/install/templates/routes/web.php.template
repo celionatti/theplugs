@@ -73,3 +73,7 @@ Route::get('/async-demo', function () {
 Route::get('/htmx-demo', function () {
     return view('demos.htmx')->renderSmart();
 });
+
+Route::get('/spa-demo', function () {
+    return view('demos.spa_demo');
+})->name('spa.demo');

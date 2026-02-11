@@ -1,0 +1,142 @@
+<div class="reactive-demo" p-init="init">
+    <!-- Header Stats -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white text-center p-3">
+                <h6 class="mb-1">Counter</h6>
+                <h2 class="mb-0">{{ $counter }}</h2>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white text-center p-3" p-poll="1000" p-poll-action="refreshTime">
+                <h6 class="mb-1">Server Time</h6>
+                <h2 class="mb-0 small">{{ $currentTime }}</h2>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card {{ $initialized ? 'bg-info' : 'bg-secondary' }} text-white text-center p-3">
+                <h6 class="mb-1">Status</h6>
+                <h2 class="mb-0 small">{{ $initialized ? 'Initialized' : 'Starting...' }}</h2>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-dark text-white text-center p-3">
+                <h6 class="mb-1">Last Action</h6>
+                <div class="small text-truncate" title="{{ $lastAction }}">{{ $lastAction }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Features Grid -->
+    <div class="row g-4">
+        <!-- Interactive Elements -->
+        <div class="col-md-6">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header bg-white fw-bold">User Interaction</div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <label class="small text-muted mb-2">Counter (p-click)</label>
+                        <div class="btn-group w-100">
+                            <button class="btn btn-outline-primary" p-click="decrement">
+                                <i class="fas fa-minus"></i> Decrement
+                            </button>
+                            <button class="btn btn-primary" p-click="increment">
+                                <i class="fas fa-plus"></i> Increment
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="small text-muted mb-2">Real-time Typing (p-keyup + Debye)</label>
+                        <input type="text" class="form-control" value="{{ $message }}" p-keyup="updateMessage"
+                            p-debounce="300" placeholder="Type something to sync...">
+                        <div class="mt-2 small text-primary p-2 bg-light rounded border">
+                            <strong>Sync Data:</strong> {{ $message ?: 'Waiting for input...' }}
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="small text-muted mb-2">Outside Click Detection (p-outside)</label>
+                        <div class="p-4 border border-dashed rounded text-center bg-light"
+                            p-outside="handleOutsideClick">
+                            Click inside here... then click <strong>outside</strong>.
+                            <div class="mt-2 fw-bold text-danger">{{ $outsideClickStatus }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Visibility & Feedback -->
+        <div class="col-md-6">
+            <div class="card h-100 shadow-sm">
+                <div class="card-header bg-white fw-bold">UX Feedback & Logic</div>
+                <div class="card-body">
+                    <div class="mb-4">
+                        <label class="small text-muted mb-2">State Toggle (p-confirm)</label>
+                        <button class="btn btn-warning w-100 mb-2" p-click="toggleVisibility"
+                            p-confirm="Are you sure you want to toggle the visibility of the success box?">
+                            <i class="fas fa-eye-slash"></i> (p-confirm) Toggle Success Box
+                        </button>
+
+                        @if($isVisible)
+                        <div class="alert alert-success animate__animated animate__fadeIn" p-click="toggleVisibility">
+                            <strong>Success!</strong> I am visible because <code>$isVisible</code> is true. Click me to
+                            close.
+                        </div>
+                        @else
+                        <div class="alert alert-secondary opacity-50">
+                            Box is hidden.
+                        </div>
+                        @endif
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="small text-muted mb-2">Async Feedback (p-loading)</label>
+                        <div p-loading=".global-loader" class="position-relative">
+                            <button class="btn btn-info text-white w-100" p-click="refreshTime">
+                                <i class="fas fa-sync"></i> Refresh Data & Test Loading
+                            </button>
+                            <div class="global-loader position-absolute top-50 start-50 translate-middle"
+                                style="display:none;">
+                                <div class="spinner-border spinner-border-sm text-white"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 pt-4 border-top">
+                        <label class="small text-muted mb-2">Scroll Observation (p-intersect)</label>
+                        <div class="bg-light p-5 rounded text-center border overflow-auto" style="max-height: 150px;">
+                            <div style="height: 300px;">
+                                <p class="text-muted pt-2">Scroll down inside this box...</p>
+                                <div style="margin-top: 150px;" p-intersect="markAsVisible" p-intersect-once="false"
+                                    class="p-3 bg-white shadow-sm border rounded">
+                                    @if($isVisibleInViewport)
+                                    <span class="text-success"><i class="fas fa-check-circle"></i> You saw me!</span>
+                                    @else
+                                    <span class="text-muted">I'm waiting for your scroll...</span>
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .reactive-demo .card {
+        transition: transform 0.2s;
+    }
+
+    .reactive-demo .card:hover {
+        transform: translateY(-2px);
+    }
+
+    .border-dashed {
+        border-style: dashed !important;
+        border-width: 2px !important;
+    }
+</style>
