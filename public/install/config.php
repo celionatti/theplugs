@@ -127,6 +127,7 @@ return [
         'resources/views/docs/architecture/lifecycle.plug.php' => 'views/docs/architecture/lifecycle.plug.php.template',
         'resources/views/docs/database/basics.plug.php' => 'views/docs/database/basics.plug.php.template',
         'resources/views/docs/features/validation.plug.php' => 'views/docs/features/validation.plug.php.template',
+        'resources/views/docs/features/ai.plug.php' => 'views/docs/features/ai.plug.php.template',
         'resources/views/components/header.plug.php' => 'views/components/header.plug.php.template',
         'resources/views/components/footer.plug.php' => 'views/components/footer.plug.php.template',
         'resources/views/components/sidebar.plug.php' => 'views/components/sidebar.plug.php.template',

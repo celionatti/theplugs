@@ -39,6 +39,7 @@ Route::get('/docs/{path?}', function ($path = 'index') {
         'type-safety' => 'Type Safety',
         'database.basics' => 'Database & ORM',
         'features.validation' => 'Validation',
+        'features.ai' => 'AI SDK',
         'reactive' => 'Reactive Components',
         'spa' => 'SPA Bridge',
         'health_metrics' => 'Health & Metrics',

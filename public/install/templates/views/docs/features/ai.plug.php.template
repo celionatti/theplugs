@@ -1,0 +1,82 @@
+@extends('layouts.docs')
+
+@section('content')
+<div data-aos="fade-up">
+    <div class="mb-5">
+        <h1 class="display-5 fw-bold mb-3">AI SDK</h1>
+        <p class="lead">A unified, driver-based interface for interacting with Large Language Models directly from the Plugs framework.</p>
+    </div>
+
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle me-2"></i>
+        Plugs AI SDK comes with built-in configuration. Simply add your API keys to your <code>.env</code> file to get started.
+    </div>
+
+    <h2 id="setup">Getting Started</h2>
+    <p>The AI SDK supports OpenAI, Anthropic (Claude), and Google Gemini. You can switch between them seamlessly using the driver pattern.</p>
+
+    <div class="mt-4">
+        <h6>1. Update Environment Variables</h6>
+        <pre><code class="language-env">AI_DRIVER=openai
+
+OPENAI_API_KEY=your-api-key
+OPENAI_MODEL=gpt-4o
+
+ANTHROPIC_API_KEY=your-api-key
+ANTHROPIC_MODEL=claude-3-5-sonnet-latest
+
+GEMINI_API_KEY=your-api-key
+GEMINI_MODEL=gemini-1.5-flash</code></pre>
+    </div>
+
+    <h2 id="usage">Basic Usage</h2>
+    <p>Using the <code>AI</code> facade, you can send simple prompts or manage full chat conversations.</p>
+
+    <div class="mt-4">
+        <h6>Simple Prompt</h6>
+        <pre><code class="language-php">use Plugs\Facades\AI;
+
+$response = AI::prompt('Explain quantum computing in simple terms.');
+
+echo $response;</code></pre>
+    </div>
+
+    <div class="mt-4">
+        <h6>Chat Completion</h6>
+        <pre><code class="language-php">use Plugs\Facades\AI;
+
+$response = AI::chat([
+    ['role' => 'user', 'content' => 'Hello, who are you?'],
+    ['role' => 'assistant', 'content' => 'I am an AI assistant.'],
+    ['role' => 'user', 'content' => 'Tell me a joke.'],
+]);
+
+echo $response;</code></pre>
+    </div>
+
+    <h2 id="drivers">Switching Providers</h2>
+    <p>You can use different providers for specific requests without changing your global default.</p>
+
+    <div class="mt-4">
+        <pre><code class="language-php">use Plugs\Facades\AI;
+
+// Use Anthropic specifically
+$claudeResponse = AI::driver('anthropic')->prompt('Hello Claude!');
+
+// Use Gemini specifically
+$geminiResponse = AI::driver('gemini')->prompt('Hello Gemini!');</code></pre>
+    </div>
+
+    <h2 id="models">Customizing Models & Options</h2>
+    <p>Override the configured model or pass extra parameters to the underlying API.</p>
+
+    <div class="mt-4">
+        <pre><code class="language-php">use Plugs\Facades\AI;
+
+$response = AI::withModel('gpt-3.5-turbo')->prompt('Write a haiku about PHP.', [
+    'temperature' => 0.7,
+    'max_tokens' => 100,
+]);</code></pre>
+    </div>
+</div>
+@endsection
