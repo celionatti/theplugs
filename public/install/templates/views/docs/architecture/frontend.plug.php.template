@@ -13,7 +13,7 @@
 
 <pre><code>// resources/views/components/counter.plug.php
 &lt;div class="reactive-counter"&gt;
-    &lt;span&gt;Counter: {{ $count }}&lt;/span&gt;
+    &lt;span&gt;Counter: &#123;&#123; $count &#125;&#125;&lt;/span&gt;
     &lt;button wire:click="increment"&gt;+&lt;/button&gt;
 &lt;/div&gt;</code></pre>
 

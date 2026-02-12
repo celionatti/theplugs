@@ -1,13 +1,17 @@
 <nav id="mainNav" class="navbar navbar-expand-lg fixed-top navbar-glass">
     <div class="container">
-        <a class="navbar-brand fw-bold" href="{{ url('/') }}">
+        <a class="navbar-brand fw-bold" href="{{ route('home') }}" data-spa="true">
             <span class="brand-font">The Plugs</span>
         </a>
 
         <!-- Right controls -->
         <div class="d-flex align-items-center gap-2 order-lg-2">
+            <div class="version-badge d-none d-md-flex me-2" style="font-size: 0.75rem; padding: 0.2rem 0.75rem;">
+                v5.0.0
+            </div>
             <button id="themeToggle" class="btn btn-icon mx-2" aria-label="Toggle theme">
-                🌙
+                <i class="fas fa-moon theme-icon-dark"></i>
+                <i class="fas fa-sun theme-icon-light d-none"></i>
             </button>
 
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
@@ -18,6 +22,9 @@
         <!-- Menu -->
         <div class="collapse navbar-collapse order-lg-1" id="navMenu">
             <ul class="navbar-nav ms-lg-auto mb-2 mb-lg-0 align-items-lg-center">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('home') }}" data-spa="true">Home</a>
+                </li>
                 <li class="nav-item">
                     <a class="nav-link" href="{{ route('spa.demo') }}" data-spa="true">SPA Demo</a>
                 </li>

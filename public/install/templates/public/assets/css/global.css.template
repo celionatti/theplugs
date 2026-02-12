@@ -2,17 +2,18 @@
   /* OKLCH Color System - Emerald Focus */
   --pl-primary: oklch(70% 0.17 145);
   --pl-primary-light: oklch(80% 0.15 145);
-  --pl-primary-dark: oklch(60% 0.20 145);
+  --pl-primary-dark: oklch(60% 0.2 145);
   --pl-accent: oklch(75% 0.18 200);
   /* Cyan-ish accent */
 
   --pl-success: oklch(75% 0.15 145);
   --pl-info: oklch(70% 0.18 245);
   --pl-warning: oklch(80% 0.15 85);
-  --pl-danger: oklch(65% 0.20 25);
+  --pl-danger: oklch(65% 0.2 25);
 
-  --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  --glass-blur: blur(12px);
+  --transition-smooth: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  --glass-blur: blur(16px);
+  --glass-border: 1px solid oklch(100% 0 0 / 0.1);
 }
 
 [data-theme="dark"] {
@@ -84,7 +85,11 @@ body {
   font-family: "Dancing Script", cursive;
   font-weight: 700;
   font-size: 2.2rem;
-  background: linear-gradient(135deg, var(--pl-primary), var(--pl-primary-light));
+  background: linear-gradient(
+    135deg,
+    var(--pl-primary),
+    var(--pl-primary-light)
+  );
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -105,7 +110,8 @@ h6 {
 .glass {
   background: var(--glass-bg);
   backdrop-filter: var(--glass-blur);
-  border: 1px solid var(--border);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: var(--glass-border);
   box-shadow: var(--shadow);
 }
 
@@ -291,9 +297,11 @@ footer {
 
 /* What's New Section */
 .whats-new {
-  background: linear-gradient(135deg,
-      rgba(16, 185, 129, 0.1),
-      rgba(5, 150, 105, 0.05));
+  background: linear-gradient(
+    135deg,
+    rgba(16, 185, 129, 0.1),
+    rgba(5, 150, 105, 0.05)
+  );
   border-radius: 16px;
   padding: 2rem;
   margin-top: 2rem;

@@ -87,9 +87,9 @@ class Counter extends ReactiveComponent
 
 <h2 id="usage">Usage in Views</h2>
 
-<p>To include a reactive component in any of your views, use the component tag syntax:</p>
+<p>To include a reactive component in any of your views, use the <code>&#64;component</code> directive:</p>
 
-<pre><code>&lt;Counter count="10" /&gt;</code></pre>
+<pre><code>&#64;component('Counter', ['count' => 10])</code></pre>
 
 <p>The component will automatically initialize and handle its own reactivity.</p>
 
@@ -113,36 +113,6 @@ class Counter extends ReactiveComponent
                 <td><code>&lt;button p-click="save"&gt;Save&lt;/button&gt;</code></td>
             </tr>
             <tr>
-                <td><code>p-init</code></td>
-                <td>Calls a method when component is initialized.</td>
-                <td><code>&lt;div p-init="setup"&gt;...&lt;/div&gt;</code></td>
-            </tr>
-            <tr>
-                <td><code>p-poll</code></td>
-                <td>Polls the server at a given interval.</td>
-                <td><code>&lt;div p-poll="2000" p-poll-action="refresh"&gt;...&lt;/div&gt;</code></td>
-            </tr>
-            <tr>
-                <td><code>p-outside</code></td>
-                <td>Triggers when clicking outside the element.</td>
-                <td><code>&lt;div p-outside="close"&gt;...&lt;/div&gt;</code></td>
-            </tr>
-            <tr>
-                <td><code>p-intersect</code></td>
-                <td>Triggers when element enters viewport.</td>
-                <td><code>&lt;div p-intersect="onShow"&gt;...&lt;/div&gt;</code></td>
-            </tr>
-            <tr>
-                <td><code>p-confirm</code></td>
-                <td>Shows confirmation before action.</td>
-                <td><code>&lt;button p-click="delete" p-confirm="Sure?"&gt;...&lt;/button&gt;</code></td>
-            </tr>
-            <tr>
-                <td><code>p-loading</code></td>
-                <td>Toggles a loading indicator.</td>
-                <td><code>&lt;div p-loading=".spinner"&gt;...&lt;/div&gt;</code></td>
-            </tr>
-            <tr>
                 <td><code>p-change</code></td>
                 <td>Triggers a PHP method on input change.</td>
                 <td><code>&lt;select p-change="filter"&gt;...&lt;/select&gt;</code></td>
@@ -151,6 +121,66 @@ class Counter extends ReactiveComponent
                 <td><code>p-submit</code></td>
                 <td>Intercepts form submission and calls method.</td>
                 <td><code>&lt;form p-submit="search"&gt;...&lt;/form&gt;</code></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<hr>
+
+<h2 id="advanced-directives">Advanced Directives</h2>
+
+<p>Bolt provides several advanced directives for handling events, polling, and lifecycle hooks.</p>
+
+<div class="table-responsive">
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Directive</th>
+                <th>Description</th>
+                <th>Example</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>p-init</code></td>
+                <td>Calls a method immediately when the component is initialized.</td>
+                <td><code>&lt;div p-init="loadData"&gt;...&lt;/div&gt;</code></td>
+            </tr>
+            <tr>
+                <td><code>p-poll</code></td>
+                <td>Polls the server at a specified interval (ms).</td>
+                <td><code>&lt;div p-poll="2000" p-poll-action="refresh"&gt;...&lt;/div&gt;</code></td>
+            </tr>
+            <tr>
+                <td><code>p-loading</code></td>
+                <td>Shows an element while a request is in flight.</td>
+                <td><code>&lt;div p-loading=".loader"&gt;...&lt;/div&gt;</code></td>
+            </tr>
+            <tr>
+                <td><code>p-keyup</code></td>
+                <td>Triggers method on keyup. Supports <code>.enter</code> modifier.</td>
+                <td><code>&lt;input p-keyup="search" p-debounce="300"&gt;</code></td>
+            </tr>
+            <tr>
+                <td><code>p-blur</code></td>
+                <td>Triggers method when an element loses focus.</td>
+                <td><code>&lt;input p-blur="validate"&gt;</code></td>
+            </tr>
+            <tr>
+                <td><code>p-outside</code></td>
+                <td>Triggers method when clicking outside the element.</td>
+                <td><code>&lt;div p-outside="closeModal"&gt;...&lt;/div&gt;</code></td>
+            </tr>
+            <tr>
+                <td><code>p-intersect</code></td>
+                <td>Triggers method when element enters the viewport.</td>
+                <td><code>&lt;div p-intersect="loadMore"&gt;...&lt;/div&gt;</code></td>
+            </tr>
+            <tr>
+                <td><code>p-confirm</code></td>
+                <td>Shows a native confirmation dialog before action.</td>
+                <td><code>&lt;button p-click="delete" p-confirm="Are you sure?"&gt;Delete&lt;/button&gt;</code></td>
             </tr>
         </tbody>
     </table>
@@ -178,4 +208,126 @@ class Counter extends ReactiveComponent
     <i class="fas fa-exclamation-triangle"></i> <strong>Important</strong>: Reactive components must be wrapped in a
     single root element in their view file to ensure correct DOM swapping.
 </div>
+
+<hr>
+
+<h2 id="advanced-directives">Advanced Directives</h2>
+
+<p>Bolt provides several advanced directives for handling events, polling, and lifecycle hooks.</p>
+
+<div class="table-responsive">
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Directive</th>
+                <th>Description</th>
+                <th>Example</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>p-init</code></td>
+                <td>Calls a method immediately when the component is initialized.</td>
+                <td><code>&lt;div p-init="loadData"&gt;...&lt;/div&gt;</code></td>
+            </tr>
+            <tr>
+                <td><code>p-poll</code></td>
+                <td>Polls the server at a specified interval (ms).</td>
+                <td><code>&lt;div p-poll="2000" p-poll-action="refresh"&gt;...&lt;/div&gt;</code></td>
+            </tr>
+            <tr>
+                <td><code>p-loading</code></td>
+                <td>Shows an element while a request is in flight.</td>
+                <td><code>&lt;div p-loading=".loader"&gt;...&lt;/div&gt;</code></td>
+            </tr>
+            <tr>
+                <td><code>p-keyup</code></td>
+                <td>Triggers method on keyup. Supports <code>.enter</code> modifier.</td>
+                <td><code>&lt;input p-keyup="search" p-debounce="300"&gt;</code></td>
+            </tr>
+            <tr>
+                <td><code>p-blur</code></td>
+                <td>Triggers method when an element loses focus.</td>
+                <td><code>&lt;input p-blur="validate"&gt;</code></td>
+            </tr>
+            <tr>
+                <td><code>p-outside</code></td>
+                <td>Triggers method when clicking outside the element.</td>
+                <td><code>&lt;div p-outside="closeModal"&gt;...&lt;/div&gt;</code></td>
+            </tr>
+            <tr>
+                <td><code>p-intersect</code></td>
+                <td>Triggers method when element enters the viewport.</td>
+                <td><code>&lt;div p-intersect="loadMore"&gt;...&lt;/div&gt;</code></td>
+            </tr>
+            <tr>
+                <td><code>p-confirm</code></td>
+                <td>Shows a native confirmation dialog before action.</td>
+                <td><code>&lt;button p-click="delete" p-confirm="Are you sure?"&gt;Delete&lt;/button&gt;</code></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+
+<hr>
+
+<h2 id="advanced-directives">Advanced Directives</h2>
+
+<p>Bolt provides several advanced directives for handling events, polling, and lifecycle hooks.</p>
+
+<div class="table-responsive">
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Directive</th>
+                <th>Description</th>
+                <th>Example</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>p-init</code></td>
+                <td>Calls a method immediately when the component is initialized.</td>
+                <td><code>&lt;div p-init="loadData"&gt;...&lt;/div&gt;</code></td>
+            </tr>
+            <tr>
+                <td><code>p-poll</code></td>
+                <td>Polls the server at a specified interval (ms).</td>
+                <td><code>&lt;div p-poll="2000" p-poll-action="refresh"&gt;...&lt;/div&gt;</code></td>
+            </tr>
+            <tr>
+                <td><code>p-loading</code></td>
+                <td>Shows an element while a request is in flight.</td>
+                <td><code>&lt;div p-loading=".loader"&gt;...&lt;/div&gt;</code></td>
+            </tr>
+            <tr>
+                <td><code>p-keyup</code></td>
+                <td>Triggers method on keyup. Supports <code>.enter</code> modifier.</td>
+                <td><code>&lt;input p-keyup="search" p-debounce="300"&gt;</code></td>
+            </tr>
+            <tr>
+                <td><code>p-blur</code></td>
+                <td>Triggers method when an element loses focus.</td>
+                <td><code>&lt;input p-blur="validate"&gt;</code></td>
+            </tr>
+            <tr>
+                <td><code>p-outside</code></td>
+                <td>Triggers method when clicking outside the element.</td>
+                <td><code>&lt;div p-outside="closeModal"&gt;...&lt;/div&gt;</code></td>
+            </tr>
+            <tr>
+                <td><code>p-intersect</code></td>
+                <td>Triggers method when element enters the viewport.</td>
+                <td><code>&lt;div p-intersect="loadMore"&gt;...&lt;/div&gt;</code></td>
+            </tr>
+            <tr>
+                <td><code>p-confirm</code></td>
+                <td>Shows a native confirmation dialog before action.</td>
+                <td><code>&lt;button p-click="delete" p-confirm="Are you sure?"&gt;Delete&lt;/button&gt;</code></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
 @endsection

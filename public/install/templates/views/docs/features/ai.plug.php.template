@@ -4,16 +4,19 @@
 <div data-aos="fade-up">
     <div class="mb-5">
         <h1 class="display-5 fw-bold mb-3">AI SDK</h1>
-        <p class="lead">A unified, driver-based interface for interacting with Large Language Models directly from the Plugs framework.</p>
+        <p class="lead">A unified, driver-based interface for interacting with Large Language Models directly from the
+            Plugs framework.</p>
     </div>
 
     <div class="alert alert-info">
         <i class="fas fa-info-circle me-2"></i>
-        Plugs AI SDK comes with built-in configuration. Simply add your API keys to your <code>.env</code> file to get started.
+        Plugs AI SDK comes with built-in configuration. Simply add your API keys to your <code>.env</code> file to get
+        started.
     </div>
 
     <h2 id="setup">Getting Started</h2>
-    <p>The AI SDK supports OpenAI, Anthropic (Claude), and Google Gemini. You can switch between them seamlessly using the driver pattern.</p>
+    <p>The AI SDK supports OpenAI, Anthropic (Claude), and Google Gemini. You can switch between them seamlessly using
+        the driver pattern.</p>
 
     <div class="mt-4">
         <h6>1. Update Environment Variables</h6>

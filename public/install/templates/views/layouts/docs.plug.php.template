@@ -214,13 +214,13 @@
 </head>
 
 <body>
-    <Header />
+    <x-header />
 
     <div class="container-fluid px-lg-5">
         <div class="docs-layout">
             <!-- Sidebar -->
             <aside class="docs-sidebar-wrapper d-none d-lg-block">
-                <Sidebar />
+                <x-sidebar />
             </aside>
 
             <!-- Main Content -->

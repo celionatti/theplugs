@@ -44,9 +44,9 @@ if ($validator->fails()) {
 
         <pre><code>&lt;!-- resources/views/register.plug.php --&gt;
 &lt;input name="email" type="email"&gt;
-@error('email')
-    &lt;div class="text-danger small"&gt;{{ $message }}&lt;/div&gt;
-@enderror</code></pre>
+&#64;error('email')
+    &lt;div class="text-danger small"&gt;&#123;&#123; $message &#125;&#125;&lt;/div&gt;
+&#64;enderror</code></pre>
 
         <div class="alert alert-info">
             <strong>Pro Tip:</strong> Use <strong>ValueObjects</strong> in your routes to automatically validate and

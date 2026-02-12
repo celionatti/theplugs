@@ -1,193 +1,88 @@
 @extends('layouts.default')
 
-@section('title', 'Installation Successful')
+@section('title', 'Welcome to {{APP_NAME}} v5.0')
 
 @section('content')
-<div class="hero-container">
-    <div class="hero-glow"></div>
-    <div class="container py-5 min-vh-100 d-flex flex-column justify-content-center">
-        <div class="row align-items-center">
-            <div class="col-lg-6 text-start mb-5 mb-lg-0">
-                <div class="version-badge mb-4">
-                    <span class="pl-pulse"></span>
-                    Framework v5.0.0 Installed
-                </div>
-                <h1 class="display-2 fw-bold mb-4">
-                    <span class="plugs-highlight">Plugs</span><br>
-                    Next-Gen PHP
-                </h1>
-                <p class="lead mb-5 fs-4">
-                    Congratulations! Your Plugs Framework application "{{ $title ?? '{{APP_NAME}}' }}" is ready.
-                </p>
+<!-- Hero Section -->
+<x-hero />
 
-                <div class="card glass border-0 shadow-lg mb-5">
-                    <div class="card-body p-4">
-                        <h4 class="mb-3">🚀 You're all set!</h4>
-                        <p class="text-muted small mb-0">
-                            The framework has been initialized with all core components, routes, and documentation.
-                            Start building your next masterpiece today.
-                        </p>
-                    </div>
-                </div>
-
-                <div class="d-flex gap-3">
-                    <a href="{{ route('docs') }}" class="btn btn-premium px-5 py-3">
-                        Read the Docs
-                    </a>
-                    <a href="https://github.com/celionatti/plugs" class="btn btn-outline px-5 py-3">
-                        GitHub
-                    </a>
-                </div>
+<!-- Stats Section -->
+<div class="container py-5 mb-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10" data-aos="fade-up">
+            <div class="glass p-1 rounded-4">
+                <x-HeavyStats />
             </div>
-
-            <div class="col-lg-6">
-                <div class="feature-grid">
-                    <div class="feature-card glass">
-                        <div class="feat-icon success">🚀</div>
-                        <h5>Ultra-Fast</h5>
-                        <p class="small text-muted mb-0">Optimized with native route and config caching.</p>
-                    </div>
-                    <div class="feature-card glass">
-                        <div class="feat-icon info">🛡️</div>
-                        <h5>Secure</h5>
-                        <p class="small text-muted mb-0">Multi-layered shield and CSRF protection.</p>
-                    </div>
-                    <div class="feature-card glass">
-                        <div class="feat-icon accent">✨</div>
-                        <h5>Reactive</h5>
-                        <p class="small text-muted mb-0">Live-updating components without JS overhead.</p>
-                    </div>
-                    <div class="feature-card glass">
-                        <div class="feat-icon warning">🎨</div>
-                        <h5>Premium</h5>
-                        <p class="small text-muted mb-0">Modern OKLCH color system and dark mode.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="text-center mt-auto pt-5 opacity-50">
-            <p class="small">Powered by Plugs Framework &bull; Created by <a href="https://github.com/celionatti" class="text-decoration-none text-light">Celio Natti</a></p>
         </div>
     </div>
 </div>
+
+<!-- Features Section -->
+<x-features />
+
+<!-- Code Section -->
+<x-code />
+
+<!-- Footer Section -->
+<x-footer />
 @endsection
 
 @push('styles')
 <style>
-    :root {
-        --hero-text: oklch(98% 0.01 145);
-    }
-
     body {
         background-color: var(--bg);
         color: var(--text);
-    }
-
-    .hero-container {
-        position: relative;
-        overflow: hidden;
-        background: radial-gradient(circle at top right, oklch(70% 0.17 145 / 0.05) 0%, transparent 70%);
     }
 
     .plugs-highlight {
         background: linear-gradient(135deg, var(--pl-primary), var(--pl-primary-light));
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
+        font-weight: 800;
     }
 
-    .btn-premium {
-        background: var(--pl-primary);
-        color: white;
-        border: none;
-        font-weight: 700;
-        border-radius: 12px;
-        transition: var(--transition-smooth);
-        box-shadow: 0 10px 20px oklch(70% 0.17 145 / 0.2);
+    /* Floating effect for glass cards */
+    .glass-float>div:nth-child(1) {
+        animation: float 6s ease-in-out infinite;
     }
 
-    .btn-premium:hover {
-        background: var(--pl-primary-light);
-        color: white;
-        transform: translateY(-3px);
-        box-shadow: 0 15px 30px oklch(70% 0.17 145 / 0.3);
+    .glass-float>div:nth-child(2) {
+        animation: float 6s ease-in-out infinite 1s;
     }
 
-    .btn-outline {
-        background: transparent;
-        border: 2px solid var(--border);
-        color: var(--text);
-        font-weight: 600;
-        border-radius: 12px;
-        transition: var(--transition-smooth);
+    .glass-float>div:nth-child(3) {
+        animation: float 6s ease-in-out infinite 2s;
     }
 
-    .btn-outline:hover {
-        background: var(--border);
-        color: var(--text);
-        transform: translateY(-3px);
-    }
+    @keyframes float {
 
-    .feature-grid {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 24px;
-    }
-
-    .feat-icon {
-        width: 50px;
-        height: 50px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        border-radius: 12px;
-        font-size: 20px;
-        margin-bottom: 1.5rem;
-    }
-
-    .feat-icon.success {
-        background: oklch(75% 0.15 145 / 0.1);
-        color: var(--pl-success);
-    }
-
-    .feat-icon.info {
-        background: oklch(70% 0.18 245 / 0.1);
-        color: var(--pl-info);
-    }
-
-    .feat-icon.accent {
-        background: oklch(75% 0.18 200 / 0.1);
-        color: var(--pl-accent);
-    }
-
-    .feat-icon.warning {
-        background: oklch(80% 0.15 85 / 0.1);
-        color: var(--pl-warning);
-    }
-
-    .pl-pulse {
-        width: 8px;
-        height: 8px;
-        background: var(--pl-primary);
-        border-radius: 50%;
-        animation: pl-pulse-ring 2s infinite;
-    }
-
-    @keyframes pl-pulse-ring {
-        0% {
-            transform: scale(.95);
-            box-shadow: 0 0 0 0 oklch(70% 0.17 145 / 0.7);
-        }
-
-        70% {
-            transform: scale(1);
-            box-shadow: 0 0 0 10px oklch(70% 0.17 145 / 0);
-        }
-
+        0%,
         100% {
-            transform: scale(.95);
-            box-shadow: 0 0 0 0 oklch(70% 0.17 145 / 0);
+            transform: translateY(0);
         }
+
+        50% {
+            transform: translateY(-15px);
+        }
+    }
+
+    /* Custom scrollbar for better aesthetics */
+    ::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+        background: var(--bg);
+    }
+
+    ::-webkit-scrollbar-thumb {
+        background: var(--border);
+        border-radius: 10px;
+        border: 2px solid var(--bg);
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+        background: var(--pl-primary-light);
     }
 </style>
 @endpush

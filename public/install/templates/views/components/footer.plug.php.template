@@ -1,21 +1,120 @@
-<footer class="text-center py-5 mt-5 border-top" style="border-color: var(--border) !important;">
-    <div class="container">
-        <h3 class="brand-font mb-4">The Plugs</h3>
-        <p class="mb-4">
-            <span class="version-badge" style="font-size: 0.9rem;">v4.0.0 Optimized</span>
-            <span class="mx-3 opacity-50">•</span>
-            Built with ❤️ for the PHP community
-        </p>
+<footer class="footer-container mt-5 pt-5">
+    <div class="container py-5">
+        <div class="glass p-5 rounded-4 shadow-lg border-0" data-aos="fade-up">
+            <div class="row g-4">
+                <!-- Branding & Bio -->
+                <div class="col-lg-4 mb-4 mb-lg-0">
+                    <h3 class="brand-font mb-4 text-white">The <span class="plugs-highlight">Plugs</span></h3>
+                    <p class="text-muted mb-4 pe-lg-4 fs-6">
+                        The PHP Framework that just connects. Built for modern developers who crave speed, simplicity,
+                        and expressive syntax.
+                    </p>
+                    <div class="version-badge d-inline-flex align-items-center" style="font-size: 0.8rem;">
+                        <span class="pl-pulse me-2"></span>
+                        v5.0.0 Stable
+                    </div>
+                </div>
 
-        <div class="footer-links d-flex justify-content-center flex-wrap gap-4 mb-4">
-            <a href="https://github.com/celionatti/plugs"><i class="fab fa-github me-1"></i>GitHub</a>
-            <a href="{{ url('/docs') }}"><i class="fas fa-book me-1"></i>Docs</a>
-            <a href="#"><i class="fas fa-history me-1"></i>Changelog</a>
-            <a href="#"><i class="fas fa-question-circle me-1"></i>Support</a>
+                <!-- Ecosystem -->
+                <div class="col-6 col-md-4 col-lg-2 offset-lg-1">
+                    <h6 class="fw-bold text-white mb-4 text-uppercase small tracking-wider">Ecosystem</h6>
+                    <ul class="list-unstyled footer-nav">
+                        <li class="mb-2"><a href="{{ route('docs') }}" data-spa="true"
+                                class="text-muted text-decoration-none hover-emerald">Documentation</a></li>
+                        <li class="mb-2"><a href="https://github.com/celionatti/plugs" target="_blank"
+                                class="text-muted text-decoration-none hover-emerald">GitHub Repo</a></li>
+                        <li class="mb-2"><a href="#" class="text-muted text-decoration-none hover-emerald">Showcase</a>
+                        </li>
+                        <li class="mb-2"><a href="#" class="text-muted text-decoration-none hover-emerald">Modules</a>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Support -->
+                <div class="col-6 col-md-4 col-lg-2">
+                    <h6 class="fw-bold text-white mb-4 text-uppercase small tracking-wider">Support</h6>
+                    <ul class="list-unstyled footer-nav">
+                        <li class="mb-2"><a href="#" class="text-muted text-decoration-none hover-emerald">Community</a>
+                        </li>
+                        <li class="mb-2"><a href="#" class="text-muted text-decoration-none hover-emerald">Changelog</a>
+                        </li>
+                        <li class="mb-2"><a href="#" class="text-muted text-decoration-none hover-emerald">Status
+                                Page</a></li>
+                        <li class="mb-2"><a href="#" class="text-muted text-decoration-none hover-emerald">Join
+                                Slack</a></li>
+                    </ul>
+                </div>
+
+                <!-- Newsletter/Social -->
+                <div class="col-md-4 col-lg-3">
+                    <h6 class="fw-bold text-white mb-4 text-uppercase small tracking-wider">Connect</h6>
+                    <div class="d-flex gap-3 mb-4">
+                        <a href="#" class="social-icon-btn glass p-3 rounded-circle text-white shadow-sm transition">
+                            <i class="fab fa-twitter"></i>
+                        </a>
+                        <a href="https://github.com/celionatti/plugs" target="_blank"
+                            class="social-icon-btn glass p-3 rounded-circle text-white shadow-sm transition">
+                            <i class="fab fa-github"></i>
+                        </a>
+                        <a href="#" class="social-icon-btn glass p-3 rounded-circle text-white shadow-sm transition">
+                            <i class="fab fa-discord"></i>
+                        </a>
+                    </div>
+                    <p class="small text-muted mb-0">Stay updated with the latest Plugs news and releases.</p>
+                </div>
+            </div>
+
+            <!-- Bottom Divider & Copyright -->
+            <div
+                class="border-top border-secondary border-opacity-10 mt-5 pt-4 d-flex flex-column flex-md-row justify-content-between align-items-center gap-3">
+                <p class="mb-0 text-muted small">
+                    © {{ date('Y') }} The Plugs Framework. Built with <i class="fas fa-heart text-danger mx-1"></i> by
+                    the community.
+                </p>
+                <div class="d-flex gap-4">
+                    <a href="#" class="text-muted text-decoration-none small hover-emerald">Privacy Policy</a>
+                    <a href="#" class="text-muted text-decoration-none small hover-emerald">Terms of Service</a>
+                </div>
+            </div>
         </div>
-
-        <p class="mb-0 text-muted" style="font-size: 0.85rem;">
-            © {{ date('Y') }} The Plugs Framework • All Rights Reserved
-        </p>
     </div>
 </footer>
+
+<style>
+    .footer-container {
+        position: relative;
+        overflow: hidden;
+        background: radial-gradient(circle at bottom right, oklch(70% 0.17 145 / 0.05) 0%, transparent 40%);
+    }
+
+    .footer-nav a {
+        transition: all 0.3s ease;
+        display: block;
+    }
+
+    .hover-emerald:hover {
+        color: var(--pl-primary) !important;
+        transform: translateX(5px);
+    }
+
+    .social-icon-btn {
+        width: 48px;
+        height: 48px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: oklch(100% 0 0 / 0.05) !important;
+        border: 1px solid oklch(100% 0 0 / 0.1) !important;
+    }
+
+    .social-icon-btn:hover {
+        background: var(--pl-primary) !important;
+        color: black !important;
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px -5px oklch(70% 0.17 145 / 0.3);
+    }
+
+    .tracking-wider {
+        letter-spacing: 0.1em;
+    }
+</style>

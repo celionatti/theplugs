@@ -4,16 +4,19 @@
 <div data-aos="fade-up">
     <div class="mb-5">
         <h1 class="display-5 fw-bold mb-3">SEO & AI Accessibility</h1>
-        <p class="lead">Optimize your application for search engines and AI models with a centralized management system.</p>
+        <p class="lead">Optimize your application for search engines and AI models with a centralized management system.
+        </p>
     </div>
 
     <div class="alert alert-info">
         <i class="fas fa-magic me-2"></i>
-        The SEO Manager is automatically available via the <code>SEO</code> facade. It's integrated into the default documentation and layout templates.
+        The SEO Manager is automatically available via the <code>SEO</code> facade. It's integrated into the default
+        documentation and layout templates.
     </div>
 
     <h2 id="metadata">Metadata Management</h2>
-    <p>Use the <code>SEO</code> facade to set standard meta tags, social media metadata (OpenGraph & Twitter Cards), and canonical URLs.</p>
+    <p>Use the <code>SEO</code> facade to set standard meta tags, social media metadata (OpenGraph & Twitter Cards), and
+        canonical URLs.</p>
 
     <div class="mt-4">
         <pre><code class="language-php">use Plugs\Facades\SEO;
@@ -30,7 +33,8 @@ SEO::addMetadata('theme-color', '#00b894');</code></pre>
     </div>
 
     <h2 id="json-ld">Structured Data (JSON-LD)</h2>
-    <p>Enhance your search results with structured data. This helps search engines and AI agents understand the context of your content.</p>
+    <p>Enhance your search results with structured data. This helps search engines and AI agents understand the context
+        of your content.</p>
 
     <div class="mt-4">
         <pre><code class="language-php">SEO::addJsonLd([
@@ -43,7 +47,8 @@ SEO::addMetadata('theme-color', '#00b894');</code></pre>
     </div>
 
     <h2 id="ai-accessibility">AI Accessibility</h2>
-    <p>Plugs includes a specialized middleware to detect and optimize content for AI crawlers like GPTBot and ClaudeBot.</p>
+    <p>Plugs includes a specialized middleware to detect and optimize content for AI crawlers like GPTBot and ClaudeBot.
+    </p>
 
     <div class="mt-4">
         <h6>Enable AI Optimization</h6>
@@ -55,7 +60,8 @@ SEO::addMetadata('theme-color', '#00b894');</code></pre>
 
     <div class="alert alert-warning">
         <i class="fas fa-robot me-2"></i>
-        When an AI agent is detected, the middleware adds a <code>X-AI-Optimized: true</code> header and ensures search engines are signaled via <code>X-Robots-Tag</code>.
+        When an AI agent is detected, the middleware adds a <code>X-AI-Optimized: true</code> header and ensures search
+        engines are signaled via <code>X-Robots-Tag</code>.
     </div>
 
     <h2 id="rendering">Rendering</h2>
@@ -65,12 +71,12 @@ SEO::addMetadata('theme-color', '#00b894');</code></pre>
         <pre><code class="language-html">&lt;head&gt;
     &lt;!-- Other tags --&gt;
     @{!! \Plugs\Facades\SEO::render() !!}
-&lt;/head&gt;
-</code></pre>
+&lt;/head&gt;</code></pre>
     </div>
 
     <h2 id="configuration">Configuration</h2>
-    <p>Default SEO values can be customized in your framework defaults. Key settings include default titles, title appendixes, and default social images.</p>
+    <p>Default SEO values can be customized in your framework defaults. Key settings include default titles, title
+        appendixes, and default social images.</p>
 
     <div class="mt-4">
         <pre><code class="language-php">// In DefaultConfig.php or your app config

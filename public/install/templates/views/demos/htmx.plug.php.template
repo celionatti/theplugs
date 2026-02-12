@@ -1,0 +1,186 @@
+@extends('layouts.default')
+
+@section('title', 'HTMX Demo')
+
+@section('content')
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0">
+                <div class="card-body p-5">
+                    <h1 class="display-5 fw-bold mb-4">HTMX + Plugs ⚡</h1>
+                    <p class="lead text-muted mb-5">
+                        This demo shows how HTMX works seamlessly with the Plugs framework using fragments and smart
+                        rendering.
+                    </p>
+
+                    <div class="mb-5">
+                        <h3 class="h4 mb-3">1. Simple Fragment Update</h3>
+                        <p class="text-muted">Click the button to refresh only the timestamp below using
+                            <code>hx-get</code> and <code>@fragment</code>. We've added random numbers to prove the
+                            server is hit.
+                        </p>
+
+                        <div class="p-4 bg-light rounded-3 border mb-3">
+                            <div id="time-container">
+                                @fragment('server-time')
+                                <div id="server-time" class="d-flex align-items-center justify-content-between">
+                                    <span class="badge bg-primary px-3 py-2">
+                                        Time: {{ date('H:i:s') }}
+                                        <small class="ms-1 opacity-75">{{ substr(microtime(false), 2, 4) }}</small>
+                                    </span>
+                                    <span class="badge bg-secondary">Hash: {{ substr(md5(microtime()), 0, 6) }}</span>
+                                    <span class="text-success small d-none d-md-inline">Live Fragment!</span>
+                                </div>
+                                @endfragment
+                            </div>
+                        </div>
+
+                        <button hx-get="/htmx-demo" hx-target="#server-time" hx-swap="outerHTML"
+                            class="btn btn-primary d-inline-flex align-items-center">
+                            <i class="fas fa-sync-alt me-2"></i> Update Time
+                        </button>
+                    </div>
+
+                    <hr class="my-5">
+
+                    <div class="mb-5">
+                        <h3 class="h4 mb-3">2. Smart Rendering Search</h3>
+                        <p class="text-muted">Type in the box to see live results filtered from the server via partial
+                            fragment extraction.</p>
+
+                        <div class="mb-4">
+                            <input type="text" name="search" placeholder="Type 'user' or 'admin'..."
+                                class="form-control form-control-lg" hx-get="/htmx-search"
+                                hx-trigger="keyup changed delay:500ms" hx-target="#search-results" hx-swap="outerHTML"
+                                hx-indicator="#search-loading">
+                        </div>
+
+                        <div id="search-loading" class="htmx-indicator mb-3">
+                            <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <span class="ms-2 text-muted">Searching...</span>
+                        </div>
+
+                        <div class="p-4 border rounded-3 bg-white">
+                            <div id="search-results-area">
+                                @fragment('search-results')
+                                <div id="search-results">
+                                    @if(isset($results) && !empty($results))
+                                    <ul class="list-group list-group-flush">
+                                        @foreach($results as $result)
+                                        <li class="list-group-item d-flex align-items-center animate-in">
+                                            <i class="fas fa-user-circle me-3 text-primary"></i>
+                                            <div>
+                                                <div class="fw-bold">{{ $result }}</div>
+                                                <div class="text-muted small">ID: {{ rand(100, 999) }}</div>
+                                            </div>
+                                        </li>
+                                        @endforeach
+                                    </ul>
+                                    @else
+                                    <p class="text-center text-muted m-0">
+                                        {{ isset($results) ? 'No results found for your query.' : 'Waiting for input...'
+                                        }}
+                                    </p>
+                                    @endif
+                                </div>
+                                @endfragment
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-5">
+
+                    <div class="mb-5">
+                        <h3 class="h4 mb-3">3. Teleportation & Notifications</h3>
+                        <p class="text-muted">Trigger a notification that "teleports" to the top right of your screen
+                            using <code>@teleport</code>. This content is rendered in this view but transported to
+                            <code>#teleport-targets</code> by the framework.
+                        </p>
+
+                        <button hx-get="/htmx-teleport" hx-target="#teleport-dummy" hx-swap="outerHTML"
+                            class="btn btn-info text-white">
+                            <i class="fas fa-bell me-2"></i> Trigger Teleport Notification
+                        </button>
+                        <div id="teleport-dummy" class="d-none"></div>
+                    </div>
+
+                    <hr class="my-5">
+
+                    <div class="mb-5">
+                        <h3 class="h4 mb-3">4. Lazy Loading & Skeletons</h3>
+                        <p class="text-muted">The component below is heavy. It shows a skeleton loader while it
+                            "computes" data on the server, then loads it seamlessly.</p>
+
+                        <div hx-get="/htmx-lazy-load" hx-trigger="load" hx-swap="outerHTML">
+                            <div class="p-4 border rounded-3 bg-light">
+                                <div class="d-flex align-items-center mb-3">
+                                    @skeleton(circle('40px')->margin('0 1rem 0 0'))
+                                    @skeleton(width('40%')->height('20px'))
+                                </div>
+                                @skeleton(width('100%')->height('100px')->radius('8px'))
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-5">
+
+                    <div class="mb-5">
+                        <h3 class="h4 mb-3">5. Block Caching</h3>
+                        <p class="text-muted">This block is cached for 60 seconds. Refresh the page or the fragment to
+                            see that its "Creation Time" stays frozen while the rest of the page updates.</p>
+
+                        <div id="cached-demo">
+                            @fragment('cache-block')
+                            @cache('demo-sidebar', 60)
+                            <div class="p-4 bg-warning bg-opacity-10 border border-warning rounded-3">
+                                <span class="badge bg-warning text-dark mb-2">Cached Fragment</span>
+                                <h5 class="mb-1">Persistent Content</h5>
+                                <p class="mb-0 text-muted">Created at: <span class="fw-bold">{{ date('H:i:s') }}</span>
+                                </p>
+                                <small class="text-muted">Refresh this fragment specifically to test the cache
+                                    hit.</small>
+                            </div>
+                            @endcache
+                            @endfragment
+                        </div>
+
+                        <button hx-get="/htmx-demo" hx-target="#cached-demo" hx-select="#cached-demo"
+                            hx-swap="outerHTML" class="btn btn-outline-warning mt-3">
+                            <i class="fas fa-history me-2"></i> Refresh Cached Fragment
+                        </button>
+                    </div>
+
+                    <div class="mt-5 pt-4 border-top d-flex justify-content-between align-items-center">
+                        <a href="/docs/views/htmx-integration" class="btn btn-outline-secondary">
+                            <i class="fas fa-book me-2"></i> Documentation
+                        </a>
+                        <span id="htmx-check" class="badge bg-light text-dark border">
+                            HTMX: Checking...
+                        </span>
+                    </div>
+
+                    <script nonce="{{ $view->getCspNonce() }}">
+                        document.addEventListener('DOMContentLoaded', function () {
+                            setTimeout(() => {
+                                const check = document.getElementById('htmx-check');
+                                if (window.htmx) {
+                                    check.classList.replace('bg-light', 'bg-success');
+                                    check.classList.replace('text-dark', 'text-white');
+                                    check.innerHTML = '<i class="fas fa-check-circle me-1"></i> HTMX Active (v' + htmx.version + ')';
+                                } else {
+                                    check.classList.replace('bg-light', 'bg-danger');
+                                    check.classList.replace('text-dark', 'text-white');
+                                    check.innerHTML = '<i class="fas fa-times-circle me-1"></i> HTMX Missing!';
+                                }
+                            }, 500);
+                        });
+                    </script>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@endsection

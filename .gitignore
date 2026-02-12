@@ -11,6 +11,7 @@
 composer.lock
 package-lock.json
 /sample/
+phpunit.xml
 
 /public/assets/
 /public/plugs/

@@ -1,55 +1,162 @@
-<section class="hero text-center" id="get-started">
-    <div class="container">
-        <div data-aos="fade-up">
-            <!-- Version Badge - EASY TO UPDATE -->
-            <div class="version-badge mt-4" data-aos="zoom-in">
-                <i class="fas fa-tag me-2"></i>Version 3.0
+<section class="hero-container py-5 min-vh-75 d-flex align-items-center" id="get-started">
+    <div class="hero-glow"></div>
+    <div class="container py-5">
+        <div class="row align-items-center">
+            <div class="col-lg-7 text-start mb-5 mb-lg-0" data-aos="fade-right">
+                <div class="version-badge mb-4" data-aos="zoom-in">
+                    <span class="pl-pulse"></span>
+                    Version 5.0.0 Optimized
+                </div>
+
+                <h1 class="display-3 fw-bold mb-4">
+                    The <span class="plugs-highlight">{{APP_NAME}}</span> Framework
+                </h1>
+
+                <div class="hero-subtitle mb-4" data-aos="fade-up" data-aos-delay="100">
+                    The PHP Framework That Just Connects
+                </div>
+
+                <p class="lead mb-5 fs-5 opacity-75" data-aos="fade-up" data-aos-delay="150">
+                    Designed for developers who value performance, security, and modern aesthetics.
+                    Now faster, more modular, and more reactive than ever.
+                </p>
+
+                <div class="d-flex flex-wrap gap-3" data-aos="zoom-in" data-aos-delay="300">
+                    <a href="{{ route('docs') }}" class="btn btn-premium px-5 py-3" data-spa="true">
+                        <i class="fas fa-rocket me-2"></i>Get Started
+                    </a>
+                    <a href="https://github.com/celionatti/plugs" target="_blank" class="btn btn-outline px-5 py-3">
+                        <i class="fab fa-github me-2"></i>GitHub
+                    </a>
+                </div>
             </div>
 
-            <h1 class="fw-bold display-4">
-                The Plugs
-            </h1>
-            <div class="hero-subtitle" data-aos="fade-up" data-aos-delay="100">
-                The PHP Framework That Just Connects
+            <div class="col-lg-5" data-aos="fade-left">
+                <div class="glass-float">
+                    <div class="feature-card glass p-4 mb-3" data-aos="fade-up" data-aos-delay="200">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="feat-icon success mb-0"><i class="fas fa-bolt"></i></div>
+                            <div>
+                                <h6 class="mb-1 text-white">40% Faster</h6>
+                                <p class="small text-muted mb-0">Optimized route and config caching.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="feature-card glass p-4 mb-3" data-aos="fade-up" data-aos-delay="300">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="feat-icon info mb-0"><i class="fas fa-shield-alt"></i></div>
+                            <div>
+                                <h6 class="mb-1 text-white">Security First</h6>
+                                <p class="small text-muted mb-0">Built-in Shield and CSRF protection.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="feature-card glass p-4" data-aos="fade-up" data-aos-delay="400">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="feat-icon accent mb-0"><i class="fas fa-code"></i></div>
+                            <div>
+                                <h6 class="mb-1 text-white">Reactive Dev</h6>
+                                <p class="small text-muted mb-0">Live components with zero JS overhead.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-
-            <p class="lead mt-3" data-aos="fade-up" data-aos-delay="150" style="max-width: 700px; margin: 0 auto;">
-                Now faster, more modular, and more developer-friendly than ever. Welcome to the next generation of PHP development.
-            </p>
-
-            <!-- Feature Highlights -->
-            <div class="mt-4" data-aos="fade-up" data-aos-delay="200">
-                <span class="feature-highlight">
-                    <i class="fas fa-bolt"></i> 40% Faster
-                </span>
-                <span class="feature-highlight">
-                    <i class="fas fa-shield-alt"></i> Enhanced Security
-                </span>
-                <span class="feature-highlight">
-                    <i class="fas fa-code"></i> New API
-                </span>
-                <span class="feature-highlight">
-                    <i class="fas fa-plug"></i> More Modules
-                </span>
-            </div>
-
-            <!-- CTA Buttons -->
-            <div class="mt-5" data-aos="zoom-in" data-aos-delay="300">
-                <a class="btn btn-primary btn-lg me-2 mb-2">
-                    <i class="fas fa-download me-2"></i>Download v3.0
-                </a>
-                <a class="btn btn-outline-light btn-lg mb-2">
-                    <i class="fas fa-book me-2"></i>View Docs
-                </a>
-                <a class="btn btn-outline-light btn-lg mb-2">
-                    <i class="fas fa-code-branch me-2"></i>Upgrade Guide
-                </a>
-            </div>
-
-            <p class="mt-4 text-light" style="opacity: 0.8; font-size: 0.9rem;" data-aos="fade-up" data-aos-delay="400">
-                <i class="fas fa-clock me-1"></i> Latest release: October 2023 |
-                <i class="fas fa-star me-1 ms-2"></i> 2,500+ GitHub stars
-            </p>
         </div>
     </div>
 </section>
+
+<style>
+    .hero-container {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .hero-glow {
+        position: absolute;
+        top: -10%;
+        right: -10%;
+        width: 60%;
+        height: 80%;
+        background: radial-gradient(circle, oklch(70% 0.17 145 / 0.15) 0%, transparent 70%);
+        pointer-events: none;
+        z-index: -1;
+    }
+
+    .plugs-highlight {
+        background: linear-gradient(135deg, var(--pl-primary), var(--pl-primary-light));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .hero-subtitle {
+        font-size: 1.5rem;
+        font-weight: 500;
+        color: var(--text);
+        opacity: 0.9;
+    }
+
+    .btn-premium {
+        background: var(--pl-primary);
+        color: white;
+        border: none;
+        font-weight: 700;
+        border-radius: 12px;
+        transition: var(--transition-smooth);
+        box-shadow: 0 10px 20px oklch(70% 0.17 145 / 0.2);
+    }
+
+    .btn-premium:hover {
+        background: var(--pl-primary-light);
+        color: white;
+        transform: translateY(-3px);
+        box-shadow: 0 15px 30px oklch(70% 0.17 145 / 0.3);
+    }
+
+    .btn-outline {
+        background: transparent;
+        border: 2px solid var(--border);
+        color: var(--text);
+        font-weight: 600;
+        border-radius: 12px;
+        transition: var(--transition-smooth);
+    }
+
+    .btn-outline:hover {
+        background: var(--border);
+        color: var(--text);
+        transform: translateY(-3px);
+    }
+
+    .glass-float {
+        position: relative;
+        z-index: 1;
+    }
+
+    .pl-pulse {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        background: var(--pl-primary);
+        border-radius: 50%;
+        margin-right: 8px;
+        animation: pl-pulse-ring 2s infinite;
+    }
+
+    @keyframes pl-pulse-ring {
+        0% {
+            transform: scale(.95);
+            box-shadow: 0 0 0 0 oklch(70% 0.17 145 / 0.7);
+        }
+
+        70% {
+            transform: scale(1);
+            box-shadow: 0 0 0 10px oklch(70% 0.17 145 / 0);
+        }
+
+        100% {
+            transform: scale(.95);
+            box-shadow: 0 0 0 0 oklch(70% 0.17 145 / 0);
+        }
+    }
+</style>

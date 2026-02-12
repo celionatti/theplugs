@@ -1,53 +1,65 @@
 <!-- Code Preview -->
-<section id="code" class="code-section">
-    <div class="container">
+<section id="code" class="py-5" style="background: oklch(20% 0.04 259 / 0.3);">
+    <div class="container py-5">
         <div class="row align-items-center">
-            <div class="col-md-6 mb-4" data-aos="fade-right">
-                <h2 class="fw-bold">Write Less, Do More</h2>
-                <p>Expressive syntax that gets out of your way so you can focus on building amazing applications.</p>
+            <div class="col-lg-6 mb-5 mb-lg-0" data-aos="fade-right">
+                <h2 class="display-5 fw-bold mb-4">Write Less, <span class="plugs-highlight">Do More</span></h2>
+                <p class="lead text-muted mb-4 fs-5">Expressive syntax that gets out of your way so you can focus on
+                    building amazing applications.</p>
 
                 <div class="mt-4">
-                    <h5 class="text-white">v3.0 Syntax Improvements:</h5>
-                    <ul class="text-muted">
-                        <li>Simplified routing with named parameters</li>
-                        <li>Better error messages and debugging</li>
-                        <li>Enhanced Blade-like template engine</li>
-                        <li>Simplified database migrations</li>
+                    <h5 class="mb-4">v5.0.0 Syntax Innovations:</h5>
+                    <ul class="list-unstyled">
+                        <li class="mb-3 d-flex align-items-center gap-2">
+                            <i class="fas fa-check-circle text-success"></i>
+                            <span>Strictly typed Request & Response handlers</span>
+                        </li>
+                        <li class="mb-3 d-flex align-items-center gap-2">
+                            <i class="fas fa-check-circle text-success"></i>
+                            <span>Enhanced Reactive Component attributes</span>
+                        </li>
+                        <li class="mb-3 d-flex align-items-center gap-2">
+                            <i class="fas fa-check-circle text-success"></i>
+                            <span>Zero-config SSR with Vite integration</span>
+                        </li>
+                        <li class="mb-3 d-flex align-items-center gap-2">
+                            <i class="fas fa-check-circle text-success"></i>
+                            <span>Native AI engine for smarter development</span>
+                        </li>
                     </ul>
                 </div>
             </div>
 
-            <div class="col-md-6" data-aos="fade-left">
-                <pre class="code-box">
-          <code>// New v3.0 Routing Syntax
-          Route::get('/user/{id}', function($id) {
-              return User::findOrFail($id);
-          })->name('user.profile');
+            <div class="col-lg-6" data-aos="fade-left">
+                <div class="code-window glass p-1 rounded-4 shadow-lg">
+                    <div
+                        class="d-flex align-items-center px-4 py-3 border-bottom border-secondary border-opacity-25 bg-dark rounded-top-4">
+                        <div class="d-flex gap-2">
+                            <div style="width: 12px; height: 12px; border-radius: 50%; background: #ff5f56;"></div>
+                            <div style="width: 12px; height: 12px; border-radius: 50%; background: #ffbd2e;"></div>
+                            <div style="width: 12px; height: 12px; border-radius: 50%; background: #27c93f;"></div>
+                        </div>
+                        <div class="ms-3 small text-muted font-monospace">routes/web.php</div>
+                    </div>
+                    <div class="code-box m-0 border-0 rounded-bottom-4" style="background: #0f172a;">
+                        <pre class="m-0"><code class="language-php">// v5.0.0 Routing & Reactive Components
+Route::get('/profile/{id}', function($id) {
+    return view('user.profile', [
+        'user' => User::cache()->findOrFail($id)
+    ]);
+})->name('profile');
 
-          // Simplified Database Operations
-          $users = DB::table('users')
-              ->where('active', true)
-              ->orderBy('name')
-              ->paginate(10);
+// Live-updating reactive state
+$this->on('update', function($data) {
+    $this->state = $data;
+    $this->refresh('stats-grid');
+});
 
-          // New Middleware Syntax
-          Route::middleware(['auth', 'verified'])
-              ->group(function() {
-                  Route::get('/dashboard', 'DashboardController@index');
-              });
-
-          // Built-in API Resources (New in v3.0)
-          class UserResource extends JsonResource {
-              public function toArray($request) {
-                  return [
-                      'id' => $this->id,
-                      'name' => $this->name,
-                      'email' => $this->email,
-                      'created_at' => $this->created_at,
-                  ];
-              }
-          }</code>
-        </pre>
+// Native AI Integration
+AI::prompt("Analyze the database health")
+    ->then(fn($res) => Log::info($res));</code></pre>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
