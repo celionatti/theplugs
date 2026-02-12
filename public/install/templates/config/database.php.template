@@ -33,6 +33,37 @@ return [
             'timeout' => 5,
             'persistent' => false,
             'max_idle_time' => 3600, // 1 hour
+            'sticky' => true,           // Route reads to write connection briefly after writes
+            'sticky_window' => 0.5,     // Seconds to keep reads on write after a write (0.5s default)
+
+            // Connection Pool Settings
+            // Enable pooling for better connection reuse in long-running processes
+            // and persistent connection management across PHP-FPM requests.
+            'pool' => [
+                'enabled' => env('DB_POOL_ENABLED', false),
+                'min_connections' => 2,    // Pre-warmed connections to keep ready
+                'max_connections' => 10,   // Maximum concurrent connections
+                'idle_timeout' => 300,     // Seconds before idle connections are pruned
+                'connection_timeout' => 30, // Seconds to wait when pool is exhausted
+            ],
+
+            // Load Balancing (takes effect when 'host' is an array or read/write splitting is used)
+            // Strategies: 'random', 'round-robin', 'weighted'
+            'load_balancing' => [
+                'strategy' => 'random',
+                'health_check_cooldown' => 30, // Seconds before retrying a downed host
+                'max_failures' => 3,           // Failures before marking host as down
+            ],
+
+            // Read/Write Splitting (optional — uncomment to use)
+            // Reads go to replicas; writes go to the primary host.
+            // Multiple read hosts get automatic failover via the LoadBalancer.
+            // 'read' => [
+            //     'host' => ['replica1.db.local', 'replica2.db.local'],
+            // ],
+            // 'write' => [
+            //     'host' => 'primary.db.local',
+            // ],
         ],
 
         'pgsql' => [
