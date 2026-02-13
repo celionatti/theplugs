@@ -1,86 +1,106 @@
 <?php
 
-declare(strict_types=1);
-
-/*
-|--------------------------------------------------------------------------
-| Authentication Configuration File
-|--------------------------------------------------------------------------
-| This file contains authentication-related settings for the application,
-| including default guard, password reset options, and user providers.
-*/
-
 return [
-    'user_model' => null, // Your custom user model if any
-    'table' => 'users',
-    'primary_key' => 'id',
-    'email_column' => 'email',
-    'password_column' => 'password',
-    'remember_token_column' => null,
-    'last_login_column' => 'last_login_at',
 
     /*
     |--------------------------------------------------------------------------
-    | Password Hashing
+    | Authentication Defaults
     |--------------------------------------------------------------------------
-    */
-    'password_algo' => PASSWORD_BCRYPT,
-    'password_cost' => 12,
-
-    /*
-    |--------------------------------------------------------------------------
-    | Session Configuration
-    |--------------------------------------------------------------------------
-    */
-    'session_key' => 'auth_user_id',
-    'remember_token_name' => 'remember_token',
-    'remember_days' => 30,
-
-    /*
-    |--------------------------------------------------------------------------
-    | OAuth Providers
-    |--------------------------------------------------------------------------
-    | 
-    | Configure your OAuth providers here. You'll need to create apps
-    | with each provider and get your client credentials.
+    |
+    | This option controls the default authentication "guard" and password
+    | reset options for your application. You may change these defaults
+    | as required, but they're a perfect start for most applications.
     |
     */
-    'oauth' => [
-        'google' => [
-            'client_id' => env('GOOGLE_CLIENT_ID', ''),
-            'client_secret' => env('GOOGLE_CLIENT_SECRET', ''),
-            // Get credentials from: https://console.cloud.google.com
-        ],
 
-        'facebook' => [
-            'client_id' => env('FACEBOOK_CLIENT_ID', ''),
-            'client_secret' => env('FACEBOOK_CLIENT_SECRET', ''),
-            // Get credentials from: https://developers.facebook.com
-        ],
+    'defaults' => [
+        'guard' => 'web',
+        'passwords' => 'users',
+    ],
 
-        'github' => [
-            'client_id' => env('GITHUB_CLIENT_ID', ''),
-            'client_secret' => env('GITHUB_CLIENT_SECRET', ''),
-            // Get credentials from: https://github.com/settings/developers
-        ],
+    /*
+    |--------------------------------------------------------------------------
+    | Authentication Guards
+    |--------------------------------------------------------------------------
+    |
+    | Next, you may define every authentication guard for your application.
+    | Of course, a great default configuration has been defined for you
+    | here which uses session storage and the Plug user provider.
+    |
+    | All authentication drivers have a user provider. This defines how the
+    | users are actually retrieved out of your database or other storage
+    | mechanisms used by this application to persist your user's data.
+    |
+    | Supported: "session"
+    |
+    */
 
-        'discord' => [
-            'client_id' => env('DISCORD_CLIENT_ID', ''),
-            'client_secret' => env('DISCORD_CLIENT_SECRET', ''),
-            // Get credentials from: https://discord.com/developers/applications
+    'guards' => [
+        'web' => [
+            'driver' => 'session',
+            'provider' => 'users',
         ],
     ],
 
-    'oauth_table' => 'oauth_accounts',
-    'remember_tokens_table' => 'remember_tokens',
+    /*
+    |--------------------------------------------------------------------------
+    | User Providers
+    |--------------------------------------------------------------------------
+    |
+    | All authentication drivers have a user provider. This defines how the
+    | users are actually retrieved out of your database or other storage
+    | mechanisms used by this application to persist your user's data.
+    |
+    | If you have multiple user tables or models you may configure multiple
+    | sources which represent each model / table. These sources may then
+    | be assigned to any extra authentication guards you have defined.
+    |
+    | Supported: "database", "eloquent" (via Plugs Model)
+    |
+    */
 
-    'use_timestamps' => true,
-    'created_at_column' => 'created_at',
-    'updated_at_column' => 'updated_at',
-    'email_verification' => [
-        'enabled' => false,
-        'token_length' => 6,
-        'expiry_hours' => 24,
-        'send_welcome_email' => true,
+    'providers' => [
+        'users' => [
+            'driver' => 'model',
+            'model' => App\Models\User::class,
+        ],
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Resetting Passwords
+    |--------------------------------------------------------------------------
+    |
+    | You may specify multiple password reset configurations if you have more
+    | than one user table or model in the application and you want to have
+    | separate password reset settings based on the specific user types.
+    |
+    | The expire time is the number of minutes that each reset token will be
+    | considered valid. This security feature keeps tokens short-lived so
+    | they have less time to be guessed. You may change this as needed.
+    |
+    */
+
+    'passwords' => [
+        'users' => [
+            'provider' => 'users',
+            'table' => 'password_reset_tokens',
+            'expire' => 60,
+            'throttle' => 60,
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Password Confirmation Timeout
+    |--------------------------------------------------------------------------
+    |
+    | Here you may define the amount of seconds before a password confirmation
+    | times out and the user is prompted to re-enter their password via the
+    | confirmation screen. By default, the timeout lasts for three hours.
+    |
+    */
+
+    'password_timeout' => 10800,
+
 ];

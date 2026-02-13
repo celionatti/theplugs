@@ -94,13 +94,46 @@ try {
     // 2. Ensure display_errors matches debug state (Security)
     ini_set('display_errors', $isDebug ? '1' : '0');
 
-    // 3. Try to Render Debug Page
-    if ($isLocal && $isDebug && function_exists('renderDebugErrorPage')) {
+    // 3. Ensure error functions are loaded (Now handled by Composer autoloader)
+    // We check if function exists just in case the autoloader failed or wasn't loaded yet.
+    if (!function_exists('renderDebugErrorPage')) {
+        // Fallback for development if vendor/autoload.php didn't include it
+        $devPath = __DIR__ . '/../src/functions/error.php';
+        if (file_exists($devPath)) {
+            require_once $devPath;
+        }
+    }
+
+    // 4. Try to use the central exception handler if application is partially booted
+    try {
+        $container = \Plugs\Container\Container::getInstance();
+        if ($container->has(\Plugs\Exceptions\Handler::class)) {
+            $handler = $container->make(\Plugs\Exceptions\Handler::class);
+            $request = \Plugs\Http\Message\ServerRequest::fromGlobals();
+            $response = $handler->handle($e, $request);
+
+            // If we got a response, emit it (manually if needed)
+            $body = (string) $response->getBody();
+            http_response_code($response->getStatusCode());
+            foreach ($response->getHeaders() as $name => $values) {
+                foreach ($values as $value) {
+                    header(sprintf('%s: %s', $name, $value), false);
+                }
+            }
+            echo $body;
+            exit;
+        }
+    } catch (\Throwable $handlerError) {
+        // Fallback to manual rendering if handler fails
+    }
+
+    // 5. Try to Render Debug Page directly
+    if ($isDebug && function_exists('renderDebugErrorPage')) {
         renderDebugErrorPage($e);
         exit;
     }
 
-    // 4. Try to Render Production Page
+    // 6. Try to Render Production Page directly
     if (function_exists('renderProductionErrorPage')) {
         renderProductionErrorPage($e, 500);
         exit;
