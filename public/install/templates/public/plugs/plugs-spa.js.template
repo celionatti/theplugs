@@ -368,6 +368,29 @@ class PlugsSPA {
         observer.observe(actionEl);
       });
 
+      // p-model (data binding)
+      filterToBound("[p-model]").forEach((actionEl) => {
+        if (actionEl._plugBoundModel) return;
+        actionEl._plugBoundModel = true;
+        const action = actionEl.getAttribute("p-model");
+        const debounceTime = parseInt(
+          actionEl.getAttribute("p-debounce") || "300",
+        );
+
+        let timer;
+        actionEl.addEventListener("input", () => {
+          clearTimeout(timer);
+          timer = setTimeout(() => {
+            this.callComponentAction(
+              el,
+              "model",
+              action,
+              this.getInputValue(actionEl),
+            );
+          }, debounceTime);
+        });
+      });
+
       el._plugInitialized = true;
     });
 
@@ -401,9 +424,11 @@ class PlugsSPA {
     temp.innerHTML = newHTML.trim();
     const newEl = temp.firstElementChild;
 
-    // If it's a single-root update matching the existing element (ideal for components), morph the element itself.
-    // This ensures root attributes like data-plug-state are correctly synced.
-    if (newEl && temp.childElementCount === 1 && (newEl.tagName === el.tagName || el.hasAttribute('data-plug-component'))) {
+    // For reactive components, the server returns the inner view HTML (without wrapper).
+    // We must morph the children only, preserving the wrapper's data-plug-* attributes.
+    if (el.hasAttribute('data-plug-component')) {
+      this._morphChildNodes(el, temp);
+    } else if (newEl && temp.childElementCount === 1 && (newEl.tagName === el.tagName)) {
       this._morphElement(el, newEl);
     } else {
       // Fallback for multi-root fragments or non-matching tags: morph the children.
