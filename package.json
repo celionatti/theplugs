@@ -1,0 +1,21 @@
+{
+  "name": "theplugs",
+  "version": "1.0.0",
+  "description": "[![Latest Version](https://img.shields.io/packagist/v/theplugs/theplugs.svg?style=flat-square)](https://packagist.org/packages/theplugs/theplugs)\r [![Total Downloads](https://img.shields.io/packagist/dt/theplugs/theplugs.svg?style=flat-square)](https://packagist.org/packages/theplugs/theplugs)\r [![License](https://img.shields.io/packagist/l/theplugs/theplugs.svg?style=flat-square)](https://packagist.org/packages/theplugs/theplugs)",
+  "main": "index.js",
+  "private": true,
+  "type": "module",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
