@@ -156,6 +156,8 @@ return [
         '.env' => 'env.template',
         'composer.json' => 'composer.json.template',
         'phpunit.xml' => 'phpunit.xml.template',
+        'package.json' => 'package.json.template',
+        'vite.config.mjs' => 'vite.config.mjs.template',
         // 'tests/TestCase.php' => 'tests/TestCase.php.template',
         // 'tests/Feature/ExampleTest.php' => 'tests/Feature/ExampleTest.php.template',
         // 'tests/Unit/ExampleTest.php' => 'tests/Unit/ExampleTest.php.template',
