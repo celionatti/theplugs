@@ -5,46 +5,33 @@ declare(strict_types=1);
 
 /*
  |----------------------------------------------------------------------
- | Define Constants for the Console
- |----------------------------------------------------------------------
- */
-
-use Plugs\Console\ConsoleKernel;
-use Plugs\Console\ConsolePlugs;
-use Plugs\Plugs;
-
-define('BASE_PATH', __DIR__ . '/');
-define('APP_PATH', BASE_PATH . 'app/');
-define('CONFIG_PATH', BASE_PATH . 'config/');
-define('STORAGE_PATH', BASE_PATH . 'storage/');
-define('VENDOR_PATH', BASE_PATH . 'vendor/');
-
-require VENDOR_PATH . 'autoload.php';
-
-/*
- |----------------------------------------------------------------------
- | Load Environment Variables
- |----------------------------------------------------------------------
- */
-$dotenv = Dotenv\Dotenv::createImmutable(BASE_PATH);
-$dotenv->load();
-
-/*
- |----------------------------------------------------------------------
- | Initialize Application
+ | Console Entry Point — Context-Aware Bootstrap
  |----------------------------------------------------------------------
  |
- | This bootstraps the application core, registers service providers,
- | and sets up the container.
+ | This entry point uses the CliKernel to boot only the services
+ | needed for console commands, avoiding HTTP overhead (session,
+ | CSRF, routing, view engine).
  */
-$app = new Plugs();
 
-/*
- |----------------------------------------------------------------------
- | Run Console Application
- |----------------------------------------------------------------------
- */
-$kernel = new ConsoleKernel();
-$console = new ConsolePlugs($kernel);
+use Plugs\Bootstrap\Bootstrapper;
+use Plugs\Bootstrap\ContextType;
+use Plugs\Kernel\CliKernel;
+use Plugs\Kernel\KernelInterface;
 
-exit($console->run($argv));
+require __DIR__ . '/vendor/autoload.php';
+
+// Boot the application with forced CLI context
+$bootstrapper = new Bootstrapper(__DIR__);
+$app = $bootstrapper->boot(ContextType::Cli);
+
+// Get the CLI kernel and run the console
+$kernel = app(KernelInterface::class);
+
+if ($kernel instanceof CliKernel) {
+    exit($kernel->handle($argv));
+} else {
+    // Fallback — should not normally happen
+    $consoleKernel = new \Plugs\Console\ConsoleKernel();
+    $console = new \Plugs\Console\ConsolePlugs($consoleKernel);
+    exit($console->run($argv));
+}
