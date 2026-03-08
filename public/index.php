@@ -12,21 +12,13 @@ declare(strict_types=1);
 */
 
 /*
- |----------------------------------------------------------------------
- | Check Installation Status
- |----------------------------------------------------------------------
- |
- | If the plugs.lock marker file doesn't exist and the install directory
- | exists, redirect to the installation wizard.
- */
-/*
- |----------------------------------------------------------------------
- | Check Installation Status
- |----------------------------------------------------------------------
- |
- | If the plugs.lock marker file doesn't exist and the install directory
- | exists, redirect to the installation wizard.
- */
+|----------------------------------------------------------------------
+| Check Installation Status
+|----------------------------------------------------------------------
+|
+| If the plugs.lock marker file doesn't exist and the install directory
+| exists, redirect to the installation wizard.
+*/
 if (!file_exists(__DIR__ . '/../plugs.lock') && is_dir(__DIR__ . '/install')) {
     $requestUri = $_SERVER['REQUEST_URI'] ?? '';
 
@@ -67,22 +59,22 @@ if (!file_exists(__DIR__ . '/../plugs.lock') && is_dir(__DIR__ . '/install')) {
 }
 
 /*
- |----------------------------------------------------------------------
- | Load the Bootstrap File
- |----------------------------------------------------------------------
- |
- | Here we are loading the bootstrap file to set up the application.
- */
+|----------------------------------------------------------------------
+| Load the Bootstrap File
+|----------------------------------------------------------------------
+|
+| Here we are loading the bootstrap file to set up the application.
+*/
 $app = require __DIR__ . '/../bootstrap/boot.php';
 
 /*
- |----------------------------------------------------------------------
- | Run the Application
- |----------------------------------------------------------------------
- |
- | Now we can run the application. This is where the main logic of
- | your application will be executed.
- */
+|----------------------------------------------------------------------
+| Run the Application
+|----------------------------------------------------------------------
+|
+| Now we can run the application. This is where the main logic of
+| your application will be executed.
+*/
 
 try {
     $app->run();
@@ -97,10 +89,15 @@ try {
     // 3. Ensure error functions are loaded (Now handled by Composer autoloader)
     // We check if function exists just in case the autoloader failed or wasn't loaded yet.
     if (!function_exists('renderDebugErrorPage')) {
-        // Fallback for development if vendor/autoload.php didn't include it
-        $devPath = __DIR__ . '/../src/functions/error.php';
-        if (file_exists($devPath)) {
-            require_once $devPath;
+        $possiblePaths = [
+            __DIR__ . '/../src/functions/error.php', // Local Development
+            (defined('VENDOR_PATH') ? VENDOR_PATH : __DIR__ . '/../vendor/') . 'plugs/plugs/src/functions/error.php', // Package User
+        ];
+        foreach ($possiblePaths as $path) {
+            if (file_exists($path)) {
+                require_once $path;
+                break;
+            }
         }
     }
 
