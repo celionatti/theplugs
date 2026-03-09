@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+# Disallow sensitive directories
+Disallow: /install/
+Disallow: /plugs/
+Disallow: /storage/
+
+Sitemap: https://yourdomain.com/sitemap.xml

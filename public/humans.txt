@@ -1,0 +1,13 @@
+/* TEAM */
+Chef: Your Name
+Contact: hello@yourdomain.com
+Twitter: @yourhandle
+From: Your City, Your Country
+
+/* THANKS */
+Framework: Plugs Framework (https://github.com/celionatti/plugs)
+
+/* SITE */
+Last update: 2024/03/09
+Standards: HTML5, CSS3, PHP8
+Software: PHP, MySQL, Redis, Plugs
