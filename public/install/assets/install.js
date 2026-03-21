@@ -132,7 +132,7 @@ function initTestConnection() {
         formData.append('db_password', document.getElementById('db_password')?.value || '');
 
         try {
-            const response = await fetch('test-connection.php', {
+            const response = await fetch('?action=testConnection', {
                 method: 'POST',
                 body: formData
             });

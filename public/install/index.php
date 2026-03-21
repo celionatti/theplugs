@@ -1,6 +1,7 @@
 <?php
 
-declare(strict_types=1);
+declare(strict_types = 1)
+;
 
 /**
  * Plugs Framework Installer
@@ -34,7 +35,7 @@ $controller = new InstallController($config);
 
 // Handle the request
 $step = $_GET['step'] ?? 1;
-$step = max(1, min(5, (int) $step));
+$step = max(1, min(5, (int)$step));
 
 // Process form submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -52,6 +53,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             echo json_encode($controller->installComposer());
             exit;
         }
+
+        if ($action === 'testConnection') {
+            echo json_encode($controller->testConnection($_POST));
+            exit;
+        }
     }
 
     $result = $controller->processStep($step, $_POST);
@@ -61,7 +67,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             header('Location: ?step=' . ($step + 1));
             exit;
         }
-    } else {
+    }
+    else {
         $error = $result['error'] ?? 'An error occurred';
     }
 }

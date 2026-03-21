@@ -2,73 +2,82 @@
 $appName = $stepData['session_data']['app']['name'] ?? 'Plugs Framework';
 $appUrl = $stepData['session_data']['app']['url'] ?? '';
 ?>
-<div class="step-content">
-    <div class="success-hero animate-in">
-        <div class="success-orb">
+<div class="space-y-12 text-center">
+    <div class="space-y-6">
+        <div class="w-24 h-24 bg-emerald-500 rounded-[2rem] flex items-center justify-center text-white text-4xl mx-auto shadow-2xl shadow-emerald-500/40 animate-bounce">
             <i class="fas fa-check"></i>
         </div>
-        <h2 class="success-title">System Fully Operational</h2>
-        <p class="success-message">
-            Congratulations! <strong><?= htmlspecialchars($appName) ?></strong> has been successfully deployed and is
-            ready for development.
-        </p>
+        <div class="space-y-3">
+            <h2 class="text-4xl font-extrabold text-gray-900 tracking-tight">System Operational</h2>
+            <p class="text-gray-500 text-lg">
+                Congratulations! <span class="text-emerald-600 font-bold"><?= htmlspecialchars($appName) ?></span> has been successfully deployed.
+            </p>
+        </div>
     </div>
 
-    <div class="alert animate-in stagger-1"
-        style="background: oklch(65% 0.2 25 / 0.1); border: 1px solid oklch(65% 0.2 25 / 0.2); color: var(--error); margin-bottom: 2rem;">
-        <i class="fas fa-shield-virus fa-lg"></i>
+    <div class="p-6 bg-red-50 border border-red-100 rounded-[2rem] flex items-start gap-4 text-red-700 shadow-sm text-left">
+        <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+            <i class="fas fa-shield-virus"></i>
+        </div>
         <div>
-            <strong>Critical Security Action</strong><br>
-            Please remove the <code>install</code> directory from your project root to prevent unauthorized
-            re-configuration.
+            <h4 class="font-bold text-lg mb-1">Security Alert</h4>
+            <p class="text-sm opacity-90">Please remove the <code class="bg-red-100 px-1.5 py-0.5 rounded font-bold">public/install</code> directory immediately to secure your installation.</p>
         </div>
     </div>
 
-    <div class="form-section animate-in stagger-2" style="text-align: left;">
-        <h3
-            style="font-size: 1.1rem; margin-bottom: 1.25rem; color: var(--pl-primary); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">
-            <i class="fas fa-clipboard-list me-2"></i> Deployment Summary
-        </h3>
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
-            <div style="opacity: 0.8; font-size: 0.95rem;"><i class="fas fa-check text-success me-2"></i> File Hierarchy
-                Created</div>
-            <div style="opacity: 0.8; font-size: 0.95rem;"><i class="fas fa-check text-success me-2"></i> Schema
-                Migrations Done</div>
-            <div style="opacity: 0.8; font-size: 0.95rem;"><i class="fas fa-check text-success me-2"></i> Admin
-                Privilege Granted</div>
-            <div style="opacity: 0.8; font-size: 0.95rem;"><i class="fas fa-check text-success me-2"></i> Env
-                Configuration Active</div>
+    <div class="p-8 bg-gray-50 rounded-[2.5rem] border border-gray-100 space-y-8 text-left">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-emerald-500 flex items-center justify-center text-white">
+                <i class="fas fa-clipboard-list"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 tracking-tight">Deployment Summary</h3>
         </div>
 
-        <div style="padding-top: 1.25rem; border-top: 1px solid oklch(100% 0 0 / 0.05);">
-            <p style="color: var(--text-muted); font-weight: 600; margin-bottom: 0.75rem;">Next Milestones:</p>
-            <ol style="color: var(--text-dim); font-size: 0.9rem; padding-left: 1.25rem; line-height: 1.8;">
-                <li>Execute secure cleanup with the button below</li>
-                <li>Verify your installation in the <a href="https://github.com/celionatti/plugs" target="_blank"
-                        style="color: var(--pl-primary);">Plugs Documentation</a></li>
-                <li>Begin building your masterpiece!</li>
-            </ol>
+        <div class="grid grid-cols-2 gap-4">
+            <div class="flex items-center gap-3 text-emerald-600 font-medium text-sm">
+                <div class="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center text-[10px]"><i class="fas fa-check"></i></div>
+                File Hierarchy Ready
+            </div>
+            <div class="flex items-center gap-3 text-emerald-600 font-medium text-sm">
+                <div class="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center text-[10px]"><i class="fas fa-check"></i></div>
+                Database Migrated
+            </div>
+            <div class="flex items-center gap-3 text-emerald-600 font-medium text-sm">
+                <div class="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center text-[10px]"><i class="fas fa-check"></i></div>
+                Admin Identity Created
+            </div>
+            <div class="flex items-center gap-3 text-emerald-600 font-medium text-sm">
+                <div class="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center text-[10px]"><i class="fas fa-check"></i></div>
+                Environment Active
+            </div>
+        </div>
+
+        <div class="pt-6 border-t border-gray-200">
+            <p class="text-gray-400 font-bold text-xs uppercase tracking-widest mb-4">Immediate Next Steps</p>
+            <ul class="space-y-3 text-gray-500 text-sm">
+                <li class="flex gap-3"><span class="text-emerald-500 font-bold">01.</span> Execute secure cleanup below.</li>
+                <li class="flex gap-3"><span class="text-emerald-500 font-bold">02.</span> Explore the <a href="https://github.com/celionatti/plugs" class="text-emerald-600 hover:underline font-bold">Documentation</a>.</li>
+                <li class="flex gap-3"><span class="text-emerald-500 font-bold">03.</span> Create your first controller using <code class="bg-gray-200 px-1 rounded text-gray-700">php plugs make:controller</code>.</li>
+            </ul>
         </div>
     </div>
 
-    <div class="btn-group animate-in stagger-3" style="flex-direction: column; gap: 1rem;">
-        <div style="display: flex; gap: 1rem;">
-            <button type="button" class="btn btn-primary" id="btn-cleanup"
-                style="flex: 2; font-weight: 800; font-size: 1.1rem;">
-                <i class="fas fa-rocket me-2"></i> Finalize & Launch App
+    <div class="space-y-4">
+        <div class="flex flex-col sm:flex-row gap-4">
+            <button type="button" id="btn-cleanup" class="flex-1 bg-gray-900 border-2 border-gray-900 hover:bg-black text-white font-bold py-5 rounded-[2rem] shadow-xl transition-all hover:-translate-y-1 flex items-center justify-center gap-3 text-lg">
+                <i class="fas fa-rocket"></i>
+                Launch & Clean Up
             </button>
-            <button type="button" class="btn btn-secondary" id="btn-composer" style="flex: 1;">
-                <i class="fas fa-box me-2"></i> Sync Deps
+            <button type="button" id="btn-composer" class="flex-none sm:w-48 bg-white border-2 border-emerald-500 text-emerald-600 font-bold py-5 rounded-[2rem] transition-all hover:bg-emerald-50 flex items-center justify-center gap-3">
+                <i class="fas fa-box"></i>
+                Sync Deps
             </button>
         </div>
-        <a href="<?= htmlspecialchars($appUrl) ?>/" class="btn btn-secondary"
-            style="opacity: 0.5; font-size: 0.85rem; padding: 0.5rem;">
-            <i class="fas fa-external-link-alt me-2"></i> Navigate to Homepage (Skip Cleanup)
+        <div id="action-status" class="text-sm font-medium text-gray-400 pb-2">Ready for take-off.</div>
+        <a href="<?= htmlspecialchars($appUrl) ?>/" class="inline-block text-gray-400 text-xs font-bold uppercase tracking-widest hover:text-emerald-500 transition-colors">
+            Skip to Homepage <i class="fas fa-external-link-alt ml-1"></i>
         </a>
     </div>
-
-    <div id="action-status" class="animate-in stagger-3"
-        style="margin-top: 1.5rem; text-align: center; color: var(--text-dim); min-height: 24px;"></div>
 </div>
 
 <script>
@@ -77,57 +86,50 @@ $appUrl = $stepData['session_data']['app']['url'] ?? '';
         const status = document.getElementById('action-status');
         btn.disabled = true;
         const originalText = btn.innerHTML;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Syncing...';
-        status.innerHTML = '<span class="animate-in">Initializing Composer sync... Please wait.</span>';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Syncing...';
+        status.innerHTML = '<span class="text-emerald-600">Initializing Composer synchronization... Please wait.</span>';
 
         try {
             const response = await fetch('?action=composer', { method: 'POST' });
             const data = await response.json();
 
             if (data.success) {
-                btn.innerHTML = '<i class="fas fa-check-circle me-2"></i> Synced';
-                btn.style.color = 'var(--success)';
-                btn.style.borderColor = 'var(--success)';
-                status.innerHTML = '<span class="animate-in">' + data.message + '</span>';
+                btn.innerHTML = '<i class="fas fa-check-circle"></i> Synced';
+                btn.className = btn.className.replace('border-emerald-500 text-emerald-600', 'border-emerald-600 bg-emerald-600 text-white');
+                status.innerHTML = '<span class="text-emerald-600">' + data.message + '</span>';
             } else {
-                btn.innerHTML = '<i class="fas fa-exclamation-circle me-2"></i> Failed';
+                btn.innerHTML = '<i class="fas fa-exclamation-circle"></i> Failed';
                 btn.disabled = false;
-                status.innerHTML = '<span class="animate-in text-error">Error: ' + (data.error || 'Sync failed') + '</span>';
+                status.innerHTML = '<span class="text-red-500">Error: ' + (data.error || 'Sync failed') + '</span>';
                 if (data.details) {
                     console.error(data.details);
                     alert('Composer Output:\n' + data.details);
                 }
             }
         } catch (e) {
-            btn.innerHTML = '<i class="fas fa-wifi-slash me-2"></i> Network Error';
+            btn.innerHTML = '<i class="fas fa-wifi-slash"></i> Error';
             btn.disabled = false;
-            status.innerHTML = '<span class="animate-in text-error">Communication failed.</span>';
+            status.innerHTML = '<span class="text-red-500">Communication failed.</span>';
         }
     });
 
     document.getElementById('btn-cleanup').addEventListener('click', async function () {
         const btn = this;
-        const originalText = btn.innerHTML;
-
         btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-circle-notch fa-spin me-2"></i> Optimizing & Cleaning...';
+        btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Optimizing...';
 
         try {
             const response = await fetch('?action=cleanup', { method: 'POST' });
             const data = await response.json();
 
             if (data.success) {
-                if (data.redirect) {
-                    window.location.href = data.redirect;
-                } else {
-                    window.location.href = '<?= htmlspecialchars($appUrl) ?>/';
-                }
+                window.location.href = data.redirect || '<?= htmlspecialchars($appUrl) ?>/';
             } else {
-                alert(data.error || 'Cleanup halted. Please perform manually.');
+                alert(data.error || 'Cleanup failed. Please delete the install folder manually.');
                 window.location.href = '<?= htmlspecialchars($appUrl) ?>/';
             }
         } catch (e) {
             window.location.href = '<?= htmlspecialchars($appUrl) ?>/';
         }
     });
-</script>
+</script>

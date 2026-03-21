@@ -86,6 +86,57 @@ class InstallController
     }
 
     /**
+     * Test database connection
+     */
+    public function testConnection(array $data): array
+    {
+        $driver = $data['db_driver'] ?? 'mysql';
+        $host = $data['db_host'] ?? 'localhost';
+        $port = (int) ($data['db_port'] ?? 3306);
+        $database = $data['db_database'] ?? '';
+        $username = $data['db_username'] ?? '';
+        $password = $data['db_password'] ?? '';
+
+        try {
+            if ($driver === 'sqlite') {
+                $dbPath = ROOT_PATH . 'storage/database.sqlite';
+
+                // Create storage directory if needed
+                $storageDir = dirname($dbPath);
+                if (!is_dir($storageDir)) {
+                    mkdir($storageDir, 0755, true);
+                }
+
+                $dsn = 'sqlite:' . $dbPath;
+                $pdo = new PDO($dsn);
+            } elseif ($driver === 'pgsql') {
+                if (empty($database)) {
+                    throw new Exception('Database name is required for PostgreSQL');
+                }
+                $dsn = "pgsql:host={$host};port={$port};dbname={$database}";
+                $pdo = new PDO($dsn, $username, $password);
+            } else {
+                if (empty($database)) {
+                    throw new Exception('Database name is required');
+                }
+                $dsn = "mysql:host={$host};port={$port};dbname={$database};charset=utf8mb4";
+                $pdo = new PDO($dsn, $username, $password);
+            }
+
+            $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+            // Try a simple query to verify connection
+            $pdo->query('SELECT 1');
+
+            return ['success' => true];
+        } catch (PDOException $e) {
+            return ['success' => false, 'error' => $e->getMessage()];
+        } catch (Exception $e) {
+            return ['success' => false, 'error' => $e->getMessage()];
+        }
+    }
+
+    /**
      * Process a step submission
      */
     public function processStep(int $step, array $data): array
@@ -326,7 +377,11 @@ class InstallController
             }
             error_log("Step 5: plugs.lock created.");
 
-            // 6. Installation technical steps done
+            // 6. Install plugs/plugs package
+            $this->installPlugsPackage();
+            error_log("Step 6: Plugs package installed.");
+
+            // 7. Installation technical steps done
             error_log("Installation technical steps completed successfully.");
 
             return ['success' => true];
@@ -702,6 +757,26 @@ class InstallController
     }
 
     /**
+     * Install plugs/plugs latest package via composer
+     */
+    private function installPlugsPackage(): void
+    {
+        $composerPath = $this->findComposer();
+        if (!$composerPath) {
+            error_log("Composer not found, skipping package installation.");
+
+            return;
+        }
+
+        $command = "cd " . escapeshellarg(ROOT_PATH) . " && $composerPath require plugs/plugs:latest --no-interaction 2>&1";
+        exec($command, $output, $returnVar);
+
+        if ($returnVar !== 0) {
+            error_log("Composer require failed: " . implode("\n", $output));
+        }
+    }
+
+    /**
      * Attempt to run composer install
      */
     public function installComposer(): array
@@ -727,7 +802,7 @@ class InstallController
             ];
         }
 
-        return ['success' => true, 'message' => 'Composer dependencies installed successfully!'];
+        return ['success' => true, 'message' => 'Composer dependencies synchronized successfully!'];
     }
 
     /**
@@ -826,6 +901,8 @@ PHP;
             return ['success' => false, 'error' => 'Could not delete files automatically. Please delete the "install" folder manually.'];
         }
     }
+
+
 
     /**
      * Recursive delete

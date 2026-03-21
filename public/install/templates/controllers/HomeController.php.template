@@ -18,7 +18,7 @@ class HomeController extends Controller
      */
     public function index(): ResponseInterface
     {
-        return $this->view('home.index', [
+        return $this->view('welcome', [
             'title' => 'Welcome to {{APP_NAME}}',
             'message' => 'Your Plugs Framework application is ready!',
         ]);

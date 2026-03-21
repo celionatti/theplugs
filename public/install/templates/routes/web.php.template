@@ -16,66 +16,8 @@ declare(strict_types=1);
 
 use Plugs\Facades\Route;
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\DashboardController;
 
-Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/', [HomeController::class, 'index'])->name('welcome');
 Route::get('/home', [HomeController::class, 'index']);
-
-// Documentation Routes
-Route::get('/docs/{path?}', function ($path = 'index') {
-    $viewPath = "docs." . str_replace('/', '.', $path);
-
-    $titles = [
-        'index' => 'Introduction',
-        'basics' => 'The Basics',
-        'configuration' => 'Configuration',
-        'architecture.lifecycle' => 'Request Lifecycle',
-        'architecture.frontend' => 'Frontend Architecture',
-        'dependency-injection' => 'Dependency Injection',
-        'routing_advanced' => 'Advanced Routing',
-        'async' => 'Async & Concurrency',
-        'microservices' => 'Microservices',
-        'caching' => 'Tiered Caching',
-        'security' => 'Security Shield',
-        'type-safety' => 'Type Safety',
-        'database.basics' => 'Database & ORM',
-        'features.validation' => 'Validation',
-        'features.ai' => 'AI SDK',
-        'features.seo' => 'SEO & AI Accessibility',
-        'reactive' => 'Reactive Components',
-        'spa' => 'SPA Bridge',
-        'health_metrics' => 'Health & Metrics',
-    ];
-
-    $titleKey = str_replace('/', '.', $path);
-
-    return view($viewPath, ['title' => $titles[$titleKey] ?? 'Documentation']);
-})->where('path', '.*')->name('docs');
-
-// Demo Routes
-Route::get('/async-demo', function () {
-    $start = microtime(true);
-    $client = new \Plugs\Http\HTTPClient();
-
-    $results = parallel([
-        'google' => fn() => $client->getAsync('https://www.google.com'),
-        'bing' => fn() => $client->getAsync('https://www.bing.com'),
-    ]);
-
-    $duration = microtime(true) - $start;
-
-    return [
-        'duration' => $duration,
-        'results' => [
-            'google' => $results['google']->getStatusCode(),
-            'bing' => $results['bing']->getStatusCode(),
-        ],
-    ];
-});
-
-Route::get('/htmx-demo', function () {
-    return view('demos.htmx')->renderSmart();
-});
-
-Route::get('/spa-demo', function () {
-    return view('demos.spa_demo');
-})->name('spa.demo');
+Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['web', 'auth'])->name('dashboard');
