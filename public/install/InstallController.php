@@ -90,50 +90,16 @@ class InstallController
      */
     public function testConnection(array $data): array
     {
-        $driver = $data['db_driver'] ?? 'mysql';
-        $host = $data['db_host'] ?? 'localhost';
-        $port = (int) ($data['db_port'] ?? 3306);
-        $database = $data['db_database'] ?? '';
-        $username = $data['db_username'] ?? '';
-        $password = $data['db_password'] ?? '';
+        $config = [
+            'driver'   => $data['db_driver'] ?? 'mysql',
+            'host'     => $data['db_host'] ?? 'localhost',
+            'port'     => (int) ($data['db_port'] ?? 3306),
+            'database' => $data['db_database'] ?? '',
+            'username' => $data['db_username'] ?? '',
+            'password' => $data['db_password'] ?? '',
+        ];
 
-        try {
-            if ($driver === 'sqlite') {
-                $dbPath = ROOT_PATH . 'storage/database.sqlite';
-
-                // Create storage directory if needed
-                $storageDir = dirname($dbPath);
-                if (!is_dir($storageDir)) {
-                    mkdir($storageDir, 0755, true);
-                }
-
-                $dsn = 'sqlite:' . $dbPath;
-                $pdo = new PDO($dsn);
-            } elseif ($driver === 'pgsql') {
-                if (empty($database)) {
-                    throw new Exception('Database name is required for PostgreSQL');
-                }
-                $dsn = "pgsql:host={$host};port={$port};dbname={$database}";
-                $pdo = new PDO($dsn, $username, $password);
-            } else {
-                if (empty($database)) {
-                    throw new Exception('Database name is required');
-                }
-                $dsn = "mysql:host={$host};port={$port};dbname={$database};charset=utf8mb4";
-                $pdo = new PDO($dsn, $username, $password);
-            }
-
-            $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-            // Try a simple query to verify connection
-            $pdo->query('SELECT 1');
-
-            return ['success' => true];
-        } catch (PDOException $e) {
-            return ['success' => false, 'error' => $e->getMessage()];
-        } catch (Exception $e) {
-            return ['success' => false, 'error' => $e->getMessage()];
-        }
+        return \Plugs\Database\Connection::testConnection($config);
     }
 
     /**
@@ -236,26 +202,16 @@ class InstallController
         string $username,
         string $password
     ): array {
-        try {
-            if ($driver === 'sqlite') {
-                $dsn = 'sqlite:' . ROOT_PATH . 'storage/database.sqlite';
-            } elseif ($driver === 'pgsql') {
-                $dsn = "pgsql:host={$host};port={$port};dbname={$database}";
-            } else {
-                $dsn = "mysql:host={$host};port={$port};dbname={$database};charset=utf8mb4";
-            }
+        $config = [
+            'driver'   => $driver,
+            'host'     => $host,
+            'port'     => $port,
+            'database' => $database,
+            'username' => $username,
+            'password' => $password,
+        ];
 
-            $options = [
-                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            ];
-
-            $pdo = new PDO($dsn, $username, $password, $options);
-
-            return ['success' => true];
-        } catch (PDOException $e) {
-            return ['success' => false, 'error' => 'Database connection failed: ' . $e->getMessage()];
-        }
+        return \Plugs\Database\Connection::testConnection($config);
     }
 
     /**
