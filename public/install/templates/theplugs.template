@@ -11,33 +11,22 @@ declare(strict_types=1);
 
 use Plugs\Console\ConsoleKernel;
 use Plugs\Console\ConsolePlugs;
+use Plugs\Bootstrap\ContextType;
+use Plugs\Bootstrap\DetectMode;
 use Plugs\Plugs;
 
-define('BASE_PATH', __DIR__ . '/');
-define('APP_PATH', BASE_PATH . 'app/');
-define('CONFIG_PATH', BASE_PATH . 'config/');
-define('STORAGE_PATH', BASE_PATH . 'storage/');
-define('VENDOR_PATH', BASE_PATH . 'vendor/');
+define('BASE_PATH', __DIR__ . DIRECTORY_SEPARATOR);
 
-require VENDOR_PATH . 'autoload.php';
+require BASE_PATH . 'vendor/autoload.php';
 
 /*
  |----------------------------------------------------------------------
- | Load Environment Variables
+ | Initialize Application via Bootstrapper
  |----------------------------------------------------------------------
  */
-$dotenv = Dotenv\Dotenv::createImmutable(BASE_PATH);
-$dotenv->load();
-
-/*
- |----------------------------------------------------------------------
- | Initialize Application
- |----------------------------------------------------------------------
- |
- | This bootstraps the application core, registers service providers,
- | and sets up the container.
- */
-$app = new Plugs();
+$bootstrapper = new \Plugs\Bootstrap\Bootstrapper(BASE_PATH);
+$app = $bootstrapper->boot();
+$GLOBALS['app'] = $app;
 
 /*
  |----------------------------------------------------------------------
