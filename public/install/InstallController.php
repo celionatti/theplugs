@@ -800,7 +800,7 @@ class InstallController
             return;
         }
 
-        $command = "cd " . escapeshellarg(ROOT_PATH) . " && $composerPath require plugs/plugs:latest --no-interaction 2>&1";
+        $command = "cd " . escapeshellarg(ROOT_PATH) . " && $composerPath require plugs/plugs:* --no-interaction 2>&1";
         exec($command, $output, $returnVar);
 
         if ($returnVar !== 0) {
