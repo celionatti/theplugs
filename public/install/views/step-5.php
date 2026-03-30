@@ -22,18 +22,26 @@ $appUrl = $stepData['session_data']['app']['url'] ?? '';
     unset($_SESSION['install_errors']);
     if (!empty($installErrors)): 
     ?>
-        <div class="p-6 bg-amber-50 border border-amber-100 rounded-[2rem] flex items-start gap-4 text-amber-700 shadow-sm text-left animate-pulse">
+        <div class="p-6 bg-amber-50 border border-amber-100 rounded-[2rem] flex items-start gap-4 text-amber-700 shadow-sm text-left">
             <div class="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
                 <i class="fas fa-exclamation-triangle"></i>
             </div>
-            <div>
+            <div class="flex-1 min-w-0">
                 <h4 class="font-bold text-lg mb-1">Post-Installation Notice</h4>
-                <ul class="text-sm opacity-90 list-disc ml-4">
-                    <?php foreach ($installErrors as $err): ?>
-                        <li><?= nl2br(htmlspecialchars($err)) ?></li>
+                <div class="space-y-4">
+                    <?php foreach ($installErrors as $index => $err): ?>
+                        <div class="text-sm">
+                            <p class="font-medium"><?= is_array($err) ? $err['summary'] : nl2br(htmlspecialchars($err)) ?></p>
+                            <?php if (is_array($err) && !empty($err['details'])): ?>
+                                <button onclick="document.getElementById('err-details-<?= $index ?>').classList.toggle('hidden')" class="text-[10px] uppercase tracking-widest font-bold mt-2 text-amber-600 hover:text-amber-800">
+                                    Show Technical Details
+                                </button>
+                                <pre id="err-details-<?= $index ?>" class="hidden mt-2 p-3 bg-amber-100/50 rounded-lg overflow-x-auto text-[10px] font-mono leading-relaxed"><?= htmlspecialchars($err['details']) ?></pre>
+                            <?php endif; ?>
+                        </div>
                     <?php endforeach; ?>
-                </ul>
-                <p class="text-xs mt-2 opacity-75">You may need to run <code class="bg-amber-100 px-1 rounded">composer update</code> manually to resolve these issues.</p>
+                </div>
+                <p class="text-xs mt-4 opacity-75 italic text-gray-500">You may need to run <code class="bg-amber-100 px-1 rounded">composer update</code> manually to resolve these issues.</p>
             </div>
         </div>
     <?php endif; ?>

@@ -898,9 +898,14 @@ class InstallController
         exec($command, $output, $returnVar);
 
         if ($returnVar !== 0) {
-            $errorMsg = "Composer failed to install 'plugs/plugs': " . implode("\n", $output);
-            error_log($errorMsg);
-            $_SESSION['install_errors'][] = $errorMsg;
+            $fullOutput = implode("\n", $output);
+            $errorMsg = "<strong>Framework Core Installation Failed.</strong><br>Please run <code class='bg-amber-100 p-1 rounded font-bold'>composer require plugs/plugs:*</code> in your terminal inside the project folder to finish the setup.";
+            
+            error_log("Composer require failed: " . $fullOutput);
+            $_SESSION['install_errors'][] = [
+                'summary' => $errorMsg,
+                'details' => $fullOutput
+            ];
         }
     }
 
