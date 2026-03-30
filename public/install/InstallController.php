@@ -59,15 +59,39 @@ class InstallController
         }
 
         // Check directory permissions
-        $results['write_root'] = [
-            'name' => 'Root directory writable',
-            'current' => is_writable(ROOT_PATH) ? 'Writable' : 'Not writable',
-            'passed' => is_writable(ROOT_PATH),
-            'required' => true,
-        ];
+        $writableDirs = $this->config['writable_directories'] ?? [ROOT_PATH];
+        foreach ($writableDirs as $dir) {
+            $path = ROOT_PATH . $dir;
+            $passed = $this->isPathWritable($path);
+            $results['write_' . str_replace('/', '_', $dir)] = [
+                'name' => "'{$dir}' directory writable",
+                'current' => $passed ? 'Writable' : 'Not writable',
+                'passed' => $passed,
+                'required' => true,
+            ];
+        }
 
         return $results;
     }
+
+    /**
+     * Check if a path is writable, or if its parent is writable if it doesn't exist.
+     */
+    private function isPathWritable(string $path): bool
+    {
+        if (file_exists($path)) {
+            return is_writable($path);
+        }
+
+        // Check nearest existing parent
+        $parent = dirname($path);
+        while (!file_exists($parent) && $parent !== dirname($parent)) {
+            $parent = dirname($parent);
+        }
+
+        return is_writable($parent);
+    }
+
 
     /**
      * Check if all required requirements are met
@@ -243,7 +267,44 @@ class InstallController
 
             return ['success' => true];
         } catch (\PDOException $e) {
+            // MySQL error 1049: Unknown database
+            if (($config['driver'] ?? 'mysql') === 'mysql' && $e->getCode() == 1049) {
+                return $this->tryCreateDatabase($config);
+            }
+
             return ['success' => false, 'error' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * Try to create the database if it doesn't exist.
+     */
+    private function tryCreateDatabase(array $config): array
+    {
+        try {
+            $host = $config['host'] ?? 'localhost';
+            $port = (int)($config['port'] ?? 3306);
+            $database = $config['database'] ?? '';
+            $username = $config['username'] ?? '';
+            $password = $config['password'] ?? '';
+
+            // Connect without database
+            $dsn = "mysql:host={$host};port={$port};charset=utf8mb4";
+            $pdo = new \PDO($dsn, $username, $password);
+            $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+
+            // Sanitize database name
+            $database = preg_replace('/[^a-zA-Z0-9_\-]/', '', $database);
+            $pdo->exec("CREATE DATABASE IF NOT EXISTS `{$database}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+
+            $_SESSION['install_message'] = "The database '{$database}' was created successfully!";
+
+            return ['success' => true];
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'error' => "The database could not be found and auto-creation failed: " . $e->getMessage() . ". Please create it manually."
+            ];
         }
     }
 
@@ -764,12 +825,38 @@ class InstallController
      */
     public function getStepData(int $step): array
     {
-        return [
+        $data = [
             'step' => $step,
             'total_steps' => 5,
             'session_data' => $_SESSION['install_data'] ?? [],
             'config' => $this->config,
         ];
+
+        if ($step === 3) {
+            $data['detected_url'] = $this->detectAppUrl();
+        }
+
+        return $data;
+    }
+
+    /**
+     * Auto-detect the application URL from current request
+     */
+    private function detectAppUrl(): string
+    {
+        $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
+        $host = $_SERVER['HTTP_HOST'];
+        $path = $_SERVER['REQUEST_URI'];
+        
+        // Remove 'public/install/index.php' if present
+        $path = str_replace(['/public/install/index.php', '/public/install/'], '', $path);
+        
+        // Strip query string if any
+        if (($pos = strpos($path, '?')) !== false) {
+            $path = substr($path, 0, $pos);
+        }
+
+        return rtrim($protocol . $host . $path, '/');
     }
 
     /**

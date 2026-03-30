@@ -48,6 +48,7 @@ $controller = new InstallController($config);
 // Handle the request
 $step = $_GET['step'] ?? 1;
 $step = max(1, min(5, (int)$step));
+$error = null;
 
 // Process form submissions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

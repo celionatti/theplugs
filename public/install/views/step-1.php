@@ -24,7 +24,19 @@
                         </div>
                     </div>
                     <div class="text-sm text-gray-500">
-                        <?= $req['passed'] ? 'Detected: <span class="text-emerald-600 font-semibold">' . htmlspecialchars($req['current']) . '</span>' : ($req['required'] ? '<span class="text-red-500">Not Installed</span>' : 'Optional Feature') ?>
+                        <?php if ($req['passed']): ?>
+                            Detected: <span class="text-emerald-600 font-semibold"><?= htmlspecialchars($req['current']) ?></span>
+                        <?php else: ?>
+                            <?php if ($req['required']): ?>
+                                <?php if (strpos(strtolower($req['name']), 'directory') !== false): ?>
+                                    <span class="text-red-500 font-semibold">Not Writable</span>
+                                <?php else: ?>
+                                    <span class="text-red-500 font-semibold">Missing / Outdated</span>
+                                <?php endif; ?>
+                            <?php else: ?>
+                                <span class="text-amber-500 font-semibold">Optional</span>
+                            <?php endif; ?>
+                        <?php endif; ?>
                     </div>
                 </div>
             <?php endforeach; ?>
@@ -91,4 +103,4 @@
             </button>
         </div>
     </form>
-</div>
+</div>

@@ -90,6 +90,17 @@
                     </div>
                 <?php endif; ?>
 
+                <?php 
+                $message = $_SESSION['install_message'] ?? null;
+                unset($_SESSION['install_message']);
+                if (!empty($message)): 
+                ?>
+                    <div class="mb-8 p-4 bg-emerald-50 border border-emerald-100 rounded-2xl flex items-center gap-3 text-emerald-600">
+                        <i class="fas fa-check-circle"></i>
+                        <span class="font-medium"><?= htmlspecialchars($message) ?></span>
+                    </div>
+                <?php endif; ?>
+
                 <?= $content ?>
             </main>
 
@@ -104,4 +115,4 @@
     <script src="assets/install.js"></script>
 </body>
 
-</html>
+</html>

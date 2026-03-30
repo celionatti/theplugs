@@ -80,7 +80,43 @@ $appUrl = $stepData['session_data']['app']['url'] ?? '';
     </div>
 </div>
 
+<style>
+    .confetti {
+        position: absolute;
+        width: 10px;
+        height: 10px;
+        background-color: #f2d74e;
+        top: -10px;
+        z-index: 1000;
+        border-radius: 20%;
+        animation: confetti-fall 3s linear forwards;
+    }
+
+    @keyframes confetti-fall {
+        0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+        100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+    }
+</style>
+
 <script>
+    function createConfetti() {
+        const colors = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6'];
+        for (let i = 0; i < 50; i++) {
+            const confetti = document.createElement('div');
+            confetti.className = 'confetti';
+            confetti.style.left = Math.random() * 100 + 'vw';
+            confetti.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+            confetti.style.animationDelay = Math.random() * 2 + 's';
+            confetti.style.width = Math.random() * 8 + 5 + 'px';
+            confetti.style.height = confetti.style.width;
+            document.body.appendChild(confetti);
+            setTimeout(() => confetti.remove(), 5000);
+        }
+    }
+
+    // Trigger initial celebration
+    setTimeout(createConfetti, 500);
+
     document.getElementById('btn-composer').addEventListener('click', async function () {
         const btn = this;
         const status = document.getElementById('action-status');
@@ -97,6 +133,7 @@ $appUrl = $stepData['session_data']['app']['url'] ?? '';
                 btn.innerHTML = '<i class="fas fa-check-circle"></i> Synced';
                 btn.className = btn.className.replace('border-emerald-500 text-emerald-600', 'border-emerald-600 bg-emerald-600 text-white');
                 status.innerHTML = '<span class="text-emerald-600">' + data.message + '</span>';
+                createConfetti();
             } else {
                 btn.innerHTML = '<i class="fas fa-exclamation-circle"></i> Failed';
                 btn.disabled = false;
@@ -117,13 +154,17 @@ $appUrl = $stepData['session_data']['app']['url'] ?? '';
         const btn = this;
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Optimizing...';
+        
+        createConfetti();
 
         try {
             const response = await fetch('?action=cleanup', { method: 'POST' });
             const data = await response.json();
 
             if (data.success) {
-                window.location.href = data.redirect || '<?= htmlspecialchars($appUrl) ?>/';
+                setTimeout(() => {
+                    window.location.href = data.redirect || '<?= htmlspecialchars($appUrl) ?>/';
+                }, 1500);
             } else {
                 alert(data.error || 'Cleanup failed. Please delete the install folder manually.');
                 window.location.href = '<?= htmlspecialchars($appUrl) ?>/';
@@ -132,4 +173,4 @@ $appUrl = $stepData['session_data']['app']['url'] ?? '';
             window.location.href = '<?= htmlspecialchars($appUrl) ?>/';
         }
     });
-</script>
+</script>

@@ -1,13 +1,15 @@
 <?php
 $timezones = $stepData['config']['timezones'] ?? [];
 $sessionApp = $stepData['session_data']['app'] ?? [];
+$detectedUrl = $stepData['detected_url'] ?? '';
 
-// Try to detect the current URL
-$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-$host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-$defaultUrl = $protocol . '://' . $host;
-// Remove /install from URL if present
-$defaultUrl = preg_replace('#/install/?$#', '', $defaultUrl);
+// Fallback detection if controller data is missing
+if (empty($detectedUrl)) {
+    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+    $detectedUrl = $protocol . '://' . $host;
+    $detectedUrl = preg_replace('#/install/?$#', '', $detectedUrl);
+}
 ?>
 <div class="space-y-10">
     <div class="space-y-4">
@@ -28,7 +30,7 @@ $defaultUrl = preg_replace('#/install/?$#', '', $defaultUrl);
             <div class="space-y-2">
                 <label for="app_url" class="text-sm font-bold text-gray-700 uppercase tracking-wider ml-1">Canonical URL</label>
                 <input type="url" name="app_url" id="app_url" class="w-full h-14 px-5 bg-white border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all font-medium text-gray-800"
-                    value="<?= htmlspecialchars($sessionApp['url'] ?? $defaultUrl) ?>"
+                    value="<?= htmlspecialchars($sessionApp['url'] ?? $detectedUrl) ?>"
                     placeholder="https://plugs.framework" required>
                 <p class="text-[11px] text-gray-400 ml-1 font-medium">The base URL of your site. Do not include a trailing slash.</p>
             </div>
@@ -92,4 +94,4 @@ $defaultUrl = preg_replace('#/install/?$#', '', $defaultUrl);
             </button>
         </div>
     </form>
-</div>
+</div>
