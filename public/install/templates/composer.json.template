@@ -25,6 +25,6 @@
     ],
     "minimum-stability": "stable",
     "require": {
-        "plugs/plugs": "^3.0"
+        "plugs/plugs": "^6.0"
     }
 }
