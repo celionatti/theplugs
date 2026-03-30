@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types = 1)
+declare(strict_types=1)
 ;
 
 /**
@@ -60,6 +60,7 @@ return [
         'storage/cache',
         'storage/app',
         'storage/app/public',
+        'public/assets/images',
         'tests',
     ],
 
@@ -92,6 +93,11 @@ return [
         'public/index.php' => 'public/index.php.template',
         'public/.htaccess' => 'public/.htaccess.template',
         'public/favicon.svg' => 'public/favicon.svg.template',
+    ],
+
+    // Binary files to copy directly (images, etc)
+    'binary_files' => [
+        'public/assets/images/plugs-6.png' => 'assets/images/plugs-6.png',
     ],
 
     // Database types supported

@@ -337,13 +337,17 @@ class InstallController
             $this->generateFiles($installData);
             error_log("Step 2: Files generated.");
 
-            // 3. Create database tables
-            $this->createDatabaseTables($installData);
-            error_log("Step 3: Database tables created.");
+            // 3. Copy binary files
+            $this->copyBinaryFiles();
+            error_log("Step 3: Binary files copied.");
 
-            // 4. Create admin user
+            // 4. Create database tables
+            $this->createDatabaseTables($installData);
+            error_log("Step 4: Database tables created.");
+
+            // 5. Create admin user
             $this->createAdminUser($installData);
-            error_log("Step 4: Admin user created.");
+            error_log("Step 5: Admin user created.");
 
             // 5. Create plugs.lock marker file
             $lockContent = json_encode([
@@ -445,6 +449,45 @@ class InstallController
             if ($targetFile === 'theplugs') {
                 @chmod($targetPath, 0755);
             }
+        }
+    }
+
+    /**
+     * Copy binary files directly without modification
+     */
+    private function copyBinaryFiles(): void
+    {
+        if (!isset($this->config['binary_files'])) {
+            return;
+        }
+
+        foreach ($this->config['binary_files'] as $targetFile => $sourceFile) {
+            $sourcePath = INSTALL_PATH . $sourceFile;
+            $targetPath = ROOT_PATH . $targetFile;
+
+            if (!file_exists($sourcePath)) {
+                error_log("Binary source not found: {$sourceFile}");
+
+                continue;
+            }
+
+            // Create parent directory if needed
+            $parentDir = dirname($targetPath);
+            if (!is_dir($parentDir)) {
+                if (!mkdir($parentDir, 0755, true)) {
+                    error_log("Failed to create parent directory for: {$targetFile}");
+
+                    throw new \Exception("Failed to create directory: " . dirname($targetFile));
+                }
+            }
+
+            if (copy($sourcePath, $targetPath) === false) {
+                error_log("Failed to copy binary file: {$sourceFile} to {$targetFile}");
+
+                throw new \Exception("Failed to copy file: {$targetFile}. Please check permissions.");
+            }
+
+            error_log("Copied binary file: {$targetFile} from source path: $sourcePath");
         }
     }
 
