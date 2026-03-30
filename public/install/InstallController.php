@@ -888,15 +888,19 @@ class InstallController
         $composerPath = $this->findComposer();
         if (!$composerPath) {
             error_log("Composer not found, skipping package installation.");
+            $_SESSION['install_errors'][] = "Composer executable not found. Please run 'composer require plugs/plugs' manually.";
 
             return;
         }
 
-        $command = "cd " . escapeshellarg(ROOT_PATH) . " && $composerPath require plugs/plugs:* --no-interaction 2>&1";
+        $rootPath = rtrim(ROOT_PATH, '/\\');
+        $command = "cd " . escapeshellarg($rootPath) . " && $composerPath require plugs/plugs:* --no-interaction 2>&1";
         exec($command, $output, $returnVar);
 
         if ($returnVar !== 0) {
-            error_log("Composer require failed: " . implode("\n", $output));
+            $errorMsg = "Composer failed to install 'plugs/plugs': " . implode("\n", $output);
+            error_log($errorMsg);
+            $_SESSION['install_errors'][] = $errorMsg;
         }
     }
 
@@ -911,7 +915,8 @@ class InstallController
             return ['success' => false, 'error' => 'Composer not found in system PATH.'];
         }
 
-        $command = "cd " . escapeshellarg(ROOT_PATH) . " && $composerPath install 2>&1";
+        $rootPath = rtrim(ROOT_PATH, '/\\');
+        $command = "cd " . escapeshellarg($rootPath) . " && $composerPath install 2>&1";
 
         // Execute command
         $output = [];

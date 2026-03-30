@@ -4,24 +4,50 @@ $appUrl = $stepData['session_data']['app']['url'] ?? '';
 ?>
 <div class="space-y-12 text-center">
     <div class="space-y-6">
-        <div class="w-24 h-24 bg-emerald-500 rounded-[2rem] flex items-center justify-center text-white text-4xl mx-auto shadow-2xl shadow-emerald-500/40 animate-bounce">
+        <div
+            class="w-24 h-24 bg-emerald-500 rounded-[2rem] flex items-center justify-center text-white text-4xl mx-auto shadow-2xl shadow-emerald-500/40 animate-bounce">
             <i class="fas fa-check"></i>
         </div>
         <div class="space-y-3">
             <h2 class="text-4xl font-extrabold text-gray-900 tracking-tight">System Operational</h2>
             <p class="text-gray-500 text-lg">
-                Congratulations! <span class="text-emerald-600 font-bold"><?= htmlspecialchars($appName) ?></span> has been successfully deployed.
+                Congratulations! <span class="text-emerald-600 font-bold"><?= htmlspecialchars($appName) ?></span> has
+                been successfully deployed.
             </p>
         </div>
     </div>
 
-    <div class="p-6 bg-red-50 border border-red-100 rounded-[2rem] flex items-start gap-4 text-red-700 shadow-sm text-left">
+    <?php 
+    $installErrors = $_SESSION['install_errors'] ?? [];
+    unset($_SESSION['install_errors']);
+    if (!empty($installErrors)): 
+    ?>
+        <div class="p-6 bg-amber-50 border border-amber-100 rounded-[2rem] flex items-start gap-4 text-amber-700 shadow-sm text-left animate-pulse">
+            <div class="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center shrink-0">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div>
+                <h4 class="font-bold text-lg mb-1">Post-Installation Notice</h4>
+                <ul class="text-sm opacity-90 list-disc ml-4">
+                    <?php foreach ($installErrors as $err): ?>
+                        <li><?= nl2br(htmlspecialchars($err)) ?></li>
+                    <?php endforeach; ?>
+                </ul>
+                <p class="text-xs mt-2 opacity-75">You may need to run <code class="bg-amber-100 px-1 rounded">composer update</code> manually to resolve these issues.</p>
+            </div>
+        </div>
+    <?php endif; ?>
+
+    <div
+        class="p-6 bg-red-50 border border-red-100 rounded-[2rem] flex items-start gap-4 text-red-700 shadow-sm text-left">
         <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
             <i class="fas fa-shield-virus"></i>
         </div>
         <div>
             <h4 class="font-bold text-lg mb-1">Security Alert</h4>
-            <p class="text-sm opacity-90">Please remove the <code class="bg-red-100 px-1.5 py-0.5 rounded font-bold">public/install</code> directory immediately to secure your installation.</p>
+            <p class="text-sm opacity-90">Please remove the <code
+                    class="bg-red-100 px-1.5 py-0.5 rounded font-bold">public/install</code> directory immediately to
+                secure your installation.</p>
         </div>
     </div>
 
@@ -35,19 +61,23 @@ $appUrl = $stepData['session_data']['app']['url'] ?? '';
 
         <div class="grid grid-cols-2 gap-4">
             <div class="flex items-center gap-3 text-emerald-600 font-medium text-sm">
-                <div class="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center text-[10px]"><i class="fas fa-check"></i></div>
+                <div class="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center text-[10px]"><i
+                        class="fas fa-check"></i></div>
                 File Hierarchy Ready
             </div>
             <div class="flex items-center gap-3 text-emerald-600 font-medium text-sm">
-                <div class="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center text-[10px]"><i class="fas fa-check"></i></div>
+                <div class="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center text-[10px]"><i
+                        class="fas fa-check"></i></div>
                 Database Migrated
             </div>
             <div class="flex items-center gap-3 text-emerald-600 font-medium text-sm">
-                <div class="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center text-[10px]"><i class="fas fa-check"></i></div>
+                <div class="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center text-[10px]"><i
+                        class="fas fa-check"></i></div>
                 Admin Identity Created
             </div>
             <div class="flex items-center gap-3 text-emerald-600 font-medium text-sm">
-                <div class="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center text-[10px]"><i class="fas fa-check"></i></div>
+                <div class="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center text-[10px]"><i
+                        class="fas fa-check"></i></div>
                 Environment Active
             </div>
         </div>
@@ -55,26 +85,33 @@ $appUrl = $stepData['session_data']['app']['url'] ?? '';
         <div class="pt-6 border-t border-gray-200">
             <p class="text-gray-400 font-bold text-xs uppercase tracking-widest mb-4">Immediate Next Steps</p>
             <ul class="space-y-3 text-gray-500 text-sm">
-                <li class="flex gap-3"><span class="text-emerald-500 font-bold">01.</span> Execute secure cleanup below.</li>
-                <li class="flex gap-3"><span class="text-emerald-500 font-bold">02.</span> Explore the <a href="https://github.com/celionatti/plugs" class="text-emerald-600 hover:underline font-bold">Documentation</a>.</li>
-                <li class="flex gap-3"><span class="text-emerald-500 font-bold">03.</span> Create your first controller using <code class="bg-gray-200 px-1 rounded text-gray-700">php theplugs make:controller</code>.</li>
+                <li class="flex gap-3"><span class="text-emerald-500 font-bold">01.</span> Execute secure cleanup below.
+                </li>
+                <li class="flex gap-3"><span class="text-emerald-500 font-bold">02.</span> Explore the <a
+                        href="https://github.com/celionatti/plugs"
+                        class="text-emerald-600 hover:underline font-bold">Documentation</a>.</li>
+                <li class="flex gap-3"><span class="text-emerald-500 font-bold">03.</span> Create your first controller
+                    using <code class="bg-gray-200 px-1 rounded text-gray-700">php theplugs make:controller</code>.</li>
             </ul>
         </div>
     </div>
 
     <div class="space-y-4">
         <div class="flex flex-col sm:flex-row gap-4">
-            <button type="button" id="btn-cleanup" class="flex-1 bg-gray-900 border-2 border-gray-900 hover:bg-black text-white font-bold py-5 rounded-[2rem] shadow-xl transition-all hover:-translate-y-1 flex items-center justify-center gap-3 text-lg">
+            <button type="button" id="btn-cleanup"
+                class="flex-1 bg-gray-900 border-2 border-gray-900 hover:bg-black text-white font-bold py-5 rounded-[2rem] shadow-xl transition-all hover:-translate-y-1 flex items-center justify-center gap-3 text-lg">
                 <i class="fas fa-rocket"></i>
                 Launch & Clean Up
             </button>
-            <button type="button" id="btn-composer" class="flex-none sm:w-48 bg-white border-2 border-emerald-500 text-emerald-600 font-bold py-5 rounded-[2rem] transition-all hover:bg-emerald-50 flex items-center justify-center gap-3">
+            <button type="button" id="btn-composer"
+                class="flex-none sm:w-48 bg-white border-2 border-emerald-500 text-emerald-600 font-bold py-5 rounded-[2rem] transition-all hover:bg-emerald-50 flex items-center justify-center gap-3">
                 <i class="fas fa-box"></i>
                 Sync Deps
             </button>
         </div>
         <div id="action-status" class="text-sm font-medium text-gray-400 pb-2">Ready for take-off.</div>
-        <a href="<?= htmlspecialchars($appUrl) ?>/" class="inline-block text-gray-400 text-xs font-bold uppercase tracking-widest hover:text-emerald-500 transition-colors">
+        <a href="<?= htmlspecialchars($appUrl) ?>/"
+            class="inline-block text-gray-400 text-xs font-bold uppercase tracking-widest hover:text-emerald-500 transition-colors">
             Skip to Homepage <i class="fas fa-external-link-alt ml-1"></i>
         </a>
     </div>
@@ -93,8 +130,15 @@ $appUrl = $stepData['session_data']['app']['url'] ?? '';
     }
 
     @keyframes confetti-fall {
-        0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-        100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        0% {
+            transform: translateY(0) rotate(0deg);
+            opacity: 1;
+        }
+
+        100% {
+            transform: translateY(100vh) rotate(720deg);
+            opacity: 0;
+        }
     }
 </style>
 
@@ -154,7 +198,7 @@ $appUrl = $stepData['session_data']['app']['url'] ?? '';
         const btn = this;
         btn.disabled = true;
         btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Optimizing...';
-        
+
         createConfetti();
 
         try {

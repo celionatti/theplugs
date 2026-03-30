@@ -10,7 +10,7 @@
         }
     },
     "keywords": [
-        "plugsframework",
+        "framework",
         "php",
         "plugs",
         "mvc",
@@ -25,6 +25,6 @@
     ],
     "minimum-stability": "stable",
     "require": {
-        "plugs/plugs": "^5.9"
+        "plugs/plugs": "*"
     }
 }
