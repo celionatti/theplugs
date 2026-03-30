@@ -6,8 +6,7 @@
             font-family: 'Plus Jakarta Sans', sans-serif;
             margin: 0;
             padding: 0;
-            overflow: hidden;
-            height: 100vh;
+            min-height: 100vh;
         }
 
         .text-emerald { color: #10b981; }
@@ -24,175 +23,159 @@
         .btn-deploy {
             background-color: #1a1a1a;
             color: white;
-            padding: 10px 20px;
+            padding: 12px 24px;
             border-radius: 8px;
             font-weight: 600;
-            transition: all 0.2s;
+            transition: background-color 0.2s;
         }
-        .btn-deploy:hover { 
-            background-color: #333;
-            transform: translateY(-1px);
-        }
-
-        .welcome-card {
-            background: white;
-            border-radius: 24px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.05);
-            max-width: 900px;
-            width: 95%;
-            overflow: hidden;
-            border: 1px solid #f0f0f0;
-            display: flex;
-            animation: fadeInScale 0.6s ease-out;
-        }
-
-        @keyframes fadeInScale {
-            from { opacity: 0; transform: scale(0.95); }
-            to { opacity: 1; transform: scale(1); }
-        }
+        .btn-deploy:hover { background-color: #333; }
 
         .isometric-container {
-            background: linear-gradient(135deg, #fff5f0 0%, #fcfaf8 100%);
+            position: relative;
+            width: 100%;
+            height: 100%;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 40px;
-            border-left: 1px solid #f0f0f0;
+            overflow: hidden;
+            background: linear-gradient(135deg, #fff5f0 0%, #fcfaf8 100%);
+            border-left: 1px solid #eee;
         }
 
         .isometric-image {
-            max-width: 100%;
-            height: auto;
-            filter: drop-shadow(0 20px 40px rgba(0,0,0,0.08));
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+            filter: drop-shadow(0 20px 40px rgba(0,0,0,0.1));
             animation: float 6s ease-in-out infinite;
         }
 
         @keyframes float {
             0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
+            50% { transform: translateY(-15px); }
         }
 
+        .stepper-line {
+            position: absolute;
+            left: 11px;
+            top: 24px;
+            bottom: -24px;
+            width: 1px;
+            background-color: #e2e8f0;
+        }
+        
         .step-circle {
-            width: 20px;
-            height: 20px;
+            width: 24px;
+            height: 24px;
             border-radius: 50%;
             border: 2px solid #e2e8f0;
             background: white;
             display: flex;
             align-items: center;
             justify-content: center;
-            flex-shrink: 0;
-            margin-top: 4px;
+            position: relative;
+            z-index: 10;
         }
         
         .step-circle-inner {
-            width: 8px;
-            height: 8px;
+            width: 10px;
+            height: 10px;
             border-radius: 50%;
             background-color: #e2e8f0;
         }
-
+        
         .step-item:hover .step-circle { border-color: #10b981; }
         .step-item:hover .step-circle-inner { background-color: #10b981; }
     </style>
 
-    <div class="h-screen w-full flex items-center justify-center p-6 bg-[#fcfaf8] relative overflow-hidden">
-        <!-- Abstract Background Doodles -->
-        <div class="absolute inset-0 z-0 opacity-[0.03] pointer-events-none">
-            <svg class="absolute top-[-10%] left-[-5%] w-96 h-96 text-emerald-900" fill="currentColor" viewBox="0 0 100 100">
-                <circle cx="50" cy="50" r="40" />
-            </svg>
-            <svg class="absolute bottom-[5%] right-[-10%] w-[500px] h-[500px] text-emerald-900" fill="none" stroke="currentColor" stroke-width="0.5" viewBox="0 0 100 100">
-                <path d="M0,50 Q25,0 50,50 T100,50" />
-            </svg>
-            <svg class="absolute top-[20%] right-[10%] w-32 h-32 text-emerald-900" fill="currentColor" viewBox="0 0 100 100">
-                <rect x="20" y="20" width="60" height="60" rx="10" transform="rotate(15 50 50)" />
-            </svg>
-            <svg class="absolute bottom-[20%] left-[15%] w-24 h-24 text-emerald-900" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 100 100">
-                <circle cx="50" cy="50" r="30" stroke-dasharray="5 5" />
-            </svg>
-        </div>
-
-        <div class="welcome-card relative z-10">
-            <!-- Left: Content -->
-            <div class="w-full lg:w-7/12 p-8 lg:p-12 flex flex-col justify-between">
-                <!-- Header -->
-                <div class="flex items-center justify-between mb-8">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center text-white shadow-lg shadow-emerald-500/20">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                            </svg>
-                        </div>
-                        <span class="text-xl font-bold tracking-tight font-outfit">My Plugs App</span>
-                    </div>
-
-                    <div class="flex items-center gap-4">
-                        @if(\Plugs\FeatureModule\FeatureModuleManager::getInstance()->hasModule('Auth'))
-                            @if(\Plugs\Facades\Auth::check())
-                                <a href="{{ route('admin.dashboard') }}" class="text-sm nav-link">Admin Dashboard</a>
-                            @else
-                                <a href="/login" class="text-sm nav-link">Log in</a>
-                                <a href="/register" class="text-sm bg-emerald font-semibold text-white px-4 py-2 rounded-lg hover:opacity-90 transition-opacity">Register</a>
-                            @endif
-                        @endif
-                    </div>
+    <div class="min-h-screen flex flex-col">
+        <!-- Navigation -->
+        <nav class="w-full max-w-7xl mx-auto px-6 py-8 flex justify-between items-center z-50">
+            <div class="flex items-center gap-2">
+                <div class="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center text-white shadow-lg shadow-emerald-500/20">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
                 </div>
+                <span class="text-2xl font-bold tracking-tight font-outfit">{{APP_NAME}}</span>
+            </div>
 
-                <!-- Main Content -->
-                <div class="space-y-8">
-                    <div class="space-y-3">
+            <div class="flex items-center gap-8">
+                @if(\Plugs\FeatureModule\FeatureModuleManager::getInstance()->hasModule('Auth'))
+                    @if(\Plugs\Facades\Auth::check())
+                        <a href="/dashboard" class="nav-link">Dashboard</a>
+                    @else
+                        <a href="/login" class="nav-link">Log in</a>
+                        <a href="/register" class="btn-deploy py-2 px-6">Register</a>
+                    @endif
+                @endif
+            </div>
+        </nav>
+
+        <main class="flex-grow flex flex-col lg:flex-row">
+            <!-- Left Content Area -->
+            <div class="w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-16">
+                <div class="max-w-md w-full space-y-10">
+                    <div class="space-y-4">
                         <h2 class="text-2xl font-bold text-gray-900">Let's get started</h2>
-                        <p class="text-gray-500 text-base">
-                            My Plugs App is ready. Start by exploring the ecosystem below.
+                        <p class="text-gray-500 leading-relaxed text-lg">
+                            {{APP_NAME}} has an incredibly rich ecosystem. We suggest starting with the following.
                         </p>
                     </div>
 
-                    <div class="space-y-6">
-                        <div class="step-item flex gap-4 group cursor-default">
+                    <div class="space-y-12">
+                        <!-- Step 1 -->
+                        <div class="step-item flex gap-6 relative group">
+                            <div class="stepper-line"></div>
                             <div class="step-circle">
                                 <div class="step-circle-inner"></div>
                             </div>
                             <div class="space-y-1">
-                                <h3 class="text-base font-medium text-gray-800">
+                                <h3 class="text-lg font-medium text-gray-800">
                                     Read the <a href="https://plugs-framework.com/docs" class="text-emerald hover:underline font-bold underline-offset-4 decoration-2">Documentation &nearr;</a>
                                 </h3>
                             </div>
                         </div>
 
-                        <div class="step-item flex gap-4 group cursor-default">
+                        <!-- Step 2 -->
+                        <div class="step-item flex gap-6 relative group">
                             <div class="step-circle">
                                 <div class="step-circle-inner"></div>
                             </div>
                             <div class="space-y-1">
-                                <h3 class="text-base font-medium text-gray-800">
-                                    Watch at <a href="https://plugs-framework.com/academy" class="text-emerald hover:underline font-bold underline-offset-4 decoration-2">Plugs Academy &nearr;</a>
+                                <h3 class="text-lg font-medium text-gray-800">
+                                    Watch video tutorials at <a href="https://plugs-framework.com/academy" class="text-emerald hover:underline font-bold underline-offset-4 decoration-2">Plugs Academy &nearr;</a>
                                 </h3>
                             </div>
                         </div>
                     </div>
 
                     <div class="pt-4">
-                        <a href="https://plugs-framework.com/deploy" class="btn-deploy inline-flex items-center gap-2">
+                        <a href="https://plugs-framework.com/deploy" class="btn-deploy inline-flex items-center gap-2 shadow-xl shadow-black/10">
                             Deploy now
                         </a>
                     </div>
                 </div>
+            </div>
 
-                <!-- Footer Info -->
-                <div class="mt-8 pt-8 border-t border-gray-50 flex items-center justify-between text-xs text-gray-400">
-                    <p>&copy; 2026. My Plugs App.</p>
-                    <div class="flex gap-4">
-                        <span>Plugs v{{ \Plugs\Plugs::version() }}</span>
-                        <span>PHP v{{ PHP_VERSION }}</span>
-                    </div>
+            <!-- Right Graphic Area -->
+            <div class="w-full lg:w-1/2 min-h-[400px] lg:min-h-0">
+                <div class="isometric-container">
+                    <img src="/assets/images/plugs-6.png" alt="Plugs 6 Isometric" class="isometric-image">
                 </div>
             </div>
+        </main>
 
-            <!-- Right: Graphic -->
-            <div class="hidden lg:flex lg:w-5/12 isometric-container">
-                <img src="/assets/images/plugs-6.png" alt="Plugs 6 Isometric" class="isometric-image">
+        <!-- Footer -->
+        <footer class="w-full max-w-7xl mx-auto px-6 py-10 flex flex-col sm:flex-row justify-between items-center border-t border-gray-100 mt-auto text-sm text-gray-400">
+            <div>
+                {{APP_NAME}} &copy; {{YEAR}}. Built with efficiency.
             </div>
-        </div>
+            <div class="flex gap-4 mt-4 sm:mt-0">
+                <span>Plugs v{{ \Plugs\Plugs::version() }}</span>
+                <span class="text-gray-200">|</span>
+                <span>PHP v{{ PHP_VERSION }}</span>
+            </div>
+        </footer>
     </div>
 </layout>

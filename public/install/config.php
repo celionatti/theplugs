@@ -80,7 +80,6 @@ return [
         'theplugs' => 'theplugs.template',
         'routes/web.php' => 'routes/web.php.template',
         'routes/api.php' => 'routes/api.php.template',
-        'routes/default.php' => 'routes/default.php.template',
         'app/Http/Controllers/HomeController.php' => 'controllers/HomeController.php.template',
         'app/Providers/AppServiceProvider.php' => 'app/Providers/AppServiceProvider.php.template',
         'app/Console/Kernel.php' => 'app/Console/Kernel.php.template',
