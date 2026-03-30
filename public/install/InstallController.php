@@ -99,7 +99,7 @@ class InstallController
             'password' => $data['db_password'] ?? '',
         ];
 
-        return \Plugs\Database\Connection::testConnection($config);
+        return $this->testPdoConnection($config);
     }
 
     /**
@@ -211,7 +211,40 @@ class InstallController
             'password' => $password,
         ];
 
-        return \Plugs\Database\Connection::testConnection($config);
+        return $this->testPdoConnection($config);
+    }
+
+    /**
+     * Test database connection using raw PDO for standalone operation.
+     */
+    private function testPdoConnection(array $config): array
+    {
+        try {
+            $driver = $config['driver'] ?? 'mysql';
+            $host = $config['host'] ?? 'localhost';
+            $port = (int)($config['port'] ?? 3306);
+            $database = $config['database'] ?? '';
+            $username = $config['username'] ?? '';
+            $password = $config['password'] ?? '';
+
+            if ($driver === 'sqlite') {
+                $dsn = "sqlite:" . ROOT_PATH . "storage/database.sqlite";
+                $pdo = new \PDO($dsn);
+            } elseif ($driver === 'pgsql') {
+                $dsn = "pgsql:host={$host};port={$port};dbname={$database}";
+                $pdo = new \PDO($dsn, $username, $password);
+            } else {
+                $dsn = "mysql:host={$host};port={$port};dbname={$database};charset=utf8mb4";
+                $pdo = new \PDO($dsn, $username, $password);
+            }
+
+            $pdo->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+            $pdo->query('SELECT 1');
+
+            return ['success' => true];
+        } catch (\PDOException $e) {
+            return ['success' => false, 'error' => $e->getMessage()];
+        }
     }
 
     /**

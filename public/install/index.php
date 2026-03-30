@@ -24,6 +24,18 @@ define('INSTALL_PATH', __DIR__ . '/');
 define('ROOT_PATH', dirname(__DIR__, 2) . '/');
 define('TEMPLATES_PATH', INSTALL_PATH . 'templates/');
 
+// Basic PSR-4 Autoloader for the installer (loads Plugs namespace from src/)
+spl_autoload_register(function ($class) {
+    if (strpos($class, 'Plugs\\') === 0) {
+        $prefix = 'Plugs\\';
+        $relative_class = substr($class, strlen($prefix));
+        $file = ROOT_PATH . 'src/' . str_replace('\\', '/', $relative_class) . '.php';
+        if (file_exists($file)) {
+            require $file;
+        }
+    }
+});
+
 // Load installer configuration
 $config = require INSTALL_PATH . 'config.php';
 
