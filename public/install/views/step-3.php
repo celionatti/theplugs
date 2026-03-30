@@ -5,10 +5,12 @@ $detectedUrl = $stepData['detected_url'] ?? '';
 
 // Fallback detection if controller data is missing
 if (empty($detectedUrl)) {
-    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+    $protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || ($_SERVER['SERVER_PORT'] ?? '') == 443) ? 'https' : 'http';
     $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-    $detectedUrl = $protocol . '://' . $host;
-    $detectedUrl = preg_replace('#/install/?$#', '', $detectedUrl);
+    $path = $_SERVER['REQUEST_URI'] ?? '/';
+    $path = str_replace(['/public/install/index.php', '/public/install', '/install/index.php', '/install'], '', $path);
+    if (($pos = strpos($path, '?')) !== false) $path = substr($path, 0, $pos);
+    $detectedUrl = rtrim($protocol . '://' . $host . $path, '/');
 }
 ?>
 <div class="space-y-10">

@@ -77,7 +77,6 @@ $app = require __DIR__ . '/../bootstrap/boot.php';
 */
 
 try {
-    /**Run the application and send the response to the client. If any exception occurs during bootstrapping or request handling, it will be caught by the catch block below. **/
     $app->run();
 } catch (\Throwable $e) {
     // 1. Determine Environment & Debug State

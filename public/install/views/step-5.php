@@ -57,7 +57,7 @@ $appUrl = $stepData['session_data']['app']['url'] ?? '';
             <ul class="space-y-3 text-gray-500 text-sm">
                 <li class="flex gap-3"><span class="text-emerald-500 font-bold">01.</span> Execute secure cleanup below.</li>
                 <li class="flex gap-3"><span class="text-emerald-500 font-bold">02.</span> Explore the <a href="https://github.com/celionatti/plugs" class="text-emerald-600 hover:underline font-bold">Documentation</a>.</li>
-                <li class="flex gap-3"><span class="text-emerald-500 font-bold">03.</span> Create your first controller using <code class="bg-gray-200 px-1 rounded text-gray-700">php plugs make:controller</code>.</li>
+                <li class="flex gap-3"><span class="text-emerald-500 font-bold">03.</span> Create your first controller using <code class="bg-gray-200 px-1 rounded text-gray-700">php theplugs make:controller</code>.</li>
             </ul>
         </div>
     </div>

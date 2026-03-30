@@ -848,8 +848,13 @@ class InstallController
         $host = $_SERVER['HTTP_HOST'];
         $path = $_SERVER['REQUEST_URI'];
         
-        // Remove 'public/install/index.php' if present
-        $path = str_replace(['/public/install/index.php', '/public/install/'], '', $path);
+        // Remove installer-related segments from the path
+        $path = str_replace([
+            '/public/install/index.php', 
+            '/public/install', 
+            '/install/index.php', 
+            '/install'
+        ], '', $path);
         
         // Strip query string if any
         if (($pos = strpos($path, '?')) !== false) {

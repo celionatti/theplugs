@@ -12,6 +12,7 @@ composer.lock
 package-lock.json
 /sample/
 phpunit.xml
+/tests/
 
 /public/assets/
 /public/plugs/
