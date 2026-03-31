@@ -1,6 +1,19 @@
 import { defineConfig } from 'vite';
 import fs from 'fs';
 import path from 'path';
+import { execSync } from 'child_process';
+
+/**
+ * Run Plugs CSS Build
+ */
+const buildPlugsCss = () => {
+    try {
+        console.log('\x1b[36m%s\x1b[0m', '⚡ Plugs CSS: Rebuilding...');
+        execSync('php theplugs css:build', { stdio: 'inherit' });
+    } catch (error) {
+        console.error('\x1b[31m%s\x1b[0m', '❌ Plugs CSS Build Failed');
+    }
+};
 
 export default defineConfig({
     plugins: [
@@ -8,6 +21,10 @@ export default defineConfig({
             name: 'plugs-vite-plugin',
             configureServer(server) {
                 const hotFile = path.resolve('public/hot');
+                
+                // Initial build
+                buildPlugsCss();
+
                 server.httpServer?.once('listening', () => {
                     const address = server.httpServer?.address();
                     const isAddressInfo = (x) => typeof x === 'object' && x !== null;
@@ -30,9 +47,17 @@ export default defineConfig({
             buildStart() {
                 const hotFile = path.resolve('public/hot');
                 if (fs.existsSync(hotFile)) fs.unlinkSync(hotFile);
+                
+                // Also build on production build start
+                if (process.env.NODE_ENV === 'production') {
+                    buildPlugsCss();
+                }
             },
             handleHotUpdate({ file, server }) {
-                if (file.endsWith('.php')) {
+                // If a template changes, rebuild Plugs CSS
+                if (file.endsWith('.php') || file.endsWith('.plug.php')) {
+                    buildPlugsCss();
+                    
                     server.ws.send({
                         type: 'full-reload',
                         path: '*'
